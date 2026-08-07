@@ -109,11 +109,13 @@ try {
   const theme = readFileSync(join(ds, "theme.css"), "utf8");
   check(theme.includes("--accent-9:"), "default theme has accent scale");
   check(theme.includes('[data-theme="dark"]'), "default theme has [data-theme] override");
-  check(theme.includes("--surface:"), "default theme has app bridge");
+  check(theme.includes("body {"), "default theme has document defaults");
+  check(theme.includes("--brand-blue:"), "default theme has brand accents");
+  check(theme.includes("monochromatic"), "default theme is monochromatic");
 
   // No unsubstituted {{VARS}} in text files (JSX style={{...}} is fine)
   const placeholderHits = [];
-  for (const file of ["AGENTS.md", "DESIGN.md", "README.md", "src/app/layout.tsx", "src/app/page.tsx"]) {
+  for (const file of ["AGENTS.md", "DESIGN.md", "README.md", "src/app/layout.tsx", "src/app/page.tsx", "src/app/page.css"]) {
     const content = readFileSync(join(app, file), "utf8");
     if (/\{\{[A-Z_]+\}\}/.test(content)) placeholderHits.push(file);
   }

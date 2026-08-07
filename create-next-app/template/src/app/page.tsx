@@ -3,13 +3,17 @@ import "./page.css";
 
 const SPACING_STEPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
+/**
+ * Token names and CSS expressions are substituted at scaffold time for the
+ * chosen palette preset and format - these are the real theme.css tokens.
+ */
 const SWATCHES = [
-  { name: "surface", label: "Surface" },
-  { name: "on-surface", label: "On surface" },
-  { name: "surface-muted", label: "Muted" },
-  { name: "accent-solid", label: "Accent" },
-  { name: "accent-soft", label: "Accent soft" },
-  { name: "line", label: "Line" },
+  { label: "Background", token: "{{T_BACKGROUND}}", value: "{{C_BACKGROUND}}" },
+  { label: "Foreground", token: "{{T_FOREGROUND}}", value: "{{C_FOREGROUND}}" },
+  { label: "Muted", token: "{{T_MUTED}}", value: "{{C_MUTED}}" },
+  { label: "Accent", token: "{{T_ACCENT_SOLID}}", value: "{{C_ACCENT_SOLID}}" },
+  { label: "Accent soft", token: "{{T_ACCENT_SOFT}}", value: "{{C_ACCENT_SOFT}}" },
+  { label: "Line", token: "{{T_LINE}}", value: "{{C_LINE}}" },
 ] as const;
 
 export default function Home() {
@@ -58,21 +62,21 @@ export default function Home() {
             ))}
           </div>
 
-          <h2>Color bridge</h2>
+          <h2>Color tokens</h2>
           <p className="hint">
-            Stable tokens from <code>theme.css</code> - try switching your OS
-            appearance, or set <code>data-theme=&quot;dark&quot;</code> on{" "}
+            From <code>theme.css</code> - try switching your OS appearance, or
+            set <code>data-theme=&quot;dark&quot;</code> on{" "}
             <code>&lt;html&gt;</code>
           </p>
           <ul className="swatches">
             {SWATCHES.map((swatch) => (
-              <li key={swatch.name} className="swatch">
+              <li key={swatch.token} className="swatch">
                 <span
                   className="swatch-chip"
-                  style={{ background: `var(--${swatch.name})` }}
+                  style={{ background: swatch.value }}
                 />
                 <span className="swatch-label">{swatch.label}</span>
-                <code className="swatch-var">--{swatch.name}</code>
+                <code className="swatch-var">{swatch.token}</code>
               </li>
             ))}
           </ul>

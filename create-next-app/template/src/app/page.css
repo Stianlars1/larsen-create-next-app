@@ -1,7 +1,7 @@
 /**
- * Welcome page styles - consumes only core tokens and the app bridge
- * (--surface, --on-surface, --surface-muted, --accent-solid, --accent-soft,
- * --line), so it renders correctly with every palette preset and format.
+ * Welcome page styles. Color values are substituted at scaffold time with
+ * the real token expressions for the chosen palette preset and format
+ * (see DESIGN.md for the mapping) - structural values come from core.css.
  */
 
 .page {
@@ -71,7 +71,7 @@ h2 {
 code {
   font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   font-size: 0.85em;
-  background: var(--surface-muted);
+  background: {{C_MUTED}};
   border-radius: var(--radius-sm);
   padding: 0.1em 0.35em;
 }
@@ -97,7 +97,7 @@ code {
 
 .spacing-bar {
   height: var(--space-2);
-  background: var(--accent-solid);
+  background: {{C_ACCENT_SOLID}};
   border-radius: var(--radius-full);
   transition: width var(--duration-base) var(--ease-out);
 }
@@ -115,13 +115,13 @@ code {
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-3);
-  border: var(--border-width) solid var(--line);
+  border: var(--border-width) solid {{C_LINE}};
   border-radius: var(--radius-md);
 }
 
 .swatch-chip {
   height: var(--space-6);
-  border: var(--border-width) solid var(--line);
+  border: var(--border-width) solid {{C_LINE}};
   border-radius: var(--radius-sm);
 }
 
@@ -148,7 +148,7 @@ code {
 .footer {
   margin-top: auto;
   padding-top: var(--space-6);
-  border-top: var(--border-width) solid var(--line);
+  border-top: var(--border-width) solid {{C_LINE}};
   font-size: 0.875rem;
 }
 

@@ -29,22 +29,24 @@ color: {{PALETTE_ALPHA_IDIOM}};
 To change the palette, edit `theme.css` directly or scaffold values with a
 new seed and copy them over.
 
-## App bridge
+## Semantic roles
 
-Six stable tokens defined at the bottom of `theme.css`. They exist for every
-preset/format combination - `base.css` and general UI should prefer them:
+The real theme.css tokens filling each UI role in this project
+({{PALETTE_PRESET}} x {{PALETTE_FORMAT}}). Use them with the idiom above:
 
-| Token | Meaning |
-| --- | --- |
-| `--surface` | Page background |
-| `--on-surface` | Primary text on the page background |
-| `--surface-muted` | Subtle background (cards, code, hover) |
-| `--accent-solid` | Strong accent (buttons, highlights) |
-| `--accent-soft` | Soft accent (selection, tints) |
-| `--line` | Borders and dividers |
+| Role | Token | Ready-to-use expression |
+| --- | --- | --- |
+| Page background | `{{T_BACKGROUND}}` | `{{C_BACKGROUND}}` |
+| Primary text | `{{T_FOREGROUND}}` | `{{C_FOREGROUND}}` |
+| Subtle background (cards, code) | `{{T_MUTED}}` | `{{C_MUTED}}` |
+| Strong accent (buttons) | `{{T_ACCENT_SOLID}}` | `{{C_ACCENT_SOLID}}` |
+| Soft accent (selection, tints) | `{{T_ACCENT_SOFT}}` | `{{C_ACCENT_SOFT}}` |
+| Borders and dividers | `{{T_LINE}}` | `{{C_LINE}}` |
 
-Bridge tokens are complete color values - use them as `var(--surface)`,
-never wrapped in a color function.
+theme.css also ends with a small generated "document defaults" block (body,
+selection, hr) using exactly these tokens - and the default Larsen Utvikling
+theme additionally ships the brand accents `--brand-blue`,
+`--brand-blue-soft` and `--brand-blue-subtle`.
 
 ## Spacing - 8 steps, 4px base
 

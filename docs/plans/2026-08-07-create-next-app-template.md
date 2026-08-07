@@ -25,7 +25,7 @@ A reusable Next.js base app, installable as `npx @larsen-utvikling/create-next-a
 | Spacing | 8 steps, 4px base: 4, 8, 12, 16, 24, 32, 48, 64 |
 | Dark mode | `prefers-color-scheme` auto + `[data-theme]` override, no JS |
 | Palette architecture | The user's preset/format choice defines the app's token baseline |
-| Default palette seed | `#4DA0FF` = `hsl(212 100% 65%)` (larsenutvikling.no brand blue) |
+| Default palette | Monochromatic from `#0A0A0A` (mirrors larsenutvikling.no) + brand accents `--brand-blue` `212 100% 65%`, `-soft`, `-subtle` (subtle flips in dark) |
 | Language | Everything in repos and generated apps is English; Norwegian is chat-only |
 | Style rules | Never Tailwind; only "-" as dash (never em/en-dash); agents clarify interactively |
 
@@ -57,10 +57,11 @@ Key mechanisms:
   `{{VAR}}` substitution, optionally writes a generated theme.css, removes
   superseded CNA files (`force: true`, drift-tolerant).
 - `palette/index.js` (`generateThemeCss`) wraps engine output in the
-  media-query + `[data-theme]` structure and appends the six app bridge
-  tokens (`--surface`, `--on-surface`, `--surface-muted`, `--accent-solid`,
-  `--accent-soft`, `--line`) so base.css/page.css work with every
-  preset/format combination.
+  media-query + `[data-theme]` structure and appends a generated "document
+  defaults" block (body, selection, hr) written with the real token names
+  and idiom for the chosen preset/format. `tokenRoles(preset, format)` maps
+  semantic roles to actual tokens; the overlay substitutes them into
+  page.css/page.tsx/docs. No invented alias tokens - base.css is color-free.
 - Local engine fixes (documented in palette/NOTICE.md): OKLAB/OKLCH output
   implemented via colorjs.io; DOM-only helper removed.
 

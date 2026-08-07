@@ -10,8 +10,9 @@
  *   2. renders it with the chosen preset + color format
  *   3. re-wraps the output in the template's dark mode structure
  *      (prefers-color-scheme auto + [data-theme] manual override)
- *   4. appends the "app bridge" tokens that base.css and app CSS consume,
- *      so the app works unchanged with every preset/format combination
+ *   4. appends a small "document defaults" rule block (body, selection, hr)
+ *      written with the real token names and the correct usage idiom for the
+ *      chosen preset/format combination - no invented alias tokens
  */
 
 import { generatePalette } from "./engine/generatePalette.js";
@@ -36,9 +37,25 @@ export const FORMATS = /** @type {const} */ ({
 
 export const SCHEMES = ["analogous", "monochromatic", "complementary", "triadic"];
 
-export const DEFAULT_HEX = "#4DA0FF"; // hsl(212 100% 65%) - Larsen Utvikling brand blue
+/**
+ * The baked-in default: monochromatic palette seeded with near-black, exactly
+ * like larsenutvikling.no (light derived from #0A0A0A, dark inverted), with
+ * the brand blue appended as a separate accent block by generate-default.mjs.
+ */
+export const DEFAULT_THEME = /** @type {const} */ ({
+  hex: "#0A0A0A",
+  preset: "shadcn",
+  format: "hsl-values",
+  scheme: "monochromatic",
+});
 
 export { isValidHex };
+
+/** @param {string} hex */
+export function normalizeHex(hex) {
+  const clean = hex.trim().replace(/^#/, "").toUpperCase();
+  return `#${clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean}`;
+}
 
 /**
  * CSS usage idioms for the chosen color format - used in the generated
@@ -58,36 +75,53 @@ export function usageIdioms(format) {
   };
 }
 
-/** @param {string} hex */
-export function normalizeHex(hex) {
-  const clean = hex.trim().replace(/^#/, "").toUpperCase();
-  return `#${clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean}`;
-}
-
 /**
- * Bridge token sources per preset. The bridge gives the app a stable, tiny
- * token surface (--surface, --on-surface, ...) regardless of which variables
- * the chosen preset emits.
+ * Semantic roles -> the real token name each preset provides for that role.
+ * shadcn emits semantic tokens; radix/css-variables emit only the scales.
  */
-const BRIDGE_SOURCES = {
+const ROLE_TOKENS = {
   shadcn: {
-    surface: "background",
-    "on-surface": "foreground",
-    "surface-muted": "muted",
-    "accent-solid": "accent-9",
-    "accent-soft": "accent-3",
+    background: "background",
+    foreground: "foreground",
+    muted: "muted",
+    accentSolid: "accent-9",
+    accentSoft: "accent-3",
     line: "border",
   },
   radix: {
-    surface: "gray-1",
-    "on-surface": "gray-12",
-    "surface-muted": "gray-2",
-    "accent-solid": "accent-9",
-    "accent-soft": "accent-3",
+    background: "gray-1",
+    foreground: "gray-12",
+    muted: "gray-2",
+    accentSolid: "accent-9",
+    accentSoft: "accent-3",
     line: "gray-6",
   },
 };
-BRIDGE_SOURCES["css-variables"] = BRIDGE_SOURCES.radix;
+ROLE_TOKENS["css-variables"] = ROLE_TOKENS.radix;
+
+/**
+ * For a preset/format combo, returns per-role { name, expr }: the actual
+ * token name (for docs/UI) and the ready-to-use CSS expression (for styles).
+ *
+ * @param {keyof typeof PRESETS} preset
+ * @param {keyof typeof FORMATS} format
+ * @returns {Record<"background" | "foreground" | "muted" | "accentSolid" | "accentSoft" | "line", { name: string, expr: string }>}
+ */
+export function tokenRoles(preset, format) {
+  const wrap =
+    format === "hsl-values"
+      ? (/** @type {string} */ t) => `hsl(var(--${t}))`
+      : (/** @type {string} */ t) => `var(--${t})`;
+  const roles = ROLE_TOKENS[preset];
+  return /** @type {any} */ (
+    Object.fromEntries(
+      Object.entries(roles).map(([role, token]) => [
+        role,
+        { name: `--${token}`, expr: wrap(token) },
+      ]),
+    )
+  );
+}
 
 /**
  * @param {object} opts
@@ -95,6 +129,8 @@ BRIDGE_SOURCES["css-variables"] = BRIDGE_SOURCES.radix;
  * @param {keyof typeof PRESETS} [opts.preset]
  * @param {keyof typeof FORMATS} [opts.format]
  * @param {string} [opts.scheme]
+ * @param {string} [opts.append] - extra CSS appended verbatim at the end
+ *   (used by generate-default.mjs for the brand accent block)
  * @returns {string} complete theme.css content
  */
 export function generateThemeCss({
@@ -102,9 +138,10 @@ export function generateThemeCss({
   preset = "shadcn",
   format = "hsl-values",
   scheme = "analogous",
+  append = "",
 }) {
   if (!isValidHex(hex)) {
-    throw new Error(`Invalid HEX color: "${hex}" (expected e.g. 4DA0FF or #4DA0FF)`);
+    throw new Error(`Invalid HEX color: "${hex}" (expected e.g. 0A0A0A or #0A0A0A)`);
   }
   if (!(preset in PRESETS)) {
     throw new Error(`Unknown preset: "${preset}" (expected ${Object.keys(PRESETS).join(" | ")})`);
@@ -120,11 +157,7 @@ export function generateThemeCss({
   const data = generatePalette({ hex: seed, scheme });
   const raw = generateExportCode(data, { preset, format: FORMATS[format] });
   const { light, dark } = extractBlocks(raw);
-
-  const wrap = format === "hsl-values" ? (v) => `hsl(var(--${v}))` : (v) => `var(--${v})`;
-  const bridge = Object.entries(BRIDGE_SOURCES[preset])
-    .map(([name, source]) => `  --${name}: ${wrap(source)};`)
-    .join("\n");
+  const roles = tokenRoles(preset, format);
 
   return `/**
  * theme.css - color tokens
@@ -155,14 +188,21 @@ ${indent(light, 2)}
 ${indent(dark, 2)}
 }
 
-/**
- * App bridge - the stable token surface consumed by base.css and app CSS.
- * These six names always exist, independent of preset and color format.
- */
-:root {
-${bridge}
+/* Document defaults - written for ${preset} x ${format} */
+body {
+  background: ${roles.background.expr};
+  color: ${roles.foreground.expr};
 }
-`;
+
+::selection {
+  background: ${roles.accentSoft.expr};
+  color: ${roles.foreground.expr};
+}
+
+hr {
+  border-top-color: ${roles.line.expr};
+}
+${append ? `\n${append.trim()}\n` : ""}`;
 }
 
 /**
@@ -177,8 +217,8 @@ function extractBlocks(css) {
   }
   const light = innerBlock(css.slice(0, mediaIdx));
   const darkPart = css.slice(mediaIdx);
-  const light2 = darkPart.indexOf(":root");
-  const dark = innerBlock(darkPart.slice(light2));
+  const rootIdx = darkPart.indexOf(":root");
+  const dark = innerBlock(darkPart.slice(rootIdx));
   return { light, dark };
 }
 

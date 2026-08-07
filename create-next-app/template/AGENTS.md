@@ -34,9 +34,10 @@ Usage rules:
   radii via `var(--radius-*)`, colors via the tokens in `theme.css`.
 - Color usage idiom for this project: `{{PALETTE_IDIOM}}`
   (alpha variant: `{{PALETTE_ALPHA_IDIOM}}`).
-- The bridge tokens `--surface`, `--on-surface`, `--surface-muted`,
-  `--accent-solid`, `--accent-soft` and `--line` always exist - prefer them
-  for general UI so components survive palette changes.
+- Semantic roles for this project's palette ({{PALETTE_PRESET}} x
+  {{PALETTE_FORMAT}}): background `{{T_BACKGROUND}}`, text `{{T_FOREGROUND}}`,
+  subtle background `{{T_MUTED}}`, strong accent `{{T_ACCENT_SOLID}}`, soft
+  accent `{{T_ACCENT_SOFT}}`, borders `{{T_LINE}}` - full mapping in DESIGN.md.
 - Dark mode is automatic (`prefers-color-scheme`) with a manual
   `[data-theme="light" | "dark"]` override on `<html>`. Never ship JS for
   theming without asking first.

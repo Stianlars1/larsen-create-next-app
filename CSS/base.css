@@ -1,10 +1,10 @@
 /**
- * base.css - reset + document defaults
+ * base.css - structural reset + document defaults
  *
- * Consumes only core tokens and the app bridge tokens that theme.css
- * defines (--surface, --on-surface, --line, ...). It never references
- * palette-specific variables directly, so it works unchanged with every
- * palette preset and color format.
+ * Deliberately color-free: every color rule (body background/color,
+ * selection, hr color) lives in the generated theme.css, written with the
+ * real token names for the chosen palette preset and format. This file
+ * therefore works unchanged with every combination.
  */
 
 /* Reset */
@@ -23,8 +23,6 @@ html {
 
 body {
   min-height: 100dvh;
-  background: var(--surface);
-  color: var(--on-surface);
   font-family:
     system-ui,
     -apple-system,
@@ -83,12 +81,8 @@ a {
 
 hr {
   border: none;
-  border-top: var(--border-width) solid var(--line);
-}
-
-::selection {
-  background: var(--accent-soft);
-  color: var(--on-surface);
+  border-top-style: solid;
+  border-top-width: var(--border-width);
 }
 
 @media (prefers-reduced-motion: reduce) {

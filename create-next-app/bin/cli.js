@@ -20,7 +20,13 @@ import { promptConfig } from "../src/prompts.js";
 import { scaffold } from "../src/scaffold.js";
 import { overlay } from "../src/overlay.js";
 import { run } from "../src/run.js";
-import { DEFAULT_HEX, generateThemeCss, normalizeHex, usageIdioms } from "../palette/index.js";
+import {
+  DEFAULT_THEME,
+  generateThemeCss,
+  normalizeHex,
+  tokenRoles,
+  usageIdioms,
+} from "../palette/index.js";
 
 const templateDir = fileURLToPath(new URL("../template", import.meta.url));
 
@@ -109,13 +115,12 @@ try {
 
   // Palette + overlay
   phase = "overlay";
-  const paletteMeta = config.palette ?? {
-    hex: DEFAULT_HEX,
-    preset: "shadcn",
-    format: "hsl-values",
-    scheme: "analogous",
-  };
+  const paletteMeta = config.palette ?? DEFAULT_THEME;
   const idioms = usageIdioms(/** @type {any} */ (paletteMeta.format));
+  const roles = tokenRoles(
+    /** @type {any} */ (paletteMeta.preset),
+    /** @type {any} */ (paletteMeta.format),
+  );
   const themeCss = config.palette
     ? generateThemeCss(/** @type {any} */ (config.palette))
     : undefined; // keep the baked-in default theme
@@ -133,6 +138,18 @@ try {
       PALETTE_SCHEME: paletteMeta.scheme,
       PALETTE_IDIOM: idioms.idiom,
       PALETTE_ALPHA_IDIOM: idioms.alphaIdiom,
+      T_BACKGROUND: roles.background.name,
+      C_BACKGROUND: roles.background.expr,
+      T_FOREGROUND: roles.foreground.name,
+      C_FOREGROUND: roles.foreground.expr,
+      T_MUTED: roles.muted.name,
+      C_MUTED: roles.muted.expr,
+      T_ACCENT_SOLID: roles.accentSolid.name,
+      C_ACCENT_SOLID: roles.accentSolid.expr,
+      T_ACCENT_SOFT: roles.accentSoft.name,
+      C_ACCENT_SOFT: roles.accentSoft.expr,
+      T_LINE: roles.line.name,
+      C_LINE: roles.line.expr,
     },
     themeCss,
   });
