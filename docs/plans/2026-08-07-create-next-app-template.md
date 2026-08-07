@@ -14,6 +14,8 @@ A reusable Next.js base app, installable as `npx @larsen-utvikling/create-next-a
   tokens, generated color theme (light + dark, zero JS), reset
 - Agent docs: AGENTS.md (rules), CLAUDE.md (pointer), DESIGN.md (tokens),
   NEXTJS.md (create-next-app's own agent guide, preserved)
+- Optional install of the Larsen Skills collection
+  (github.com/Stianlars1/larsen-skills) into the project
 - Optional custom 12-step palette from a single HEX, powered by the vendored
   rampkit engine (github.com/Stianlars1/rampkit-client @ 48d6b33)
 
@@ -35,7 +37,7 @@ A reusable Next.js base app, installable as `npx @larsen-utvikling/create-next-a
 Repo root holds two masters, synced into the package at prepack:
 
 ```
-CSS/          master design system (index/core/theme/base.css) - edit here
+CSS/          master design system (index/core/theme/motion/base.css) - edit here
 palette/      master color generator: index.js API + vendored engine/ + NOTICE.md
 create-next-app/
   bin/cli.js  orchestration (prompts -> scaffold -> overlay -> install -> git)
