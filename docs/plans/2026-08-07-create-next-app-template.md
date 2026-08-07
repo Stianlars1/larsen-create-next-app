@@ -1,7 +1,8 @@
 # Plan: Larsen Utvikling template + @larsen-utvikling/create-next-app
 
 Approved 2026-08-07. Norwegian working copy: `~/.claude/plans/vi-er-inne-i-resilient-sketch.md`.
-Status: implemented and smoke-tested; awaiting first npm publish.
+Status: **shipped - v0.1.0 published to npm 2026-08-07** and verified from the
+registry (scaffold, custom palette, `npm create` alias, production build).
 
 ## Goal
 
@@ -75,10 +76,26 @@ Key mechanisms:
 - Verify a publish: `npx @larsen-utvikling/create-next-app@<exact-version>`
   from a scratch dir (npx `@latest` cache can lie).
 
-## First publish (requires Stian)
+## Releasing
 
-1. Create npmjs.com account + free org `larsen-utvikling`, run `npm login`.
-2. From `create-next-app/`: `npm publish` (publishConfig handles public
-   access; prepublishOnly runs the smoke test automatically).
-3. Verify with the exact version from a scratch dir, plus one run of
-   `npm create @larsen-utvikling/next-app`.
+2FA is enabled on the npm account, so `npm publish` must run in an
+interactive terminal (browser auth) - it fails with `EOTP` otherwise:
+
+```bash
+cd create-next-app && npm version patch && npm publish
+```
+
+`prepublishOnly` runs the smoke test and `prepack` syncs the masters, so a
+green run means the published tarball is verified.
+
+Verify afterwards from a clean scratch dir with the **exact** version (the
+npx `@latest` cache can lie):
+
+```bash
+npx --yes @larsen-utvikling/create-next-app@<version> verify-app --defaults --no-git --no-install
+```
+
+Note: a brand-new scoped package 404s for anonymous registry reads for a
+couple of minutes (CDN propagation) while authenticated `npm view` already
+works. `npmjs.com/package/...` returns 403 to curl (bot protection) - not a
+useful health check.
