@@ -40,7 +40,7 @@ export default function Home() {
 
       <main className="main">
         <section>
-          <h1>{"{{APP_NAME}}"}</h1>
+          <h1>{{APP_NAME}}</h1>
           <p className="lead">
             A clean Next.js start: newest stable version, App Router, and a
             vanilla CSS design system. No utility framework - just tokens.

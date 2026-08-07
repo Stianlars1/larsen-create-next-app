@@ -39,13 +39,13 @@ export const FORMATS = /** @type {const} */ ({
 export const SCHEMES = ["analogous", "monochromatic", "complementary", "triadic"];
 
 /**
- * The baked-in default: monochromatic palette exactly like
- * larsenutvikling.no - light derived from #0A0A0A, dark from #FAFAFA - with
- * the brand blue appended as a separate accent block by generate-default.mjs.
+ * The baked-in default: the whole palette generated from the Larsen
+ * Utvikling brand blue, so accents read blue, while generate-default.mjs
+ * pins the page surfaces and focus ring to the exact black/white pair the
+ * brand uses (larsenutvikling.no does the same).
  */
 export const DEFAULT_THEME = /** @type {const} */ ({
-  hex: "#0A0A0A",
-  darkHex: "#FAFAFA",
+  hex: "#4DA0FF", // hsl(212 100% 65%) - --brand-blue on larsenutvikling.no
   preset: "shadcn",
   format: "hsl-values",
   scheme: "monochromatic",

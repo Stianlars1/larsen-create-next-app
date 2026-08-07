@@ -3,14 +3,15 @@
 /**
  * Regenerates the default theme master at CSS/theme.css.
  *
- * The default mirrors larsenutvikling.no: a monochromatic palette seeded
- * with near-black (#0A0A0A light, inverted dark), plus the Larsen Utvikling
- * brand blue appended as a separate accent block.
+ * The default mirrors larsenutvikling.no: the palette is generated from the
+ * Larsen Utvikling brand blue, so accents and buttons read blue, while the
+ * page surfaces and the focus ring are pinned to the exact black/white pair
+ * the brand uses.
  *
  * Usage (from the repo root):
- *   npm run gen:theme              -> brand default (#0A0A0A, monochromatic)
- *   npm run gen:theme -- "#22C55E" -> custom seed (still monochromatic default
- *                                     structure; pass a second arg for scheme)
+ *   npm run gen:theme              -> brand default (blue accents, mono surfaces)
+ *   npm run gen:theme -- "#22C55E" -> custom seed, plain generated surfaces
+ *   npm run gen:theme -- "#22C55E" analogous -> custom seed and scheme
  *
  * Hand-tweaks to CSS/theme.css are fine - this script overwrites them.
  */
@@ -21,8 +22,8 @@ import { DEFAULT_THEME, SCHEMES, generateThemeCss } from "./index.js";
 
 const seed = process.argv[2] ?? DEFAULT_THEME.hex;
 const scheme = process.argv[3] ?? DEFAULT_THEME.scheme;
-// A custom seed gets the plain generated surface; only the brand default
-// pins the exact black/white pair.
+// A custom seed gets the plain generated palette; only the brand default
+// pins the black/white surface and ring.
 const custom = Boolean(process.argv[2]);
 if (!SCHEMES.includes(scheme)) {
   console.error(`Unknown scheme "${scheme}" (expected ${SCHEMES.join(" | ")})`);
@@ -31,8 +32,8 @@ if (!SCHEMES.includes(scheme)) {
 const target = fileURLToPath(new URL("../CSS/theme.css", import.meta.url));
 
 /**
- * Brand accents layered on top of the monochromatic palette, exactly like
- * larsenutvikling.no. Only the subtle tint flips between light and dark.
+ * Softer and subtler blues than the generated scale provides, carried over
+ * from larsenutvikling.no. Only the subtle tint flips between light and dark.
  */
 const BRAND_ACCENTS = `
 /* Brand accents - Larsen Utvikling blue (larsenutvikling.no) */
@@ -58,25 +59,29 @@ const BRAND_ACCENTS = `
 `;
 
 /**
- * larsenutvikling.no pins the page surface to the exact #FAFAFA / #0A0A0A
- * pair rather than the generator's derived near-grays, so the brand reads as
- * true black and white. Mirrored here.
+ * The brand keeps pages true black and white and uses blue for accents, so
+ * the surface pair and the focus ring are pinned rather than taken from the
+ * blue-derived scale. Pinning --ring also keeps focus indicators above the
+ * WCAG 3:1 requirement, which the brand blue misses on a white surface.
  */
-const BRAND_SURFACE = { background: "#FAFAFA", foreground: "#0A0A0A" };
+const WHITE = "#FAFAFA";
+const BLACK = "#0A0A0A";
+const brandLight = { background: WHITE, foreground: BLACK, ring: BLACK };
+const brandDark = { background: BLACK, foreground: WHITE, ring: WHITE };
 
 const css = generateThemeCss({
   hex: seed,
-  darkHex: custom ? undefined : DEFAULT_THEME.darkHex,
   preset: DEFAULT_THEME.preset,
   format: DEFAULT_THEME.format,
   scheme,
-  overrides: custom ? undefined : BRAND_SURFACE,
-  darkOverrides: custom
-    ? undefined
-    : { background: BRAND_SURFACE.foreground, foreground: BRAND_SURFACE.background },
+  overrides: custom ? undefined : brandLight,
+  darkOverrides: custom ? undefined : brandDark,
   append: BRAND_ACCENTS,
 });
 
 writeFileSync(target, css);
 console.log(`Wrote ${target}`);
-console.log(`Seed: ${seed} | preset: ${DEFAULT_THEME.preset} | format: ${DEFAULT_THEME.format} | scheme: ${scheme} | brand accents appended`);
+console.log(
+  `Seed: ${seed} | preset: ${DEFAULT_THEME.preset} | format: ${DEFAULT_THEME.format} | scheme: ${scheme}` +
+    (custom ? "" : " | brand surfaces and ring pinned, brand accents appended"),
+);

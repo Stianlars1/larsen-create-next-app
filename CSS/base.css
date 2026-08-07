@@ -44,6 +44,8 @@ canvas,
 svg {
   display: block;
   max-width: 100%;
+  /* Paired with max-width so aspect ratio is kept - next/image warns without it */
+  height: auto;
 }
 
 input,
