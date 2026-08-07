@@ -150,6 +150,11 @@ try {
       C_ACCENT_SOFT: roles.accentSoft.expr,
       T_LINE: roles.line.name,
       C_LINE: roles.line.expr,
+      // The brand accents ship with the default theme only - a custom palette
+      // makes its own seed the accent, so the note must not appear there.
+      BRAND_NOTE: config.palette
+        ? ""
+        : "\nThe default Larsen Utvikling theme additionally ships the brand\naccents `--brand-blue`, `--brand-blue-soft` and `--brand-blue-subtle`\n(used for links and highlights on larsenutvikling.no).",
     },
     themeCss,
   });

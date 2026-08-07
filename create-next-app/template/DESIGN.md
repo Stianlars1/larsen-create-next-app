@@ -44,9 +44,8 @@ The real theme.css tokens filling each UI role in this project
 | Borders and dividers | `{{T_LINE}}` | `{{C_LINE}}` |
 
 theme.css also ends with a small generated "document defaults" block (body,
-selection, hr) using exactly these tokens - and the default Larsen Utvikling
-theme additionally ships the brand accents `--brand-blue`,
-`--brand-blue-soft` and `--brand-blue-subtle`.
+selection, hr) using exactly these tokens.
+{{BRAND_NOTE}}
 
 ## Spacing - 8 steps, 4px base
 
