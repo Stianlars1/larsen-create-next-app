@@ -39,6 +39,82 @@ function check(ok, label) {
   if (!ok) failures.push(label);
 }
 
+/**
+ * Verifies the generated theme is actually usable in both modes:
+ * foreground text readable (WCAG AA 4.5), primary and ring distinguishable
+ * from the page surface (WCAG non-text 3.0), and button labels readable.
+ * Only meaningful for the hsl-values default theme.
+ *
+ * @param {string} css
+ * @returns {string[]} human-readable failures
+ */
+function checkThemeContrast(css) {
+  const block = (/** @type {string} */ from, /** @type {string} */ to) => {
+    const start = css.indexOf(from);
+    const segment = to === "" ? css.slice(start) : css.slice(start, css.indexOf(to));
+    /** @type {Record<string, string>} */
+    const tokens = {};
+    for (const m of segment.matchAll(/--([a-z0-9-]+):\s*([0-9.]+ [0-9.]+% [0-9.]+%)/g)) {
+      if (!(m[1] in tokens)) tokens[m[1]] = m[2];
+    }
+    return tokens;
+  };
+
+  // Relative luminance from an "H S% L%" triplet (WCAG 2.1 formula).
+  const luminance = (/** @type {string} */ triplet) => {
+    const [h, s, l] = triplet.split(" ").map(parseFloat);
+    const sN = s / 100;
+    const lN = l / 100;
+    const c = (1 - Math.abs(2 * lN - 1)) * sN;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = lN - c / 2;
+    const [r, g, b] = (
+      h < 60 ? [c, x, 0]
+      : h < 120 ? [x, c, 0]
+      : h < 180 ? [0, c, x]
+      : h < 240 ? [0, x, c]
+      : h < 300 ? [x, 0, c]
+      : [c, 0, x]
+    ).map((v) => {
+      const channel = v + m;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (/** @type {string} */ a, /** @type {string} */ b) => {
+    const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+
+  /** @type {string[]} */
+  const failures = [];
+  for (const [mode, tokens] of [
+    ["light", block(":root {", "@media")],
+    ["dark", block("@media", '[data-theme="light"]')],
+  ]) {
+    const t = /** @type {Record<string, string>} */ (tokens);
+    if (!t.background) {
+      failures.push(`${mode}: no tokens parsed`);
+      continue;
+    }
+    for (const [name, against, min] of [
+      ["foreground", "background", 4.5],
+      ["primary", "background", 3],
+      ["ring", "background", 3],
+      ["primary-foreground", "primary", 4.5],
+    ]) {
+      const value = t[/** @type {string} */ (name)];
+      const base = t[/** @type {string} */ (against)];
+      if (!value || !base) continue;
+      const r = ratio(value, base);
+      if (r < /** @type {number} */ (min)) {
+        failures.push(`${mode} --${name} vs --${against} = ${r.toFixed(2)} (needs ${min})`);
+      }
+    }
+  }
+  return failures;
+}
+
 /** @param {string} cmd @param {string[]} args @param {string} cwd */
 function runSync(cmd, args, cwd) {
   const result = spawnSync(cmd, args, {
@@ -112,6 +188,15 @@ try {
   check(theme.includes("body {"), "default theme has document defaults");
   check(theme.includes("--brand-blue:"), "default theme has brand accents");
   check(theme.includes("monochromatic"), "default theme is monochromatic");
+
+  // Regression guard: an extreme seed used to leave --primary and --ring at
+  // the seed color in both modes, so dark mode rendered near-black on
+  // near-black (about 1:1 contrast - invisible buttons and focus rings).
+  const contrastFailures = checkThemeContrast(theme);
+  check(
+    contrastFailures.length === 0,
+    `default theme contrast (${contrastFailures.join("; ") || "all pairs pass"})`,
+  );
 
   // No unsubstituted {{VARS}} in text files (JSX style={{...}} is fine)
   const placeholderHits = [];

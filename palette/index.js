@@ -15,9 +15,10 @@
  *      chosen preset/format combination - no invented alias tokens
  */
 
+import Color from "colorjs.io";
 import { generatePalette } from "./engine/generatePalette.js";
 import { generateExportCode } from "./engine/export-formats.js";
-import { isValidHex } from "./engine/color-utils.js";
+import { hexToHSL, hexToRGB, isValidHex } from "./engine/color-utils.js";
 
 /** CLI-facing names -> engine enums */
 export const PRESETS = /** @type {const} */ ({
@@ -38,16 +39,82 @@ export const FORMATS = /** @type {const} */ ({
 export const SCHEMES = ["analogous", "monochromatic", "complementary", "triadic"];
 
 /**
- * The baked-in default: monochromatic palette seeded with near-black, exactly
- * like larsenutvikling.no (light derived from #0A0A0A, dark inverted), with
+ * The baked-in default: monochromatic palette exactly like
+ * larsenutvikling.no - light derived from #0A0A0A, dark from #FAFAFA - with
  * the brand blue appended as a separate accent block by generate-default.mjs.
  */
 export const DEFAULT_THEME = /** @type {const} */ ({
   hex: "#0A0A0A",
+  darkHex: "#FAFAFA",
   preset: "shadcn",
   format: "hsl-values",
   scheme: "monochromatic",
 });
+
+/**
+ * The engine keeps --primary and --ring at the seed color in BOTH modes, so
+ * an extreme seed makes one mode unusable: a near-black seed yields a
+ * near-black primary on the near-black dark surface (about 1:1 contrast -
+ * invisible buttons and focus rings), and a near-white seed does the same to
+ * light mode. Past these thresholds each mode is generated from its own seed.
+ */
+const EXTREME_LIGHTNESS = { min: 15, max: 85 };
+
+/**
+ * Seeds for the light and dark blocks. Light mode needs a dark accent and
+ * dark mode needs a light one, so an extreme seed is paired with its
+ * lightness-inverted counterpart and each is assigned to the mode it works in.
+ *
+ * @param {string} hex - normalized seed
+ * @param {string} [explicitDark] - normalized dark seed chosen by the caller
+ * @returns {{ lightSeed: string, darkSeed: string | undefined }} darkSeed is
+ *   undefined when one run serves both modes
+ */
+export function seedsForModes(hex, explicitDark) {
+  if (explicitDark) {
+    const pair = [hex, explicitDark].sort((a, b) => hexToHSL(a).l - hexToHSL(b).l);
+    return { lightSeed: pair[0], darkSeed: pair[1] };
+  }
+  const { h, s, l } = hexToHSL(hex);
+  if (l >= EXTREME_LIGHTNESS.min && l <= EXTREME_LIGHTNESS.max) {
+    return { lightSeed: hex, darkSeed: undefined };
+  }
+  const counterpart = normalizeHex(
+    new Color("hsl", [h, s, 100 - l]).to("srgb").toString({ format: "hex" }),
+  );
+  return l < EXTREME_LIGHTNESS.min
+    ? { lightSeed: hex, darkSeed: counterpart }
+    : { lightSeed: counterpart, darkSeed: hex };
+}
+
+/**
+ * Formats a hex color the same way the engine formats palette values, so
+ * token overrides match the rest of the file.
+ * @param {string} hex
+ * @param {keyof typeof FORMATS} format
+ */
+function formatValue(hex, format) {
+  switch (format) {
+    case "hsl-values": {
+      const { h, s, l } = hexToHSL(hex);
+      return `${h} ${s}% ${l}%`;
+    }
+    case "hsl": {
+      const { h, s, l } = hexToHSL(hex);
+      return `hsl(${h}, ${s}%, ${l}%)`;
+    }
+    case "rgb": {
+      const { r, g, b } = hexToRGB(hex);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+    case "oklab":
+      return new Color(hex).to("oklab").toString({ precision: 4 });
+    case "oklch":
+      return new Color(hex).to("oklch").toString({ precision: 4 });
+    default:
+      return hex;
+  }
+}
 
 export { isValidHex };
 
@@ -126,18 +193,29 @@ export function tokenRoles(preset, format) {
 /**
  * @param {object} opts
  * @param {string} opts.hex - seed color, with or without leading '#'
+ * @param {string} [opts.darkHex] - separate seed for the dark block. Defaults
+ *   to an inverted counterpart when the seed is near-black or near-white
+ *   (see counterpartSeed); pass null-ish only if you truly want one run.
  * @param {keyof typeof PRESETS} [opts.preset]
  * @param {keyof typeof FORMATS} [opts.format]
  * @param {string} [opts.scheme]
+ * @param {Record<string, string>} [opts.overrides] - token -> hex color,
+ *   forced in both modes after generation (light gets the value, dark gets
+ *   its counterpart from darkOverrides)
+ * @param {Record<string, string>} [opts.darkOverrides] - token -> hex color
+ *   forced in the dark block
  * @param {string} [opts.append] - extra CSS appended verbatim at the end
  *   (used by generate-default.mjs for the brand accent block)
  * @returns {string} complete theme.css content
  */
 export function generateThemeCss({
   hex,
+  darkHex,
   preset = "shadcn",
   format = "hsl-values",
   scheme = "analogous",
+  overrides,
+  darkOverrides,
   append = "",
 }) {
   if (!isValidHex(hex)) {
@@ -154,16 +232,30 @@ export function generateThemeCss({
   }
 
   const seed = normalizeHex(hex);
-  const data = generatePalette({ hex: seed, scheme });
-  const raw = generateExportCode(data, { preset, format: FORMATS[format] });
-  const { light, dark } = extractBlocks(raw);
+  const { lightSeed, darkSeed } = seedsForModes(seed, darkHex ? normalizeHex(darkHex) : undefined);
   const roles = tokenRoles(preset, format);
+
+  const render = (/** @type {string} */ s) =>
+    extractBlocks(
+      generateExportCode(generatePalette({ hex: s, scheme }), {
+        preset,
+        format: FORMATS[format],
+      }),
+    );
+
+  // An extreme seed makes one mode unusable from a single run, so each mode
+  // is rendered from the seed that actually works in it.
+  let { light } = render(lightSeed);
+  let dark = darkSeed ? render(darkSeed).dark : render(lightSeed).dark;
+
+  light = applyOverrides(light, overrides, format);
+  dark = applyOverrides(dark, darkOverrides ?? overrides, format);
 
   return `/**
  * theme.css - color tokens
  *
  * Generated by @larsen-utvikling/create-next-app (rampkit engine).
- * Seed: ${seed} | preset: ${preset} | format: ${format} | scheme: ${scheme}
+ * Seed: ${seed}${darkSeed ? ` (light from ${lightSeed}, dark from ${darkSeed})` : ""} | preset: ${preset} | format: ${format} | scheme: ${scheme}
  *
  * Dark mode follows the OS automatically. Set data-theme="light" or
  * data-theme="dark" on <html> to override manually - no JS shipped.
@@ -203,6 +295,26 @@ hr {
   border-top-color: ${roles.line.expr};
 }
 ${append ? `\n${append.trim()}\n` : ""}`;
+}
+
+/**
+ * Replaces token values in a declaration block. Tokens not already present
+ * are appended, so overrides always take effect.
+ * @param {string} block
+ * @param {Record<string, string> | undefined} overrides - token -> hex color
+ * @param {keyof typeof FORMATS} format
+ */
+function applyOverrides(block, overrides, format) {
+  if (!overrides) return block;
+  let out = block;
+  for (const [token, hex] of Object.entries(overrides)) {
+    const value = formatValue(normalizeHex(hex), format);
+    const pattern = new RegExp(`(--${token}:)[^;]*;`);
+    out = pattern.test(out)
+      ? out.replace(pattern, `$1 ${value};`)
+      : `${out.trimEnd()}\n  --${token}: ${value};`;
+  }
+  return out;
 }
 
 /**

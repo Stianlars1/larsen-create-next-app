@@ -21,6 +21,9 @@ import { DEFAULT_THEME, SCHEMES, generateThemeCss } from "./index.js";
 
 const seed = process.argv[2] ?? DEFAULT_THEME.hex;
 const scheme = process.argv[3] ?? DEFAULT_THEME.scheme;
+// A custom seed gets the plain generated surface; only the brand default
+// pins the exact black/white pair.
+const custom = Boolean(process.argv[2]);
 if (!SCHEMES.includes(scheme)) {
   console.error(`Unknown scheme "${scheme}" (expected ${SCHEMES.join(" | ")})`);
   process.exit(1);
@@ -54,11 +57,23 @@ const BRAND_ACCENTS = `
 }
 `;
 
+/**
+ * larsenutvikling.no pins the page surface to the exact #FAFAFA / #0A0A0A
+ * pair rather than the generator's derived near-grays, so the brand reads as
+ * true black and white. Mirrored here.
+ */
+const BRAND_SURFACE = { background: "#FAFAFA", foreground: "#0A0A0A" };
+
 const css = generateThemeCss({
   hex: seed,
+  darkHex: custom ? undefined : DEFAULT_THEME.darkHex,
   preset: DEFAULT_THEME.preset,
   format: DEFAULT_THEME.format,
   scheme,
+  overrides: custom ? undefined : BRAND_SURFACE,
+  darkOverrides: custom
+    ? undefined
+    : { background: BRAND_SURFACE.foreground, foreground: BRAND_SURFACE.background },
   append: BRAND_ACCENTS,
 });
 
