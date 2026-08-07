@@ -37,9 +37,10 @@ src/
     page.tsx              Welcome page - replace it
   lib/design-system/
     index.css             Entry point
-    core.css              Spacing, widths, radii, motion, z-index
-    theme.css             Colors (light + dark) + app bridge tokens
-    base.css              Reset + document defaults
+    core.css              Spacing, widths, radii, type, z-index
+    theme.css             Colors (light + dark) + document defaults
+    motion.css            Durations, curves, reduced-motion contract
+    base.css              Reset
 public/larsen-utvikling/  Brand assets
 ```
 
@@ -54,6 +55,18 @@ agents), `NEXTJS.md` (Next.js agent guide).
 - [ ] Add project-specific rules to `AGENTS.md`
 - [ ] Create `.env.local` if the project needs environment variables
 - [ ] Add an Open Graph image (`src/app/opengraph-image.png`)
+
+## Agent skills
+
+The [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection
+covers UI craft, motion, accessibility and prototyping. Installed skills live
+in `.agents/skills/` and are symlinked into each agent's own directory.
+
+```bash
+npx skills add Stianlars1/larsen-skills   # add or change skills
+npx skills list                           # see what is installed
+npx skills update                         # update to the latest versions
+```
 
 ## Tech
 

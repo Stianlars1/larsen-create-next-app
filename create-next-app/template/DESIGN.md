@@ -68,14 +68,59 @@ selection, hr) using exactly these tokens.
 | `--width-content` | 48rem | Standard content column |
 | `--width-wide` | 80rem | Wide layouts |
 
-## Radius, motion, layering
+## Radius and layering
 
 - Radius: `--radius-sm` 4px, `--radius-md` 8px, `--radius-lg` 16px,
   `--radius-full` pill
-- Motion: `--duration-fast` 150ms, `--duration-base` 250ms,
-  `--duration-slow` 400ms, easings `--ease-out` and `--ease-in-out`
 - Z-index: `--z-dropdown` 100, `--z-sticky` 200, `--z-overlay` 300,
   `--z-modal` 400, `--z-toast` 500
+
+## Type
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--leading-heading` | 1.1 | Headings |
+| `--leading-body` | 1.5 | Body copy |
+| `--leading-tight` | 1.4 | Floor for anything wrapping to 3+ lines |
+| `--tracking-display` | -0.025em | Large display text |
+| `--tracking-label` | 0.05em | Small uppercase labels |
+| `--tracking-body` | 0 | Reading sizes |
+
+Leading is unitless so it scales with font size. Cap long-form measure at
+60-75 characters - that is what `--width-prose` (65ch) is for.
+
+## Motion
+
+From `motion.css`. UI motion stays under 300ms; entrances may be slower than
+their matching exit (a common pair is `--duration-enter` in, `--duration-fast`
+out).
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--duration-press` | 140ms | `:active` feedback |
+| `--duration-fast` | 160ms | Hover, color and opacity, exits |
+| `--duration-ui` | 200ms | Tooltips, dropdowns, menus |
+| `--duration-slow` | 240ms | Modals, drawers, sheets |
+| `--duration-enter` | 300ms | Entrances |
+| `--ease-out` | `cubic-bezier(0.23, 1, 0.32, 1)` | Entrances, exits, direct response |
+| `--ease-in-out` | `cubic-bezier(0.77, 0, 0.175, 1)` | Travel between on-screen poses |
+| `--ease-drawer` | `cubic-bezier(0.32, 0.72, 0, 1)` | Sheets and drawers |
+| `--ease-soft` | `cubic-bezier(0.2, 0, 0, 1)` | Cross-fades |
+| `--press-scale` | 0.97 | Press feedback on buttons and cards |
+| `--press-scale-subtle` | 0.985 | Press feedback on large surfaces |
+| `--enter-scale` | 0.96 | Entrance scale - never animate from `scale(0)` |
+| `--enter-distance` | 12px | Entrance `translateY` offset |
+| `--enter-blur` | 4px | Optional soft reveal, paired with distance |
+| `--stagger-item` | 50ms | Delay between peer items |
+| `--stagger-group` | 100ms | Delay between semantic chunks |
+
+Under `prefers-reduced-motion` the distance, scale and stagger tokens
+collapse to zero, so transitions keep running while movement stops - reduced
+means gentler, not absent. Purely decorative continuous animation should
+carry `data-motion="decorative"` so it can be switched off.
+
+These values follow the `motion-craft` skill from
+[Larsen Skills](https://github.com/Stianlars1/larsen-skills).
 
 ## Breakpoints (reference)
 

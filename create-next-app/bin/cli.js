@@ -20,6 +20,7 @@ import { promptConfig } from "../src/prompts.js";
 import { scaffold } from "../src/scaffold.js";
 import { overlay } from "../src/overlay.js";
 import { run } from "../src/run.js";
+import { SKILLS_REPO, installSkills } from "../src/skills.js";
 import {
   DEFAULT_THEME,
   generateThemeCss,
@@ -42,6 +43,8 @@ const { values: flags, positionals } = parseArgs({
     scheme: { type: "string" },
     pm: { type: "string" },
     linter: { type: "string" },
+    skills: { type: "string" },
+    "no-skills": { type: "boolean", default: false },
     git: { type: "boolean" },
     "no-git": { type: "boolean", default: false },
     install: { type: "boolean" },
@@ -72,6 +75,8 @@ Options:
   --scheme <name>       Color scheme: analogous | monochromatic | complementary | triadic
   --pm <name>           Package manager: npm | pnpm | yarn | bun
   --linter <name>       Linter: eslint | biome | none
+  --skills <list>       Larsen Skills: recommended | all | comma-separated names
+  --no-skills           Skip the Larsen Skills install
   --no-git              Skip git init
   --no-install          Skip dependency install
   --cna-version <spec>  Pin create-next-app version (default: latest)
@@ -113,8 +118,26 @@ try {
   );
   spinner.stop("Next.js scaffolded (newest stable)");
 
-  // Palette + overlay
+  // Larsen Skills - installed before the overlay so the docs it writes list
+  // the skills that actually landed, not the ones that were requested.
   phase = "overlay";
+  /** @type {string[]} */
+  let installedSkills = [];
+  if (config.skills.length > 0) {
+    const skillsSpinner = p.spinner();
+    skillsSpinner.start(`Installing ${config.skills.length} Larsen Skills`);
+    try {
+      installedSkills = await installSkills(config.skills, { cwd: appDir });
+      skillsSpinner.stop(`${installedSkills.length} skills installed into .agents/skills/`);
+    } catch {
+      skillsSpinner.stop("Skills install failed", 1);
+      p.log.warn(
+        `Run "npx skills add ${SKILLS_REPO}" inside ${config.name} to install them manually.`,
+      );
+    }
+  }
+
+  // Palette + overlay
   const paletteMeta = config.palette ?? DEFAULT_THEME;
   const idioms = usageIdioms(/** @type {any} */ (paletteMeta.format));
   const roles = tokenRoles(
@@ -155,6 +178,10 @@ try {
       BRAND_NOTE: config.palette
         ? ""
         : "\nThe default Larsen Utvikling theme additionally ships the brand\naccents `--brand-blue`, `--brand-blue-soft` and `--brand-blue-subtle`\n(used for links and highlights on larsenutvikling.no).",
+      SKILLS_NOTE:
+        installedSkills.length > 0
+          ? `\n## Installed skills\n\nLarsen Skills live in \`.agents/skills/\`, symlinked into each agent's own\ndirectory. Use them when the work matches:\n\n${installedSkills.map((s) => `- \`${s}\``).join("\n")}\n\nUpdate them with \`npx skills update\`, add more with\n\`npx skills add ${SKILLS_REPO}\`.`
+          : `\n## Skills\n\nNo agent skills are installed. The Larsen Skills collection covers UI\ncraft, motion and accessibility - add it with\n\`npx skills add ${SKILLS_REPO}\`.`,
     },
     themeCss,
   });

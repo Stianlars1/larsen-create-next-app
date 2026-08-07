@@ -9,6 +9,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
 import { FORMATS, PRESETS, SCHEMES, isValidHex } from "../palette/index.js";
+import { ALL_SKILLS, RECOMMENDED_SKILLS, SKILLS } from "./skills.js";
 
 const NAME_RE = /^[a-z0-9][a-z0-9._-]*$/;
 
@@ -193,6 +194,9 @@ export async function promptConfig(flags, positionalName, cwd) {
     }
   }
 
+  // Larsen Skills - agent skills for UI, motion and accessibility work
+  let skills = await resolveSkills(flags, useDefaults);
+
   // Git + install
   let git = flags["no-git"] ? false : flags.git;
   if (git === undefined) {
@@ -219,10 +223,70 @@ export async function promptConfig(flags, positionalName, cwd) {
   return {
     name,
     palette,
+    skills,
     linter: /** @type {"eslint" | "biome" | "none"} */ (linter),
     pm,
     git,
     install,
     cnaVersion: flags["cna-version"] ?? "latest",
   };
+}
+
+/**
+ * Resolves which Larsen Skills to install.
+ *
+ * --skills accepts "recommended", "all", or a comma-separated list of names;
+ * --no-skills and --defaults skip the install entirely.
+ *
+ * @param {Record<string, any>} flags
+ * @param {boolean} useDefaults
+ * @returns {Promise<string[]>} skill names, empty when nothing is installed
+ */
+async function resolveSkills(flags, useDefaults) {
+  if (flags["no-skills"]) return [];
+
+  if (flags.skills) {
+    const raw = String(flags.skills).trim();
+    if (raw === "recommended") return RECOMMENDED_SKILLS;
+    if (raw === "all") return ALL_SKILLS;
+    const requested = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = requested.filter((s) => !ALL_SKILLS.includes(s));
+    if (unknown.length > 0) {
+      p.cancel(`Unknown skill(s): ${unknown.join(", ")}\nAvailable: ${ALL_SKILLS.join(", ")}`);
+      process.exit(1);
+    }
+    return requested;
+  }
+
+  // Opt-in only: an unattended run installs nothing.
+  if (useDefaults) return [];
+
+  const wants = await p.confirm({
+    message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
+    initialValue: true,
+  });
+  handleCancel(/** @type {never} */ (wants));
+  if (!wants) return [];
+
+  const choice = await p.select({
+    message: "Which skills?",
+    options: [
+      { value: "recommended", label: "Recommended", hint: RECOMMENDED_SKILLS.join(", ") },
+      { value: "all", label: "All", hint: `${ALL_SKILLS.length} skills` },
+      { value: "pick", label: "Let me pick" },
+    ],
+  });
+  handleCancel(/** @type {never} */ (choice));
+
+  if (choice === "recommended") return RECOMMENDED_SKILLS;
+  if (choice === "all") return ALL_SKILLS;
+
+  const picked = await p.multiselect({
+    message: "Select skills (space to toggle, enter to confirm)",
+    options: SKILLS.map((s) => ({ value: s.name, label: s.label, hint: s.hint })),
+    initialValues: RECOMMENDED_SKILLS,
+    required: false,
+  });
+  handleCancel(/** @type {never} */ (picked));
+  return /** @type {string[]} */ (picked);
 }

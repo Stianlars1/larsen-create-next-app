@@ -47,7 +47,7 @@
 
 h1 {
   font-size: 2.25rem;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-display);
   margin-bottom: var(--space-3);
 }
 
@@ -99,7 +99,7 @@ code {
   height: var(--space-2);
   background: {{C_ACCENT_SOLID}};
   border-radius: var(--radius-full);
-  transition: width var(--duration-base) var(--ease-out);
+  transition: width var(--duration-ui) var(--ease-out);
 }
 
 .swatches {
@@ -158,9 +158,18 @@ code {
   gap: var(--space-2);
   text-decoration: none;
   opacity: 0.75;
-  transition: opacity var(--duration-fast) var(--ease-out);
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    scale var(--duration-press) var(--ease-out);
 }
 
-.footer-link:hover {
-  opacity: 1;
+/* Hover motion is gated - touch devices fire hover on tap */
+@media (hover: hover) and (pointer: fine) {
+  .footer-link:hover {
+    opacity: 1;
+  }
+}
+
+.footer-link:active {
+  scale: var(--press-scale);
 }

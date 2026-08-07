@@ -160,7 +160,7 @@ try {
   // Run 1: defaults (baked-in theme)
   const run1 = runSync(
     cliCmd[0],
-    [...cliCmd.slice(1), "app-default", "--defaults", "--pm", "npm", "--no-git", "--no-install"],
+    [...cliCmd.slice(1), "app-default", "--defaults", "--pm", "npm", "--no-git", "--no-install", "--no-skills"],
     work,
   );
   check(run1.ok, "scaffold with --defaults exits 0");
@@ -169,9 +169,17 @@ try {
   const app = join(work, "app-default");
   const ds = join(app, "src", "lib", "design-system");
 
-  for (const file of ["index.css", "core.css", "theme.css", "base.css"]) {
+  for (const file of ["index.css", "core.css", "theme.css", "motion.css", "base.css"]) {
     check(existsSync(join(ds, file)), `design-system/${file} exists`);
   }
+  const indexCss = readFileSync(join(ds, "index.css"), "utf8");
+  check(indexCss.includes("./motion.css"), "index.css imports motion.css");
+  const motion = readFileSync(join(ds, "motion.css"), "utf8");
+  check(motion.includes("--ease-drawer"), "motion.css has the easing set");
+  check(
+    motion.includes("prefers-reduced-motion") && motion.includes("--enter-distance: 0px"),
+    "motion.css collapses movement under reduced motion",
+  );
   for (const file of ["AGENTS.md", "CLAUDE.md", "DESIGN.md", "README.md", "NEXTJS.md"]) {
     check(existsSync(join(app, file)), `${file} exists`);
   }
@@ -240,10 +248,19 @@ try {
       "--pm", "npm",
       "--no-git",
       "--no-install",
+      "--skills", "motion-craft",
     ],
     work,
   );
   check(run2.ok, "scaffold with custom palette exits 0");
+  const skillDir = join(work, "app-custom", ".agents", "skills", "motion-craft");
+  check(existsSync(join(skillDir, "SKILL.md")), "requested skill installed into .agents/skills/");
+  const customAgents = readFileSync(join(work, "app-custom", "AGENTS.md"), "utf8");
+  check(customAgents.includes("`motion-craft`"), "AGENTS.md lists the installed skill");
+  check(
+    !readFileSync(join(app, "AGENTS.md"), "utf8").includes("Installed skills"),
+    "AGENTS.md omits the skills section when none are installed",
+  );
   const customTheme = readFileSync(
     join(work, "app-custom", "src", "lib", "design-system", "theme.css"),
     "utf8",

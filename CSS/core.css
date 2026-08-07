@@ -31,12 +31,15 @@
   /* Border */
   --border-width: 1px;
 
-  /* Motion */
-  --duration-fast: 150ms;
-  --duration-base: 250ms;
-  --duration-slow: 400ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Type - unitless leading so it scales with font size */
+  --leading-heading: 1.1;
+  --leading-body: 1.5;
+  --leading-tight: 1.4; /* floor for anything wrapping to 3+ lines */
+  --tracking-display: -0.025em; /* large text reads too loose as it grows */
+  --tracking-label: 0.05em; /* small uppercase labels */
+  --tracking-body: 0;
+
+  /* Motion tokens live in motion.css */
 
   /* Layering */
   --z-dropdown: 100;
