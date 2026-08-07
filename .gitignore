@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+*.tgz
+*.log
+
+# Synced copies - masters live at repo root (CSS/ and palette/), never edit these
+create-next-app/palette/
+create-next-app/template/src/lib/design-system/

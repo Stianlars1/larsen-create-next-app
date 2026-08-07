@@ -1,0 +1,15 @@
+{
+  "name": "larsen-utvikling-templates",
+  "private": true,
+  "description": "Repo tooling for the Larsen Utvikling template masters (CSS/ and palette/). The publishable npm package lives in create-next-app/.",
+  "type": "module",
+  "scripts": {
+    "gen:theme": "node palette/generate-default.mjs",
+    "sync": "node create-next-app/scripts/sync.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/colors": "3.0.0",
+    "bezier-easing": "2.1.0",
+    "colorjs.io": "0.5.2"
+  }
+}
