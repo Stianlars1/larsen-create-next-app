@@ -26,7 +26,7 @@ A reusable Next.js base app, installable as `npx @larsen-utvikling/create-next-a
 | Spacing | 8 steps, 4px base: 4, 8, 12, 16, 24, 32, 48, 64 |
 | Dark mode | `prefers-color-scheme` auto + `[data-theme]` override, no JS |
 | Palette architecture | The user's preset/format choice defines the app's token baseline |
-| Default palette | Monochromatic from `#0A0A0A` (mirrors larsenutvikling.no) + brand accents `--brand-blue` `212 100% 65%`, `-soft`, `-subtle` (subtle flips in dark) |
+| Default palette | Monochromatic from the brand blue `#4DA0FF` (`hsl(212 100% 65%)`), with `--background`/`--foreground`/`--ring` pinned to the exact `#FAFAFA`/`#0A0A0A` pair, plus the `--brand-blue-soft`/`-subtle` tints from larsenutvikling.no |
 | Language | Everything in repos and generated apps is English; Norwegian is chat-only |
 | Style rules | Never Tailwind; only "-" as dash (never em/en-dash); agents clarify interactively |
 
