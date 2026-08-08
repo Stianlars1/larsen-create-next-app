@@ -55,6 +55,14 @@ npx @larsen-utvikling/create-next-app my-app --hex 22C55E --pm pnpm --skills rec
 
 Full flag reference: [create-next-app/README.md](create-next-app/README.md).
 
+## Documentation
+
+| File | What it covers |
+| --- | --- |
+| [PROJECT.md](PROJECT.md) | **The full reference.** Every prompt, flag, token and file, the architecture, and the reasoning behind each decision |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
+| [AGENTS.md](AGENTS.md) | Rules for agents and contributors working on this package |
+
 ## Repository layout
 
 This repo holds the published package and the masters it is built from.
