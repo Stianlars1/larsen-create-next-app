@@ -13,6 +13,15 @@
   ],
   "license": "MIT",
   "author": "Stian Larsen <stian.larsen@mac.com> (https://www.larsenutvikling.no)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Stianlars1/larsen-create-next-app.git",
+    "directory": "create-next-app"
+  },
+  "homepage": "https://github.com/Stianlars1/larsen-create-next-app#readme",
+  "bugs": {
+    "url": "https://github.com/Stianlars1/larsen-create-next-app/issues"
+  },
   "type": "module",
   "bin": {
     "create-next-app": "bin/cli.js"
