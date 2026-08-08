@@ -8,9 +8,7 @@ a generated project contains counts as user-facing.
 
 ---
 
-## [0.2.2] - unreleased
-
-Committed and tagged locally, **not yet published to npm**.
+## [0.2.2] - 2026-08-08
 
 ### Added
 - `repository`, `homepage` and `bugs` fields in `package.json`, so the npm page

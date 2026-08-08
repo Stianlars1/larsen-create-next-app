@@ -374,11 +374,22 @@ If publish fails with **E404 on PUT**, the auth token has expired. npm hides
 
 | | |
 | --- | --- |
-| Published | 0.1.0, 0.1.1, 0.2.0, 0.2.1 |
-| Local | **0.2.2 - committed but NOT published** |
-| Pending | 0.2.2 adds `repository`, `homepage` and `bugs` to package.json, so the npm page shows source and issue links. Publishing it is an open action. |
+| Published | 0.1.0, 0.1.1, 0.2.0, 0.2.1, **0.2.2 (current)** |
 | Landing page | Built and pushed; domain not yet attached in Vercel, DNS CNAME not yet created |
 | Blog posts | Written in `docs/blog/` in the site repo, Norwegian and English, not yet published |
+
+### Known issues, not yet fixed
+
+- **`radix` and `css-variables` produce identical output.** Verified: both
+  emit the same 50 token names. Upstream rampkit's `generateRadixCSS` is
+  `return generateCSSVariables(data, format)` - a no-op alias - and the
+  vendored engine inherits it. The CLI therefore offers a choice that changes
+  nothing, which misleads anyone picking "Radix Colors".
+  Note that `--accent-1..12` **is** correct Radix naming (Radix ships
+  `blue1`…`blue12`); the 50-950 convention is Tailwind's, not Radix's. What a
+  real Radix preset is missing is `--accent-surface`, `--accent-contrast` and
+  the P3 wide-gamut variants - all of which the engine already computes on
+  every call and no preset emits.
 
 See `CHANGELOG.md` for what changed in each version.
 
