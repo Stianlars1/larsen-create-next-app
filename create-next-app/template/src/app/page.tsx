@@ -90,8 +90,10 @@ export default function Home() {
               to replace
             </li>
             <li>
-              Tokens live in <code>src/lib/design-system/</code> - spacing and
-              widths in <code>core.css</code>, colors in <code>theme.css</code>
+              Tokens live in <code>src/lib/design-system/</code> - spacing,
+              widths and type in <code>core.css</code>, colors in{" "}
+              <code>theme.css</code>, durations and curves in{" "}
+              <code>motion.css</code>
             </li>
             <li>
               Read <code>DESIGN.md</code> for the token reference and{" "}

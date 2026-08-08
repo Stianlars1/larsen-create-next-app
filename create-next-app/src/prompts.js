@@ -22,6 +22,23 @@ function handleCancel(value) {
 }
 
 /**
+ * Guards a prompt that is about to run. Without a TTY - CI, a piped stdin -
+ * the prompt would block and then die on Node's unsettled-await warning, so
+ * fail immediately with the flag that answers the question instead.
+ *
+ * @param {string} question - what is being asked
+ * @param {string} flag - the flag that supplies the answer
+ */
+function requireInteractive(question, flag) {
+  if (process.stdin.isTTY) return;
+  p.cancel(
+    `Cannot prompt for ${question} without a terminal.\n` +
+      `Pass ${flag}, or use --defaults to accept every default.`,
+  );
+  process.exit(1);
+}
+
+/**
  * @param {string} name
  * @param {string} cwd
  * @returns {string | undefined} error message, or undefined when valid
@@ -64,6 +81,7 @@ export async function promptConfig(flags, positionalName, cwd) {
       process.exit(1);
     }
   } else {
+    requireInteractive("the app name", "the name as an argument");
     const answer = await p.text({
       message: "What is your app named?",
       placeholder: "my-app",
@@ -94,6 +112,7 @@ export async function promptConfig(flags, positionalName, cwd) {
       scheme,
     };
   } else if (!useDefaults) {
+    requireInteractive("the palette choice", "--hex <color>");
     const wantsCustom = await p.confirm({
       message: "Generate a custom 12-step palette from a single HEX?",
       initialValue: false,
@@ -101,6 +120,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     handleCancel(/** @type {never} */ (wantsCustom));
 
     if (wantsCustom) {
+      requireInteractive("a palette seed", "--hex <color>");
       const hex = await p.text({
         message: "Enter your HEX color",
         placeholder: "#4DA0FF",
@@ -157,6 +177,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     if (useDefaults) {
       linter = "eslint";
     } else {
+      requireInteractive("the linter", "--linter <name>");
       const answer = await p.select({
         message: "Which linter?",
         options: [
@@ -180,6 +201,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     if (useDefaults) {
       pm = "npm";
     } else {
+      requireInteractive("the package manager", "--pm <name>");
       const answer = await p.select({
         message: "Which package manager?",
         options: [
@@ -203,6 +225,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     if (useDefaults) {
       git = true;
     } else {
+      requireInteractive("git init", "--no-git");
       const answer = await p.confirm({ message: "Initialize a git repository?", initialValue: true });
       handleCancel(/** @type {never} */ (answer));
       git = Boolean(answer);
@@ -214,6 +237,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     if (useDefaults) {
       install = true;
     } else {
+      requireInteractive("the dependency install", "--no-install");
       const answer = await p.confirm({ message: "Install dependencies?", initialValue: true });
       handleCancel(/** @type {never} */ (answer));
       install = Boolean(answer);
@@ -261,6 +285,7 @@ async function resolveSkills(flags, useDefaults) {
   // Opt-in only: an unattended run installs nothing.
   if (useDefaults) return [];
 
+  requireInteractive("the skills choice", "--skills <list> or --no-skills");
   const wants = await p.confirm({
     message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
     initialValue: true,

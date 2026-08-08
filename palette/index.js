@@ -155,9 +155,11 @@ const ROLE_TOKENS = {
     accentSoft: "accent-3",
     line: "border",
   },
+  // The scale presets emit --background and --foreground too, but no --muted
+  // or --border, so those two roles fall back to the gray scale.
   radix: {
-    background: "gray-1",
-    foreground: "gray-12",
+    background: "background",
+    foreground: "foreground",
     muted: "gray-2",
     accentSolid: "accent-9",
     accentSoft: "accent-3",
