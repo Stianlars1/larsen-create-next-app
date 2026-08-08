@@ -1,6 +1,6 @@
 {
   "name": "@larsen-utvikling/create-next-app",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Scaffold the newest Next.js with the Larsen Utvikling design system: vanilla CSS design tokens, agent docs (AGENTS.md), and an optional 12-step color palette generated from a single HEX.",
   "keywords": [
     "create-next-app",
