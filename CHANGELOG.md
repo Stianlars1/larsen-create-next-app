@@ -89,8 +89,8 @@ a generated project contains counts as user-facing.
   curves in one file, press and entrance scales, and stagger delays.
 - **Type tokens** in `core.css`: unitless leading and size-specific tracking.
 - **Optional Larsen Skills install.** A prompt offers the recommended set, all
-  nine, or a multi-select. Skills land in `.agents/skills/` with symlinks into
-  each agent's own directory. Off by default on `--defaults`.
+  nine, or a multi-select. The wrapper verifies requested
+  `.agents/skills/<name>/SKILL.md` files. Off by default on `--defaults`.
 - `AGENTS.md` in generated projects now lists exactly the skills that were
   installed - skills are installed before the overlay so the docs cannot claim
   something that failed.
@@ -144,8 +144,8 @@ a generated project contains counts as user-facing.
 First release.
 
 ### Added
-- Scaffolds the newest stable Next.js by running `create-next-app@latest`
-  non-interactively, then overlaying the template. TypeScript, App Router,
+- Requests the mutable `create-next-app@latest` npm dist-tag
+  non-interactively, then overlays the template. TypeScript, App Router,
   `src/` directory, `@/*` import alias, and never Tailwind.
 - A vanilla CSS design system in `src/lib/design-system/`: spacing on a 4px
   base, widths, radii, layering, a generated colour theme for both modes, and a

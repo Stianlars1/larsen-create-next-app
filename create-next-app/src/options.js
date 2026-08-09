@@ -311,14 +311,10 @@ export function renderMarkdownOptionTable() {
 
 /** @param {string} spec */
 export function nextJsClaim(spec) {
-  return spec === "latest"
-    ? "newest stable Next.js"
-    : `Next.js generated with create-next-app@${spec}`;
+  return `the wrapper requested create-next-app@${spec}`;
 }
 
 /** @param {string} spec */
 export function scaffoldCompleteMessage(spec) {
-  return spec === "latest"
-    ? "Next.js scaffolded (newest stable)"
-    : `Next.js scaffolded (create-next-app@${spec})`;
+  return `Next.js scaffolded - requested create-next-app@${spec}`;
 }

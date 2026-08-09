@@ -1,13 +1,13 @@
 # @larsen-utvikling/create-next-app
 
-Scaffold the **newest stable Next.js** (App Router, TypeScript) with the Larsen Utvikling design system baked in: vanilla CSS design tokens, agent docs, and an optional 12-step color palette generated from a single HEX.
+Request create-next-app's mutable `latest` npm dist-tag, then add the Larsen Utvikling design system: vanilla CSS design tokens, agent docs, and an optional 12-step color palette generated from a single HEX.
 
 No Tailwind. No CSS framework. Just tokens.
 
 ## Usage
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app
+npx --yes @larsen-utvikling/create-next-app my-app
 ```
 
 or via the `create` alias:
@@ -16,13 +16,13 @@ or via the `create` alias:
 npm create @larsen-utvikling/next-app my-app
 ```
 
-The CLI fetches the latest stable `create-next-app` by default, so the normal
-path starts on the newest Next.js. Use `--cna-version <spec>` as an explicit
-escape hatch when the upstream latest release breaks.
+The CLI requests `create-next-app@latest` by default. `latest` is a mutable npm
+dist-tag, so this does not pin or guarantee the version npm resolves or its
+stability. Use `--cna-version <spec>` to request an explicit upstream spec.
 
 ## What you get
 
-- Newest Next.js, App Router, TypeScript, `src/` directory
+- Next.js requested through the selected create-next-app spec, with App Router, TypeScript, and `src/` directory
 - Vanilla CSS design system at `src/lib/design-system/`:
   - `core.css` - spacing scale (8 steps, 4px base), max-widths, radii, type, z-index
   - `theme.css` - full light/dark color theme (auto via `prefers-color-scheme`, manual override via `[data-theme]`, zero JS)
@@ -32,7 +32,7 @@ escape hatch when the upstream latest release breaks.
 - Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), and `DESIGN.md` (token documentation). `NEXTJS.md` preserves upstream guidance only when create-next-app supplies `AGENTS.md`
 - A welcome page demonstrating the tokens
 - Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine
-- Optional **agent skills**: install the [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection (UI craft, motion, accessibility, prototyping) into the project, where every agent picks them up
+- Optional **agent skills**: request entries from the [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection. The wrapper verifies only `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
 
@@ -48,11 +48,14 @@ for prompt conditions, interactions, invalid pairs, and CI behavior.
 Every prompt has a flag - useful for scripts and CI:
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app --defaults --pm npm
+PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" \
+  my-app --defaults --pm npm
 ```
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app \
+PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
   --hex 4DA6FF --preset shadcn --format hsl-values \
   --scheme analogous --linter eslint --pm pnpm --no-skills \
   --no-git --no-install

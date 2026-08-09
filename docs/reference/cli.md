@@ -46,10 +46,9 @@ The prompt order and its flag bypasses are:
      and can be changed only with `--scheme` together with `--hex`.
 3. Linter - answered by `--linter`, or by its default under `--defaults`.
 4. Package manager - answered by `--pm`, or by its default under `--defaults`.
-5. Larsen Skills - `--skills` selects `recommended`, `all`, or a comma-separated
-   list; `--no-skills` skips installation. Without either, an interactive run
-   asks whether to install skills and then which set. `--defaults` installs no
-   skills.
+5. Larsen Skills - `--skills` answers the branch directly and `--no-skills`
+   skips installation. Without either, the interactive branch follows the
+   generated skills prompt reference below. `--defaults` installs no skills.
 6. Git initialization - `--git` or `--no-git`; the interactive and
    `--defaults` answer is Yes.
 7. Dependency installation - `--install` or `--no-install`; the interactive
@@ -83,14 +82,38 @@ prompt or scaffold operation.
 | `-h, --help` | Show this help |
 <!-- END GENERATED CLI REFERENCE -->
 
+## Skills prompt reference
+
+This block is generated from the same contract used by `src/prompts.js` and
+the same skill records used by `src/skills.js`.
+
+<!-- BEGIN GENERATED SKILLS PROMPT REFERENCE -->
+Confirmation: `Install Larsen Skills for AI agents (UI, motion, accessibility)?`
+Interactive default: Yes. A No answer installs nothing.
+
+A Yes answer opens `Which skills?` with these choices:
+
+- `Recommended` (`recommended`) - motion-craft, interface-craft, interface-review, ui-primitive-picker
+- `All` (`all`) - 9 skills
+- `Let me pick` (`pick`)
+
+The initial choice is `recommended`. `Let me pick` conditionally opens the multiselect:
+
+- Prompt: `Select skills (space to toggle, enter to confirm)`
+- Recommended initial selection: `motion-craft`, `interface-craft`, `interface-review`, `ui-primitive-picker`
+- The multiselect is optional; an empty selection is allowed.
+
+Valid comma-separated names for `--skills`: `motion-craft`, `interface-craft`, `interface-review`, `ui-primitive-picker`, `motion-vocabulary`, `liquid-interface`, `prototype-lab`, `reverse-engineer-motion`, `animated-logo-cycle`.
+<!-- END GENERATED SKILLS PROMPT REFERENCE -->
+
 Additional behavior that is intentionally explicit:
 
 - `--hex` accepts three- or six-digit HEX with or without `#`, then normalizes
   the value before generation.
 - `--cna-version` is appended to `create-next-app@<spec>` without resolving or
   rewriting the npm spec. The progress and generated-project claims name a
-  non-`latest` spec exactly as supplied. Only `latest` is described as the
-  newest stable release.
+  spec exactly as supplied. `latest` is documented only as the mutable npm
+  dist-tag that was requested, not a version or stability guarantee.
 - Linter choices map directly to upstream `--eslint`, `--biome`, and
   `--no-linter` flags.
 - The selected package manager is used only for dependency installation and
@@ -123,21 +146,27 @@ choices.
 Default unattended scaffold:
 
 ```bash
-npx --yes @larsen-utvikling/create-next-app@0.2.2 ci-app \
+PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --defaults --no-git --no-install
 ```
 
 Fully explicit custom scaffold:
 
 ```bash
-npx --yes @larsen-utvikling/create-next-app@0.2.2 ci-app \
+PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --hex 4DA0FF --preset shadcn --format hsl-values --scheme analogous \
   --linter eslint --pm npm --no-skills --no-git --no-install
 ```
 
-Both examples require network access for the package and the selected
-create-next-app spec. The test suite exercises the same argument sets with
-controlled local command doubles and closed stdin.
+Both examples pin the published wrapper version instead of relying on its
+mutable latest tag. Version 0.2.2 is used because it is registry-verified in
+`docs/verification/releases.md`; replace it with another exact published
+version only after reviewing that version. Both examples require network
+access for the package and selected create-next-app spec. The test suite
+exercises the same argument sets with controlled local command doubles and
+closed stdin.
 
 ## Upstream scaffold boundary
 

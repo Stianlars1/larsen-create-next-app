@@ -60,8 +60,9 @@ create-next-app.
 ## Agent skills
 
 The [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection
-covers UI craft, motion, accessibility and prototyping. Installed skills live
-in `.agents/skills/` and are symlinked into each agent's own directory.
+covers UI craft, motion, accessibility and prototyping. The wrapper verifies
+only each requested `.agents/skills/<name>/SKILL.md` file. It does not verify
+agent-specific discovery or symlinks.
 
 ```bash
 npx skills add Stianlars1/larsen-skills   # add or change skills

@@ -113,13 +113,30 @@ test("closed stdin accepts explicit default palette, git, and install answers", 
   ]);
   try {
     assert.equal(run.status, 0, run.output);
-    assert.match(run.output, /Next\.js scaffolded \(create-next-app@14\.2\.0\)/);
+    assert.match(run.output, /Next\.js scaffolded - requested create-next-app@14\.2\.0/);
     const readme = readFileSync(join(run.root, "app-positive", "README.md"), "utf8");
     const page = readFileSync(join(run.root, "app-positive", "src", "app", "page.tsx"), "utf8");
     assert.match(readme, /create-next-app@14\.2\.0/);
     assert.doesNotMatch(readme, /newest stable/);
     assert.match(page, /create-next-app@14\.2\.0/);
     assert.doesNotMatch(page, /newest stable/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("latest wording states only that the mutable dist-tag was requested", () => {
+  const run = runCli(["app-latest", "--defaults", "--no-git", "--no-install"]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    assert.match(run.output, /requested create-next-app@latest/);
+    assert.doesNotMatch(run.output, /newest|stable/i);
+    const readme = readFileSync(join(run.root, "app-latest", "README.md"), "utf8");
+    const page = readFileSync(join(run.root, "app-latest", "src", "app", "page.tsx"), "utf8");
+    for (const generated of [readme, page]) {
+      assert.match(generated, /create-next-app@latest/);
+      assert.doesNotMatch(generated, /newest|stable/i);
+    }
   } finally {
     run.cleanup();
   }
@@ -233,14 +250,13 @@ test("AGENTS.md documents exactly the skills that landed", () => {
       agents.slice(agents.indexOf("## Installed skills")).trimEnd(),
       `## Installed skills
 
-Larsen Skills live in \`.agents/skills/\`, symlinked into each agent's own
-directory. Use them when the work matches:
+The wrapper verified these files on disk:
 
-- \`motion-craft\`
-- \`interface-craft\`
+- \`.agents/skills/motion-craft/SKILL.md\`
+- \`.agents/skills/interface-craft/SKILL.md\`
 
-Update them with \`npx skills update\`, add more with
-\`npx skills add Stianlars1/larsen-skills\`.`,
+This verifies only the listed files, not agent-specific discovery or symlinks.
+Add more with \`npx skills add Stianlars1/larsen-skills\`.`,
     );
   } finally {
     run.cleanup();

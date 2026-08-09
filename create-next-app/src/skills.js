@@ -4,10 +4,10 @@
  * Optional install of the Larsen Skills collection into the scaffolded
  * project: https://github.com/Stianlars1/larsen-skills
  *
- * Uses the open `skills` installer, which writes to the universal
- * .agents/skills/ directory and symlinks the agent-specific ones, so a
- * single install covers Claude Code, Codex, Cursor, Copilot, Gemini CLI and
- * the rest. Nothing is installed unless the user asks for it.
+ * Uses the open `skills` installer. This wrapper verifies only the requested
+ * .agents/skills/<name>/SKILL.md files. It makes no claim about
+ * agent-specific discovery or symlinks. Nothing is installed unless the user
+ * asks for it.
  */
 
 import { existsSync } from "node:fs";

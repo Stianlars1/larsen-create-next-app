@@ -49,13 +49,12 @@ craft, motion and accessibility - add it with
 
 const MOTION_SKILL_SECTION = `## Installed skills
 
-Larsen Skills live in \`.agents/skills/\`, symlinked into each agent's own
-directory. Use them when the work matches:
+The wrapper verified these files on disk:
 
-- \`motion-craft\`
+- \`.agents/skills/motion-craft/SKILL.md\`
 
-Update them with \`npx skills update\`, add more with
-\`npx skills add Stianlars1/larsen-skills\`.`;
+This verifies only the listed files, not agent-specific discovery or symlinks.
+Add more with \`npx skills add Stianlars1/larsen-skills\`.`;
 
 /** @type {string[]} */
 const failures = [];

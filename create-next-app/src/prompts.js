@@ -17,6 +17,41 @@ import {
 } from "./options.js";
 import { ALL_SKILLS, RECOMMENDED_SKILLS, SKILLS } from "./skills.js";
 
+/**
+ * Canonical interactive skills branch. Runtime prompts and generated
+ * maintainer documentation consume the same messages, choices, defaults, and
+ * multiselect contract.
+ */
+export const SKILLS_PROMPT_CONTRACT = Object.freeze({
+  confirmation: Object.freeze({
+    message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
+    initialValue: optionPromptDefault("skills") !== undefined,
+  }),
+  selection: Object.freeze({
+    message: "Which skills?",
+    options: Object.freeze([
+      Object.freeze({
+        value: "recommended",
+        label: "Recommended",
+        hint: RECOMMENDED_SKILLS.join(", "),
+      }),
+      Object.freeze({ value: "all", label: "All", hint: `${ALL_SKILLS.length} skills` }),
+      Object.freeze({ value: "pick", label: "Let me pick" }),
+    ]),
+    initialValue: optionPromptDefault("skills"),
+  }),
+  picker: Object.freeze({
+    message: "Select skills (space to toggle, enter to confirm)",
+    options: Object.freeze(
+      SKILLS.map((skill) =>
+        Object.freeze({ value: skill.name, label: skill.label, hint: skill.hint }),
+      ),
+    ),
+    initialValues: Object.freeze([...RECOMMENDED_SKILLS]),
+    required: false,
+  }),
+});
+
 const NAME_RE = /^[a-z0-9][a-z0-9._-]*$/;
 
 /** @param {never} value */
@@ -293,33 +328,17 @@ async function resolveSkills(flags, useDefaults) {
   if (useDefaults) return optionDefault("skills");
 
   requireInteractive("the skills choice", "--skills <list> or --no-skills");
-  const wants = await p.confirm({
-    message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
-    initialValue: optionPromptDefault("skills") !== undefined,
-  });
+  const wants = await p.confirm(SKILLS_PROMPT_CONTRACT.confirmation);
   handleCancel(/** @type {never} */ (wants));
   if (!wants) return [];
 
-  const choice = await p.select({
-    message: "Which skills?",
-    options: [
-      { value: "recommended", label: "Recommended", hint: RECOMMENDED_SKILLS.join(", ") },
-      { value: "all", label: "All", hint: `${ALL_SKILLS.length} skills` },
-      { value: "pick", label: "Let me pick" },
-    ],
-    initialValue: optionPromptDefault("skills"),
-  });
+  const choice = await p.select(SKILLS_PROMPT_CONTRACT.selection);
   handleCancel(/** @type {never} */ (choice));
 
   if (choice === "recommended") return RECOMMENDED_SKILLS;
   if (choice === "all") return ALL_SKILLS;
 
-  const picked = await p.multiselect({
-    message: "Select skills (space to toggle, enter to confirm)",
-    options: SKILLS.map((s) => ({ value: s.name, label: s.label, hint: s.hint })),
-    initialValues: RECOMMENDED_SKILLS,
-    required: false,
-  });
+  const picked = await p.multiselect(SKILLS_PROMPT_CONTRACT.picker);
   handleCancel(/** @type {never} */ (picked));
   return /** @type {string[]} */ (picked);
 }

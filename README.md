@@ -8,7 +8,7 @@
 <h1 align="center">@larsen-utvikling/create-next-app</h1>
 
 <p align="center">
-  Scaffold the newest Next.js with a vanilla CSS design system.<br>
+  Request create-next-app's latest npm dist-tag and add a vanilla CSS design system.<br>
   No Tailwind, no CSS framework - just tokens.
 </p>
 
@@ -18,7 +18,7 @@
 </p>
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app
+npx --yes @larsen-utvikling/create-next-app my-app
 ```
 
 See the [canonical CLI reference](docs/reference/cli.md) for every flag,
@@ -26,13 +26,14 @@ prompt, choice, default, interaction, and invalid combination.
 
 ## What you get
 
-- **The newest stable Next.js by default**, with `--cna-version <spec>` as an
-  explicit escape hatch for upstream breakage
+- **The mutable `create-next-app@latest` npm dist-tag by default**, with
+  `--cna-version <spec>` for an explicit upstream spec. This does not guarantee
+  which version npm resolves or that it is stable
 - **TypeScript, App Router, `src/` directory** - and never Tailwind
 - **A vanilla CSS design system** in `src/lib/design-system/`: spacing, widths, type, color and motion tokens, light and dark, with zero JS
 - **A color palette generated from one HEX** - a 12-step accent scale, gray scale and semantic colors in both modes, produced locally by the vendored engine
 - **Agent docs** - `AGENTS.md` with the project rules, `CLAUDE.md` pointing at it, and `DESIGN.md` with the token reference. Upstream agent guidance is preserved as `NEXTJS.md` only when create-next-app supplies it
-- **Optional [Larsen Skills](https://github.com/Stianlars1/larsen-skills)** installed into the project, where every coding agent picks them up
+- **Optional [Larsen Skills](https://github.com/Stianlars1/larsen-skills)** with installation verified only by `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
 
@@ -42,8 +43,8 @@ package's local lowercase regex and empty-directory check, not npm package-name
 validation. Every prompt has a flag, so the whole flow can run unattended:
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app --defaults
-npx @larsen-utvikling/create-next-app my-app --defaults \
+npx --yes @larsen-utvikling/create-next-app my-app --defaults
+npx --yes @larsen-utvikling/create-next-app my-app --defaults \
   --hex 22C55E --pm pnpm --skills recommended
 ```
 

@@ -4,9 +4,9 @@
 /**
  * @larsen-utvikling/create-next-app
  *
- * Scaffolds the newest stable Next.js via create-next-app@latest, then
- * overlays the Larsen Utvikling design system (vanilla CSS tokens), agent
- * docs, and an optional 12-step color palette generated from a single HEX.
+ * Requests the selected create-next-app npm spec, then overlays the Larsen
+ * Utvikling design system (vanilla CSS tokens), agent docs, and an optional
+ * 12-step color palette generated from a single HEX.
  *
  * Flow: prompts -> scaffold -> overlay (+ palette) -> install -> git
  */
@@ -148,7 +148,7 @@ try {
         : "\nThe default Larsen Utvikling theme additionally ships the brand\naccents `--brand-blue`, `--brand-blue-soft` and `--brand-blue-subtle`\n(used for links and highlights on larsenutvikling.no).",
       SKILLS_NOTE:
         installedSkills.length > 0
-          ? `\n## Installed skills\n\nLarsen Skills live in \`.agents/skills/\`, symlinked into each agent's own\ndirectory. Use them when the work matches:\n\n${installedSkills.map((s) => `- \`${s}\``).join("\n")}\n\nUpdate them with \`npx skills update\`, add more with\n\`npx skills add ${SKILLS_REPO}\`.`
+          ? `\n## Installed skills\n\nThe wrapper verified these files on disk:\n\n${installedSkills.map((s) => `- \`.agents/skills/${s}/SKILL.md\``).join("\n")}\n\nThis verifies only the listed files, not agent-specific discovery or symlinks.\nAdd more with \`npx skills add ${SKILLS_REPO}\`.`
           : `\n## Skills\n\nNo agent skills are installed. The Larsen Skills collection covers UI\ncraft, motion and accessibility - add it with\n\`npx skills add ${SKILLS_REPO}\`.`,
     },
     themeCss,

@@ -14,12 +14,14 @@ documentation, an optional generated palette, optional Larsen Skills,
 optional dependency installation, and optional git initialization.
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app
+npx --yes @larsen-utvikling/create-next-app my-app
 ```
 
-The default upstream spec is `create-next-app@latest`. The CLI does not bundle
-or fork Next.js. `--cna-version <spec>` passes a different npm spec to
-create-next-app and names that spec in progress and generated-project text.
+The default upstream spec requests npm's mutable `create-next-app@latest`
+dist-tag. That request does not pin or guarantee the version npm resolves or
+its stability. The CLI does not bundle or fork Next.js. `--cna-version <spec>`
+passes a different npm spec to create-next-app and names the requested spec in
+progress and generated-project text.
 
 The package requires Node.js `>=20.12.0`. Network access is required to fetch
 the wrapper, the selected create-next-app spec, dependencies when installation
@@ -239,7 +241,8 @@ for exact token counts, current gaps, and proposals that are not implemented.
 `--skills` runs `npx skills add Stianlars1/larsen-skills` with one `--skill`
 argument per requested skill. Exit status is insufficient because the
 installer can exit successfully without installing the requested set. The CLI
-therefore checks `.agents/skills/` and documents only entries that landed.
+therefore verifies `.agents/skills/<name>/SKILL.md` and documents only entries
+with that file. It does not verify any agent-specific discovery or symlink.
 
 Skills are installed before the overlay. A failed optional install produces a
 warning and the scaffold continues without claiming those skills exist.

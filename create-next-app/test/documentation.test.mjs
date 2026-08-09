@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { FORMATS, PRESETS, SCHEMES } from "../palette/index.js";
 import { renderMarkdownOptionTable } from "../src/options.js";
+import { ALL_SKILLS, RECOMMENDED_SKILLS } from "../src/skills.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 
@@ -48,4 +49,22 @@ test("the published README CLI reference matches OPTION_CONTRACT", () => {
 test("the internal CLI reference matches OPTION_CONTRACT", () => {
   const reference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
   assert.ok(reference.includes(renderMarkdownOptionTable()));
+});
+
+test("the internal CLI reference includes the complete runtime skills prompt contract", () => {
+  const reference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
+  const start = reference.indexOf("<!-- BEGIN GENERATED SKILLS PROMPT REFERENCE -->");
+  const end = reference.indexOf("<!-- END GENERATED SKILLS PROMPT REFERENCE -->");
+  assert.notEqual(start, -1);
+  assert.ok(end > start);
+  const generated = reference.slice(start, end);
+
+  for (const skill of ALL_SKILLS) assert.match(generated, new RegExp(`\\b${skill}\\b`));
+  for (const skill of RECOMMENDED_SKILLS) {
+    assert.match(generated, new RegExp(`Recommended initial selection:[^\n]*${skill}`));
+  }
+  assert.match(generated, /Recommended/);
+  assert.match(generated, /All/);
+  assert.match(generated, /Let me pick/);
+  assert.match(generated, /empty selection is allowed/i);
 });
