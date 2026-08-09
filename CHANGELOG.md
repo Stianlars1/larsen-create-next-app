@@ -8,9 +8,39 @@ a generated project contains counts as user-facing.
 
 ---
 
-## [Unreleased] - 0.3.0 foundation
+## [Unreleased] - 0.4.0 palette contracts
 
-0.3.0 exists in the local package manifest and has not been published to npm.
+0.4.0 is prepared in the local package manifest and has not been published to
+npm.
+
+### Added
+- Deterministic desired-contract coverage for all 18 palette preset and format
+  combinations, including alpha syntax and exact framework mappings.
+
+### Changed
+- The shadcn preset now exposes its Card, Popover, chart, Sidebar, and radius
+  contracts. It emits 81 color names in both modes plus root-level
+  `--radius`, while retaining `--destructive-foreground` for compatibility.
+- The radix preset is now labeled `Radix Themes tokens` and emits the full
+  57-name Radix Themes contract plus 26 existing Larsen tokens. CSS Variables
+  remains the generic 50-name preset.
+- Current palette documentation now describes the implemented 82/81, 83, and
+  50-name contracts. The dated audit remains research and provenance input.
+
+### Fixed
+- Eight-digit HEX and CSS color alpha is preserved in HEX, RGB, HSL, HSL
+  Values, OKLAB, and OKLCH output instead of being discarded by the RGB and
+  HSL helper paths.
+- Card, Popover, and Sidebar aliases stay aligned after the baked default
+  theme applies its final brand background, foreground, and ring overrides.
+- Mechanical shadcn contrast verification now includes Card and Popover text
+  in both generated modes.
+
+---
+
+## [0.3.0] - 2026-08-09
+
+Publication evidence is recorded separately in `docs/verification/releases.md`.
 
 ### Added
 - A machine-readable wrapper option contract that drives parsing, help,
@@ -21,8 +51,9 @@ a generated project contains counts as user-facing.
 - Focused Node tests for option behavior, generated documentation, overlay
   boundaries, palette contracts, contrast, release packaging, and full-smoke
   argument handling.
-- Deterministic desired-contract coverage for all 18 palette preset and format
-  combinations, including alpha syntax and exact framework mappings.
+- Deterministic current-contract coverage for all 18 palette preset and format
+  combinations. shadcn emits 64 names per selector block; radix and
+  css-variables each emit 50 and remain declaration-equivalent per format.
 - A canonical internal CLI reference, package-only palette reference, exact
   approved-plan provenance, and npm release evidence for 0.1.0 through 0.2.2.
 
@@ -40,12 +71,6 @@ a generated project contains counts as user-facing.
   version history, and publication evidence. Landing-page and blog state is
   outside this package contract.
 - The default-theme command is `npm run gen:theme` with no HEX argument.
-- The shadcn preset now exposes its Card, Popover, chart, Sidebar, and radius
-  contracts. It emits 81 color names in both modes plus root-level
-  `--radius`, while retaining `--destructive-foreground` for compatibility.
-- The radix preset is now labeled `Radix Themes tokens` and emits the full
-  57-name Radix Themes contract plus 26 existing Larsen tokens. CSS Variables
-  remains the generic 50-name preset.
 
 ### Fixed
 - Required-token verification reports each absent token before contrast is
@@ -62,9 +87,6 @@ a generated project contains counts as user-facing.
   semver ranges containing JSX punctuation cannot corrupt the welcome page.
 - Contrast documentation now states the exact `shadcn` and `hsl-values`
   parser boundary, WCAG thresholds, and non-WCAG visibility floor.
-- Eight-digit HEX and CSS color alpha is preserved in HEX, RGB, HSL, HSL
-  Values, OKLAB, and OKLCH output instead of being discarded by the RGB and
-  HSL helper paths.
 
 ---
 
