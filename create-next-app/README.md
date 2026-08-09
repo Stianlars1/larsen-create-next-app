@@ -1,13 +1,13 @@
 # @larsen-utvikling/create-next-app
 
-Scaffold the **newest stable Next.js** (App Router, TypeScript) with the Larsen Utvikling design system baked in: vanilla CSS design tokens, agent docs, and an optional 12-step color palette generated from a single HEX.
+Request create-next-app's mutable `latest` npm dist-tag, then add the Larsen Utvikling design system: vanilla CSS design tokens, agent docs, and an optional 12-step color palette generated from a single HEX.
 
 No Tailwind. No CSS framework. Just tokens.
 
 ## Usage
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app
+npx --yes @larsen-utvikling/create-next-app my-app
 ```
 
 or via the `create` alias:
@@ -16,73 +16,77 @@ or via the `create` alias:
 npm create @larsen-utvikling/next-app my-app
 ```
 
-The CLI always fetches the latest stable `create-next-app` at run time, so every project starts on the newest Next.js.
+The CLI requests `create-next-app@latest` by default. `latest` is a mutable npm
+dist-tag, so this does not pin or guarantee the version npm resolves or its
+stability. Use `--cna-version <spec>` to request an explicit upstream spec.
 
 ## What you get
 
-- Newest Next.js, App Router, TypeScript, `src/` directory
+- Next.js requested through the selected create-next-app spec, with App Router, TypeScript, and `src/` directory
 - Vanilla CSS design system at `src/lib/design-system/`:
   - `core.css` - spacing scale (8 steps, 4px base), max-widths, radii, type, z-index
   - `theme.css` - full light/dark color theme (auto via `prefers-color-scheme`, manual override via `[data-theme]`, zero JS)
   - `motion.css` - durations, easing curves and gesture tokens, plus a reduced-motion contract that keeps feedback and drops movement
   - `base.css` - modern reset
   - `index.css` - single entry importing all of the above
-- Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), `DESIGN.md` (token documentation), `NEXTJS.md` (Next.js agent guide, preserved from create-next-app)
+- Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), and `DESIGN.md` (token documentation). `NEXTJS.md` preserves upstream guidance only when create-next-app supplies `AGENTS.md`
 - A welcome page demonstrating the tokens
-- Optional **custom color palette**: answer one prompt with a HEX color and get a complete 12-step accent scale, gray scale, and semantic colors in both light and dark mode - powered by the [rampkit](https://rampkit.app) engine
-- Optional **agent skills**: install the [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection (UI craft, motion, accessibility, prototyping) into the project, where every agent picks them up
-
-The motion tokens follow the `motion-craft` skill, so the design system and
-the agent guidance agree on the same numbers.
+- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine
+- Optional **agent skills**: request entries from the [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection. The wrapper verifies only `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
 
-| Prompt | Choices |
-| --- | --- |
-| App name | any valid npm package name |
-| Generate custom palette from a HEX? | yes / no (no = default Larsen Utvikling theme) |
-| HEX color | e.g. `#4DA6FF` or `4DA6FF` |
-| Framework/style | shadcn/ui, Radix Colors, CSS Variables |
-| Color format | HEX, RGB, HSL, HSL Values, OKLAB, OKLCH |
-| Linter | ESLint, Biome, none |
-| Install Larsen Skills? | yes / no, then recommended, all, or pick |
-| Package manager | npm, pnpm, yarn, bun |
-| Git init | yes / no |
-| Install dependencies | yes / no |
+The interactive flow asks for the app name, palette, linter, package manager,
+optional Larsen Skills, git initialization and dependency installation. The
+generated reference below is the complete published list of choices and
+defaults. Maintainers use the repository's
+[canonical CLI reference](https://github.com/Stianlars1/larsen-create-next-app/blob/main/docs/reference/cli.md)
+for prompt conditions, interactions, invalid pairs, and CI behavior.
 
-## Non-interactive usage
+## CLI reference
 
 Every prompt has a flag - useful for scripts and CI:
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app --defaults --pm npm
+PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" \
+  my-app --defaults --pm npm
 ```
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app \
+PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
   --hex 4DA6FF --preset shadcn --format hsl-values \
-  --linter eslint --pm pnpm --no-git --no-install
+  --scheme analogous --linter eslint --pm pnpm --no-skills \
+  --no-git --no-install
 ```
 
+<!-- BEGIN GENERATED CLI REFERENCE -->
 | Flag | Description |
 | --- | --- |
-| `-d, --defaults` | Skip all prompts, use defaults |
-| `--hex <color>` | Palette seed HEX (with or without `#`) |
-| `--preset <name>` | `shadcn` \| `radix` \| `css-variables` |
-| `--format <name>` | `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
-| `--scheme <name>` | `analogous` (default) \| `monochromatic` \| `complementary` \| `triadic` |
-| `--pm <name>` | `npm` \| `pnpm` \| `yarn` \| `bun` |
-| `--linter <name>` | `eslint` \| `biome` \| `none` |
-| `--skills <list>` | `recommended` \| `all` \| comma-separated skill names |
-| `--no-skills` | Skip the skills install (the default for `--defaults`) |
-| `--no-git` | Skip git init |
-| `--no-install` | Skip dependency install |
-| `--cna-version <spec>` | Pin the create-next-app version (escape hatch, default `latest`) |
+| `-d, --defaults` | Skip all prompts, use defaults (no skills) |
+| `--default-palette` | Answer No to a custom palette and use the default palette. Interactive default: `no`. Conflicts with `--hex` |
+| `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
+| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
+| `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
+| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Value must not be empty. Requires `--hex` |
+| `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
+| `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
+| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
+| `--no-skills` | Skip the Larsen Skills install. Conflicts with `--skills` |
+| `--git` | Initialize a git repository. Default: `yes`. Conflicts with `--no-git` |
+| `--no-git` | Skip git init. Conflicts with `--git` |
+| `--install` | Install dependencies. Default: `yes`. Conflicts with `--no-install` |
+| `--no-install` | Skip dependency install. Conflicts with `--install` |
+| `--cna-version <spec>` | Select the create-next-app version spec. Default: `latest`. Value must not be empty |
+| `-v, --version` | Print version |
+| `-h, --help` | Show this help |
+<!-- END GENERATED CLI REFERENCE -->
 
 ## Requirements
 
-- Node.js >= 20.9
-- Network access (fetches `create-next-app@latest`)
+- Node.js >= 20.12.0
+- Network access (fetches the selected create-next-app spec, `latest` by default)
 
 ## License
 

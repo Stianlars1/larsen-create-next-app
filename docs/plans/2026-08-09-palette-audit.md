@@ -5,6 +5,12 @@ generated output has been changed. Every number below was produced by running
 the real code in this session; the scripts live in the session scratchpad and
 are described inline so they can be recreated.
 
+Chronology note: this audit predates the verified 0.3.0 foundation. It is
+dated research, mapping, and provenance evidence, not the current source of
+truth. Current authority is `AGENTS.md`, `PROJECT.md`,
+`docs/reference/palette.md`, runtime and tests, then this file. Do not reapply
+the audit's historical `PROJECT.md` or `CHANGELOG.md` proposals.
+
 ## 1. Method
 
 - **Matrix**: ran `generateThemeCss` (the public API, exactly as the CLI calls

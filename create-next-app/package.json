@@ -1,7 +1,7 @@
 {
   "name": "@larsen-utvikling/create-next-app",
-  "version": "0.2.2",
-  "description": "Scaffold the newest Next.js with the Larsen Utvikling design system: vanilla CSS design tokens, agent docs (AGENTS.md), and an optional 12-step color palette generated from a single HEX.",
+  "version": "0.4.0",
+  "description": "Request create-next-app, then add the Larsen Utvikling vanilla CSS design system, agent docs, and an optional palette generated from one HEX.",
   "keywords": [
     "create-next-app",
     "nextjs",
@@ -33,18 +33,20 @@
     "template"
   ],
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=20.12.0"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "test": "node --test",
     "sync": "node scripts/sync.mjs",
     "gen:theme": "node ../palette/generate-default.mjs",
+    "pack:release": "node scripts/pack-release.mjs --verify",
     "smoke": "node scripts/smoke.mjs",
-    "smoke:full": "node scripts/smoke.mjs --full",
+    "smoke:full": "node scripts/full-smoke.mjs",
     "prepack": "node scripts/sync.mjs",
-    "prepublishOnly": "node scripts/smoke.mjs --dev"
+    "prepublishOnly": "node scripts/refuse-source-publish.mjs"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",

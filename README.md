@@ -8,58 +8,57 @@
 <h1 align="center">@larsen-utvikling/create-next-app</h1>
 
 <p align="center">
-  Scaffold the newest Next.js with a vanilla CSS design system.<br>
+  Request create-next-app's latest npm dist-tag and add a vanilla CSS design system.<br>
   No Tailwind, no CSS framework - just tokens.
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@larsen-utvikling/create-next-app"><img alt="npm" src="https://img.shields.io/npm/v/@larsen-utvikling/create-next-app?color=4DA0FF"></a>
-  <a href="LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@larsen-utvikling/create-next-app?color=4DA0FF"></a>
+  <a href="create-next-app/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/@larsen-utvikling/create-next-app?color=4DA0FF"></a>
 </p>
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app
+npx --yes @larsen-utvikling/create-next-app my-app
 ```
+
+See the [canonical CLI reference](docs/reference/cli.md) for every flag,
+prompt, choice, default, interaction, and invalid combination.
 
 ## What you get
 
-- **The newest stable Next.js**, fetched at scaffold time - never a pinned version going stale
+- **The mutable `create-next-app@latest` npm dist-tag by default**, with
+  `--cna-version <spec>` for an explicit upstream spec. This does not guarantee
+  which version npm resolves or that it is stable
 - **TypeScript, App Router, `src/` directory** - and never Tailwind
 - **A vanilla CSS design system** in `src/lib/design-system/`: spacing, widths, type, color and motion tokens, light and dark, with zero JS
-- **A color palette generated from one HEX** - a full 12-step accent scale, gray scale and semantic colors in both modes, powered by the [rampkit](https://rampkit.app) engine running locally during install
-- **Agent docs** - `AGENTS.md` with the project rules, `CLAUDE.md` pointing at it, `DESIGN.md` with the token reference, and Next.js's own agent guide preserved as `NEXTJS.md`
-- **Optional [Larsen Skills](https://github.com/Stianlars1/larsen-skills)** installed into the project, where every coding agent picks them up
-
-Motion tokens follow the `motion-craft` skill, so the design system and the
-agent guidance agree on the same numbers - including a reduced-motion
-contract that keeps feedback and drops movement, rather than disabling
-everything.
+- **A color palette generated from one HEX** - a 12-step accent scale, gray scale and semantic colors in both modes, produced locally by the vendored engine
+- **Agent docs** - `AGENTS.md` with the project rules, `CLAUDE.md` pointing at it, and `DESIGN.md` with the token reference. Upstream agent guidance is preserved as `NEXTJS.md` only when create-next-app supplies it
+- **Optional [Larsen Skills](https://github.com/Stianlars1/larsen-skills)** with installation verified only by `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
 
-| Question | Options |
-| --- | --- |
-| App name | any valid npm package name |
-| Custom 12-step palette? | yes → HEX, framework/style, color format |
-| Linter | ESLint, Biome, none |
-| Install Larsen Skills? | recommended, all, or pick |
-| Package manager | npm, pnpm, yarn, bun |
-| git init, install dependencies | yes / no |
-
-Every prompt has a flag, so the whole thing runs unattended:
+The CLI asks for app name, palette, linter, package manager, optional skills,
+git initialization and dependency installation. The app name uses this
+package's local lowercase regex and empty-directory check, not npm package-name
+validation. Every prompt has a flag, so the whole flow can run unattended:
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app --defaults
-npx @larsen-utvikling/create-next-app my-app --hex 22C55E --pm pnpm --skills recommended
+npx --yes @larsen-utvikling/create-next-app my-app --defaults
+npx --yes @larsen-utvikling/create-next-app my-app --defaults \
+  --hex 22C55E --pm pnpm --skills recommended
 ```
 
-Full flag reference: [create-next-app/README.md](create-next-app/README.md).
+See the [canonical CLI reference](docs/reference/cli.md) for the exact prompt
+tree, choices, defaults, interactions, invalid pairs, and CI requirements.
 
 ## Documentation
 
 | File | What it covers |
 | --- | --- |
-| [PROJECT.md](PROJECT.md) | **The full reference.** Every prompt, flag, token and file, the architecture, and the reasoning behind each decision |
+| [PROJECT.md](PROJECT.md) | The current package contract and evidence boundaries |
+| [docs/reference/cli.md](docs/reference/cli.md) | Canonical CLI and prompt reference |
+| [docs/reference/palette.md](docs/reference/palette.md) | Current palette contracts and boundaries |
+| [docs/verification/releases.md](docs/verification/releases.md) | npm evidence for published versions |
 | [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
 | [AGENTS.md](AGENTS.md) | Rules for agents and contributors working on this package |
 
@@ -74,17 +73,21 @@ This repo holds the published package and the masters it is built from.
 | [`palette/`](palette) | Master color generator (rampkit engine, vendored - see [NOTICE](palette/NOTICE.md)) |
 | [`docs/plans/`](docs/plans) | Design and implementation notes |
 
-`create-next-app/scripts/sync.mjs` copies both masters into the package, and
-runs automatically on `prepack`, so a publish can never ship stale tokens.
+`create-next-app/scripts/sync.mjs` copies both masters into the package. Direct
+packs run it on `prepack`; the release packer syncs the same masters into an
+isolated staging package before it builds the consumer tarball.
 
 ## Development
 
 ```bash
-node create-next-app/bin/cli.js my-app   # run the CLI from source
-npm run gen:theme -- "#4DA0FF"           # regenerate the default theme
-npm run sync                             # copy masters into the package
-cd create-next-app && npm run smoke      # packaging + scaffold assertions
-cd create-next-app && npm run smoke:full # + install and production build
+node create-next-app/bin/cli.js my-app       # run the CLI from source
+npm run gen:theme                            # regenerate the default theme
+npm run sync                                 # copy masters into the package
+cd create-next-app
+node scripts/generate-cli-reference.mjs --check
+npm test
+npm run pack:release                         # reports one verified tarball
+npm run smoke:full -- /path/reported-by-pack-release.tgz
 ```
 
 ## License

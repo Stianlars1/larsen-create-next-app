@@ -1,74 +1,73 @@
 # AGENTS.md
 
-Rules for working **on** this package. These are not the rules the package
-writes into generated projects - those live in
-`create-next-app/template/AGENTS.md`.
+Mandatory protocol for work on this package. Generated projects receive a
+different file from `create-next-app/template/AGENTS.md`.
 
-## Read this first
+## Cold start
 
-**[PROJECT.md](PROJECT.md) is the source of truth.** It describes every prompt,
-every flag, the architecture, the decisions and their reasons, and what this
-package deliberately does not do. Read it before proposing changes, and update
-it in the same commit when behaviour changes.
+Before proposing changes or making behavioral claims:
 
-## Non-negotiables
+1. Read all of [PROJECT.md](PROJECT.md), not a summary.
+2. Read [docs/reference/cli.md](docs/reference/cli.md) for the complete CLI
+   contract.
+3. Read the evidence relevant to the claim. Published-version evidence is in
+   [docs/verification/releases.md](docs/verification/releases.md). Current
+   source behavior must be checked against the implementation and the
+   verification commands in `PROJECT.md` in the same session.
+4. Inspect the worktree and preserve unrelated local changes.
 
-- **Never Tailwind.** Not in the template, not on the landing page, not as an
-  option. The design system is vanilla CSS custom properties.
-- **Only `-` as a dash.** Never `—` or `–` - in code, docs, commits, or any
-  generated content.
-- **Clarify, do not guess.** When a decision has more than one defensible
-  answer, ask Stian with concrete options and a recommendation. Do not pick a
-  direction on a hunch and build it.
-- **Everything in this repo is English.** Norwegian belongs in conversation,
-  not in files.
-- **Never publish to npm.** 2FA is on the account; Stian runs `npm publish`.
-  Never ask for or handle an OTP.
+Update `PROJECT.md` in the same commit when behavior changes. Update the CLI
+contract in `create-next-app/src/options.js`, then regenerate both CLI tables.
+Do not turn a local test result, a packed artifact, or a commit into a claim
+about npm publication.
 
-## Where to edit
+## Non-negotiable rules
 
-| To change | Edit | Never edit |
+- Never add Tailwind, including as an option or generated artifact.
+- Use only `-` as a dash. Never use em dash or en dash characters.
+- Keep all repository and generated-project content in English.
+- Clarify decisions with more than one defensible answer. Do not guess.
+- Never publish to npm or handle an npm OTP. Stian publishes.
+- Test the generated app and release artifact, not only source helpers.
+- The mechanical CSS contrast parser supports only `shadcn` with `hsl-values`:
+  `--foreground` vs `--background` at 4.5, `--ring` vs `--background` at 3,
+  `--card-foreground` vs `--card` at 4.5, `--popover-foreground` vs
+  `--popover` at 4.5, `--primary-foreground` vs `--primary` at 4.5, and
+  `--primary` vs `--background` at the deliberately non-WCAG 1.5 visibility
+  floor. The generator applies primary and ring corrections before all format
+  serialization. Representative Radix accent contrast pairs are checked
+  separately at 4.5 in all six formats.
+
+## Edit map
+
+| Change | Edit here | Do not edit |
 | --- | --- | --- |
 | Design tokens | `CSS/*.css` | `create-next-app/template/src/lib/design-system/` |
-| Colour generation | `palette/index.js` | `create-next-app/palette/` |
-| Vendored engine | `palette/engine/` + record it in `palette/NOTICE.md` | anything under `create-next-app/palette/engine/` |
-| create-next-app flags | `create-next-app/src/scaffold.js` only | scattered across other files |
-| What a generated app contains | `create-next-app/template/` | |
+| Color generation | `palette/index.js` | `create-next-app/palette/` |
+| Vendored engine | `palette/engine/` and `palette/NOTICE.md` | `create-next-app/palette/engine/` |
+| Wrapper flags, choices, defaults | `create-next-app/src/options.js` | Hand-maintained option lists |
+| Upstream create-next-app arguments | `create-next-app/src/scaffold.js` | Other CLI modules |
+| Generated-project contents | `create-next-app/template/` | Synced design-system copy |
+| Current package contract | `PROJECT.md` | Historical plan files |
+| Published history | `CHANGELOG.md`, `docs/verification/releases.md` | `PROJECT.md` |
 
-`create-next-app/palette/` and `create-next-app/template/src/lib/design-system/`
-are **synced copies**, gitignored, overwritten by `scripts/sync.mjs` on every
-`prepack`. Editing them loses your work silently.
+The package copies of `palette/` and the design system are gitignored and
+overwritten by `npm run sync` and release packing.
 
-## Working rules
-
-- **Verify, do not assert.** This project has already shipped two claims that
-  turned out to be false ("validated against npm's naming rules", "seven
-  questions" beside a list of ten). If you write a factual statement about
-  behaviour, check it against the source in the same session.
-- **Test the generated app, not the generator.** `npm run smoke` from
-  `create-next-app/` scaffolds real projects and asserts on the output. Run it
-  before claiming anything works.
-- **A default is a decision.** Changing one changes every future project.
-  Raise it rather than adjusting it quietly.
-- **Contrast is checked, not eyeballed.** The smoke test measures it. A visual
-  review missed an invisible dark-mode button once already - the demo page
-  simply did not happen to use `--primary`.
-
-## Commands
+## Required commands
 
 ```bash
-npm run gen:theme -- "#4DA0FF"   # regenerate the default theme (repo root)
-npm run sync                     # copy masters into the package (repo root)
+npm run gen:theme                 # regenerate the default theme
+npm run sync                      # refresh package copies
 
 cd create-next-app
-npm run smoke                    # packaging + scaffold assertions
-npm run smoke:full               # + install and production build
-node bin/cli.js my-app           # run the CLI from source
+node scripts/generate-cli-reference.mjs --check
+npm test
+npm run smoke
+npm run pack:release              # reports one verified tarball
+npm run smoke:full -- /path/reported-by-pack-release.tgz
 ```
 
-## Related documents
-
-- [PROJECT.md](PROJECT.md) - full solution reference
-- [CHANGELOG.md](CHANGELOG.md) - what changed in each version
-- [docs/plans/](docs/plans) - design notes and the original plan
-- `palette/NOTICE.md` - vendored engine attribution and local deviations
+Use the exact tarball reported by `pack:release` for the full smoke and any
+later owner-run publish. See `PROJECT.md` for the evidence boundary of each
+command.
