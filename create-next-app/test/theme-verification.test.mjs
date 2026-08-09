@@ -69,6 +69,50 @@ test("an extreme seed assigns separate mode seeds and passes every contrast chec
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 });
 
+test("representative custom seeds pass every generated shadcn contrast check", () => {
+  const script = `
+    import assert from "node:assert/strict";
+    import { checkThemeContrast } from "./scripts/theme-contrast.mjs";
+    import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
+
+    const seeds = [
+      "#0A0A0A", "#262626", "#D8D8D8", "#F5F5F5",
+      "#4DA0FF", "#123456", "#ABCDEF",
+      "#FF0000", "#22C55E", "#F59E0B",
+      "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF",
+      "#EC4899", "#F97316", "#14B8A6",
+    ];
+    const schemes = ["analogous", "monochromatic", "complementary", "triadic"];
+    const fixture = await createPaletteMasterFixture();
+    try {
+      for (const hex of seeds) {
+        for (const scheme of schemes) {
+          const css = fixture.api.generateThemeCss({
+            hex,
+            preset: "shadcn",
+            format: "hsl-values",
+            scheme,
+          });
+          assert.deepEqual(
+            checkThemeContrast(css),
+            [],
+            \`\${hex} \${scheme}\`,
+          );
+        }
+      }
+    } finally {
+      fixture.cleanup();
+    }
+  `;
+  const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], {
+    cwd: packageDir,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+});
+
 test("contrast verification reports every required token that is absent", () => {
   const script = `
     import assert from "node:assert/strict";

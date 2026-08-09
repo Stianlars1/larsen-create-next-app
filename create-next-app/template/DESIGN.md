@@ -20,12 +20,13 @@ and `[data-theme="light" | "dark"]` on `<html>` overrides it manually.
 
 Preset contracts:
 
-- `shadcn` includes the semantic component contract for backgrounds, Card,
-  Popover, primary and secondary actions, muted and accent states,
-  destructive actions, inputs, five charts, Sidebar, radius, scales, harmony,
-  and Larsen status colors. `--radius` aliases `var(--radius-md)`.
-- `radix` includes the 57-name Radix Themes contract: background, solid and
-  alpha accent and gray scales, contrast, surface, indicator, and track. It
+- `shadcn` includes the approved semantic token-name contract for backgrounds,
+  Card, Popover, primary and secondary actions, muted and accent states,
+  destructive actions, inputs, five charts, Sidebar, radius, scales,
+  harmony, and Larsen status colors. `--radius` aliases `var(--radius-md)`.
+- `radix` includes the 57-name Radix Themes custom-palette override contract:
+  background, solid and alpha accent and gray scales, contrast, surface,
+  indicator, and track. It
   retains Larsen background, foreground, harmony, and status tokens for 83
   names in each mode.
 - `css-variables` is the generic 50-name Larsen contract: background,
@@ -33,6 +34,15 @@ Preset contracts:
 
 Radix alpha tokens such as `--accent-a1` already contain alpha. The selected
 format is preserved, including slash alpha for HSL Values, OKLAB, and OKLCH.
+HSL and HSL Values retain decimal precision where integer rounding would
+change the selected color enough to weaken contrast.
+These are token contracts, not claims of full shadcn component or Radix
+Themes runtime compatibility.
+
+The generator preserves the requested seed for shadcn primary and ring when
+their role-specific contrast floors pass, otherwise it uses the closest safe
+accent-scale color. Foregrounds remain scale-first rather than defaulting to
+pure black or white. Radix accent contrast reaches 4.5 against accent step 9.
 
 **Usage idiom for this project:**
 

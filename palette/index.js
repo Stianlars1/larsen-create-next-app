@@ -52,11 +52,10 @@ export const DEFAULT_THEME = /** @type {const} */ ({
 });
 
 /**
- * The engine keeps --primary and --ring at the seed color in BOTH modes, so
- * an extreme seed makes one mode unusable: a near-black seed yields a
- * near-black primary on the near-black dark surface (about 1:1 contrast -
- * invisible buttons and focus rings), and a near-white seed does the same to
- * light mode. Past these thresholds each mode is generated from its own seed.
+ * The raw engine starts --primary and --ring from the seed color in both
+ * modes. Extreme seeds therefore need separate mode seeds before export. The
+ * shadcn exporter then keeps each selected seed only where the role-specific
+ * visibility floor passes, or chooses the closest passing accent-scale step.
  */
 const EXTREME_LIGHTNESS = { min: 15, max: 85 };
 
@@ -115,8 +114,9 @@ export function usageIdioms(format) {
 
 /**
  * Semantic roles -> the real token name each preset provides for that role.
- * shadcn emits semantic component tokens. Radix Themes and CSS Variables
- * retain the Larsen base roles, while only Radix adds its framework contract.
+ * shadcn emits approved semantic token names. Radix Themes and CSS Variables
+ * retain the Larsen base roles, while only Radix adds custom-palette override
+ * names.
  */
 const ROLE_TOKENS = {
   shadcn: {

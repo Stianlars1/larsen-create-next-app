@@ -235,8 +235,15 @@ Current custom choices are:
 - Schemes: `analogous`, `monochromatic`, `complementary`, `triadic`.
 
 For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
-so the accent works on both light and dark surfaces. The mechanical verifier
-supports only `shadcn` with `hsl-values` and both generated modes:
+before export. For every seed, shadcn keeps the selected seed as primary and
+ring only when it reaches the role's floor in that mode. Otherwise it selects
+the perceptually closest passing accent-scale color. Primary foreground is
+then recomputed with the existing accent-scale-first chooser. Radix keeps the
+upstream accent contrast only when it reaches 4.5 against accent step 9 and
+otherwise uses that same scale-first chooser.
+
+The mechanical CSS verifier parses only `shadcn` with `hsl-values` and checks
+both generated modes:
 
 - `--foreground` vs `--background` must reach 4.5.
 - `--card-foreground` vs `--card` must reach 4.5.
@@ -246,14 +253,19 @@ supports only `shadcn` with `hsl-values` and both generated modes:
 - `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
   visibility floor.
 
-These checks do not guarantee any other preset-format matrix entry.
+The generator applies these role corrections before serialization, so format
+selection cannot bypass them. The CSS parser itself makes no broader
+preset-format claim. Representative Radix accent pairs are checked separately
+at 4.5 in all six generated formats.
 
 The deterministic 3 x 6 preset-format matrix locks the implemented contracts:
 shadcn exposes 81 color names in both modes plus root-level `--radius`, Radix
 Themes exposes 83 names in both modes, and CSS Variables remains the generic
 50-name contract. Radix alpha scales and surfaces preserve alpha in all six
-formats. See [docs/reference/palette.md](docs/reference/palette.md) for exact
-names, mappings, serialization, and deliberately deferred P3 output.
+formats. HSL and HSL Values retain enough component precision to preserve
+contrast through serialization. See
+[docs/reference/palette.md](docs/reference/palette.md) for exact names,
+mappings, serialization, and deliberately deferred P3 output.
 
 ## Optional Larsen Skills
 
@@ -317,5 +329,6 @@ The current published record is in
 - No font selection.
 - No automatic updates to existing generated projects.
 - No package publication, tag push, branch push, or deployment by an agent.
-- No claim that current shadcn or Radix output implements each upstream token.
+- No claim of full shadcn component compatibility, full Radix Themes runtime
+  compatibility, every upstream token, or the deferred Radix P3 blocks.
 - No product-site, blog, domain, or deployment status in this package contract.

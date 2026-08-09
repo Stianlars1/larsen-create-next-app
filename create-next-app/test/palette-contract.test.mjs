@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import Color from "colorjs.io";
 import { after, test } from "node:test";
 import { createPaletteMasterFixture } from "../test-support/palette-master.mjs";
 
@@ -75,8 +76,8 @@ const RADIX_TOKENS = [
 const FORMAT_EXAMPLES = {
   hex: "#f2f2f2",
   rgb: "rgb(242, 242, 242)",
-  hsl: "hsl(0, 0%, 95%)",
-  "hsl-values": "0 0% 95%",
+  hsl: "hsl(0, 0%, 94.902%)",
+  "hsl-values": "0 0% 94.902%",
   oklab: "oklab(96.12% 0 0)",
   oklch: "oklch(96.12% 0 none)",
 };
@@ -102,8 +103,8 @@ const ALPHA_FORMAT_PATTERNS = {
 const ALPHA_OVERRIDE_EXAMPLES = {
   hex: "#1E73C806",
   rgb: "rgba(30, 115, 200, 0.0235)",
-  hsl: "hsla(210, 74%, 45%, 0.0235)",
-  "hsl-values": "210 74% 45% / 0.0235",
+  hsl: "hsla(210, 73.913%, 45.098%, 0.0235)",
+  "hsl-values": "210 73.913% 45.098% / 0.0235",
   oklab: "oklab(55.21% -0.0451 -0.1462 / 0.0235)",
   oklch: "oklch(55.21% 0.153 252.9 / 0.0235)",
 };
@@ -126,6 +127,28 @@ function declarations(block) {
     name: match[1],
     value: match[2],
   }));
+}
+
+function contrastRatio(colorA, colorB) {
+  const luminance = (hex) => {
+    const compact = hex.replace("#", "");
+    const expanded = compact.length === 3
+      ? [...compact].map((channel) => channel.repeat(2)).join("")
+      : compact;
+    const channels = expanded.match(/.{2}/g).map((channel) => {
+      const value = Number.parseInt(channel, 16) / 255;
+      return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const [lighter, darker] = [luminance(colorA), luminance(colorB)]
+    .sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function serializedContrastRatio(colorA, colorB, format) {
+  const parse = (value) => new Color(format === "hsl-values" ? `hsl(${value})` : value);
+  return parse(colorA).contrastWCAG21(parse(colorB));
 }
 
 for (const [preset, lightNames, darkNames = lightNames] of [
@@ -173,7 +196,7 @@ for (const [preset, lightNames, darkNames = lightNames] of [
   }
 }
 
-test("shadcn derives its component contracts from the approved palette roles", () => {
+test("shadcn derives its approved token-name contract from palette roles", () => {
   const css = generateThemeCss({
     hex: "#4DA0FF",
     preset: "shadcn",
@@ -212,7 +235,7 @@ test("shadcn derives its component contracts from the approved palette roles", (
     "sidebar-accent": "#d7e3f3",
     "sidebar-accent-foreground": "#003071",
     "sidebar-border": "#b8bbbe",
-    "sidebar-ring": "#4DA0FF",
+    "sidebar-ring": "#005bb4",
   });
   assert.deepEqual(selected(darkBlock, names), {
     card: "#18191a",
@@ -272,7 +295,7 @@ test("Radix Themes maps its representative contract roles to engine data", () =>
     "color-background": "#f2f2f2",
     "accent-a1": "#1e73c806",
     "accent-a12": "#003071",
-    "accent-contrast": "#fff",
+    "accent-contrast": "#003071",
     "accent-surface": "#e2eaf3cc",
     "accent-indicator": "#4da0ff",
     "accent-track": "#4da0ff",
@@ -287,7 +310,7 @@ test("Radix Themes maps its representative contract roles to engine data", () =>
     "color-background": "#101010",
     "accent-a1": "#0026fa0c",
     "accent-a12": "#cae3ff",
-    "accent-contrast": "#fff",
+    "accent-contrast": "#08111b",
     "accent-surface": "#0f223a80",
     "accent-indicator": "#4da0ff",
     "accent-track": "#4da0ff",
@@ -298,6 +321,101 @@ test("Radix Themes maps its representative contract roles to engine data", () =>
     "gray-indicator": "#6b6e71",
     "gray-track": "#6b6e71",
   });
+});
+
+test("Radix accent contrast reaches WCAG AA while preserving scale-first foregrounds", () => {
+  const seeds = [
+    "#262626", "#D8D8D8", "#4DA0FF", "#22C55E", "#F59E0B",
+    "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#EC4899",
+  ];
+
+  for (const hex of seeds) {
+    const blocks = declarationBlocks(generateThemeCss({
+      hex,
+      preset: "radix",
+      format: "hex",
+      scheme: "analogous",
+    }));
+    for (const [index, block] of blocks.entries()) {
+      const values = Object.fromEntries(
+        declarations(block).map(({ name, value }) => [name, value]),
+      );
+      assert.ok(
+        contrastRatio(values["accent-contrast"], values["accent-9"]) >= 4.5,
+        `${hex} block ${index} emitted ${values["accent-contrast"]} against ${values["accent-9"]}`,
+      );
+    }
+  }
+
+  const brandBlocks = declarationBlocks(generateThemeCss({
+    hex: "#4DA0FF",
+    preset: "radix",
+    format: "hex",
+    scheme: "analogous",
+  }));
+  for (const block of brandBlocks) {
+    const values = Object.fromEntries(
+      declarations(block).map(({ name, value }) => [name, value]),
+    );
+    assert.notEqual(values["accent-contrast"].toLowerCase(), "#000000");
+    assert.notEqual(values["accent-contrast"].toLowerCase(), "#ffffff");
+  }
+});
+
+test("every serialized format preserves required foreground contrast", () => {
+  const requiredPairs = {
+    shadcn: [
+      ["foreground", "background"], ["card-foreground", "card"],
+      ["popover-foreground", "popover"], ["primary-foreground", "primary"],
+      ["secondary-foreground", "secondary"], ["muted-foreground", "muted"],
+      ["accent-foreground", "accent"], ["destructive-foreground", "destructive"],
+      ["ring", "background", 3], ["primary", "background", 1.5],
+    ],
+    radix: [
+      ["foreground", "background"], ["accent-contrast", "accent-9"],
+      ["gray-contrast", "gray-9"],
+    ],
+    "css-variables": [["foreground", "background"]],
+  };
+  for (const preset of Object.keys(requiredPairs)) {
+    requiredPairs[preset].push(
+      ["analogous-foreground", "analogous"],
+      ["complementary-foreground", "complementary"],
+    );
+    for (const name of ["success", "danger", "warning", "info"]) {
+      requiredPairs[preset].push(
+        [`${name}-foreground`, name],
+        [`${name}-muted-foreground`, `${name}-muted`],
+      );
+    }
+  }
+
+  for (const format of Object.keys(FORMAT_EXAMPLES)) {
+    for (const preset of Object.keys(requiredPairs)) {
+      const blocks = declarationBlocks(generateThemeCss({
+        hex: "#D8D8D8",
+        preset,
+        format,
+        scheme: "analogous",
+      }));
+      for (const [index, block] of blocks.entries()) {
+        const values = Object.fromEntries(
+          declarations(block).map(({ name, value }) => [name, value]),
+        );
+        for (const [foreground, background, minimum = 4.5] of requiredPairs[preset]) {
+          const actual = serializedContrastRatio(
+            values[foreground],
+            values[background],
+            format,
+          );
+          assert.ok(
+            actual >= minimum,
+            `${preset} x ${format} block ${index} emitted ${foreground}/${background} at ${actual.toFixed(4)}`,
+          );
+        }
+      }
+    }
+  }
 });
 
 for (const [format, expected] of Object.entries(ALPHA_OVERRIDE_EXAMPLES)) {

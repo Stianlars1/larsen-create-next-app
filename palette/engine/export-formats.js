@@ -1,6 +1,6 @@
 import Color from "colorjs.io";
-import { hexToHSL, hexToRGB } from "./color-utils.js";
-import { getBestForeground } from "./contrast-utils.js";
+import { hexToRGB } from "./color-utils.js";
+import { getBestForeground, getContrastRatio } from "./contrast-utils.js";
 function generateExportCode(data, options) {
   switch (options.preset) {
     case "shadcn":
@@ -28,6 +28,15 @@ function alphaFromHex(color) {
   if (clean.length !== 8) return undefined;
   return Number((parseInt(clean.slice(6, 8), 16) / 255).toFixed(4));
 }
+function preciseHSL(color) {
+  const [rawHue, rawSaturation, rawLightness] = new Color(color).to("hsl").coords;
+  const round = (value) => Number(value.toFixed(4));
+  return {
+    h: Number.isFinite(rawHue) ? round(rawHue) : 0,
+    s: round(rawSaturation),
+    l: round(rawLightness)
+  };
+}
 function formatColor(color, format) {
   const isHex = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color);
   const parsed = isHex ? undefined : new Color(color);
@@ -39,11 +48,11 @@ function formatColor(color, format) {
     : alphaFromHex(hex);
   switch (format) {
     case "HSL_VALUES": {
-      const hsl = hexToHSL(hex);
+      const hsl = preciseHSL(hex);
       return `${hsl.h} ${hsl.s}% ${hsl.l}%${alpha === undefined ? "" : ` / ${alpha}`}`;
     }
     case "HSL": {
-      const hsl = hexToHSL(hex);
+      const hsl = preciseHSL(hex);
       return alpha === undefined
         ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`
         : `hsla(${hsl.h}, ${hsl.s}%, ${hsl.l}%, ${alpha})`;
@@ -77,15 +86,55 @@ function formatSemanticColorSet(name, colorSet, format, indent = "  ") {
     `${indent}--${name}-border: ${formatFn(colorSet.border)};`
   ].join("\n");
 }
+function closestContrastSafeColor(preferred, background, accentScale, grayScale, minimum) {
+  if (getContrastRatio(preferred, background) >= minimum) return preferred;
+
+  const preferredColor = new Color(preferred);
+  const candidates = accentScale
+    .filter((color) => getContrastRatio(color, background) >= minimum)
+    .map((color) => ({ color, distance: preferredColor.deltaEOK(new Color(color)) }))
+    .sort((a, b) => a.distance - b.distance);
+
+  return candidates[0]?.color
+    ?? getBestForeground(background, accentScale, grayScale, minimum).color;
+}
 function generateShadcnCSS(data, format) {
   const formatFn = (hex) => formatColor(hex, format);
+  const lightPrimary = closestContrastSafeColor(
+    data.accent,
+    data.lightBackground,
+    data.accentScale.light,
+    data.grayScale.light,
+    1.5
+  );
+  const lightRing = closestContrastSafeColor(
+    data.accent,
+    data.lightBackground,
+    data.accentScale.light,
+    data.grayScale.light,
+    3
+  );
+  const darkPrimary = closestContrastSafeColor(
+    data.accent,
+    data.darkBackground,
+    data.accentScale.dark,
+    data.grayScale.dark,
+    1.5
+  );
+  const darkRing = closestContrastSafeColor(
+    data.accent,
+    data.darkBackground,
+    data.accentScale.dark,
+    data.grayScale.dark,
+    3
+  );
   const lightForeground = getBestForeground(
     data.lightBackground,
     data.grayScale.light,
     data.grayScale.light
   );
   const lightPrimaryForeground = getBestForeground(
-    data.accent,
+    lightPrimary,
     data.accentScale.light,
     data.grayScale.light
   );
@@ -110,7 +159,7 @@ function generateShadcnCSS(data, format) {
     data.grayScale.dark
   );
   const darkPrimaryForeground = getBestForeground(
-    data.accent,
+    darkPrimary,
     data.accentScale.dark,
     data.grayScale.dark
   );
@@ -157,7 +206,7 @@ function generateShadcnCSS(data, format) {
   --card-foreground: ${formatFn(lightForeground.color)};
   --popover: ${formatFn(data.lightBackground)};
   --popover-foreground: ${formatFn(lightForeground.color)};
-  --primary: ${formatFn(data.accent)};
+  --primary: ${formatFn(lightPrimary)};
   --primary-foreground: ${formatFn(lightPrimaryForeground.color)};
   --secondary: ${formatFn(data.accentScale.light[2])};
   --secondary-foreground: ${formatFn(lightSecondaryForeground.color)};
@@ -169,7 +218,7 @@ function generateShadcnCSS(data, format) {
   --destructive-foreground: ${formatFn(data.semantic.light.danger.foreground)};
   --border: ${formatFn(data.grayScale.light[6])};
   --input: ${formatFn(data.grayScale.light[6])};
-  --ring: ${formatFn(data.accent)};
+  --ring: ${formatFn(lightRing)};
   --chart-1: ${formatFn(data.accentScale.light[8])};
   --chart-2: ${formatFn(data.analogous.accentScale.light[8])};
   --chart-3: ${formatFn(data.complementary.accentScale.light[8])};
@@ -178,12 +227,12 @@ function generateShadcnCSS(data, format) {
   --radius: var(--radius-md);
   --sidebar: ${formatFn(data.lightBackground)};
   --sidebar-foreground: ${formatFn(lightForeground.color)};
-  --sidebar-primary: ${formatFn(data.accent)};
+  --sidebar-primary: ${formatFn(lightPrimary)};
   --sidebar-primary-foreground: ${formatFn(lightPrimaryForeground.color)};
   --sidebar-accent: ${formatFn(data.accentScale.light[2])};
   --sidebar-accent-foreground: ${formatFn(lightAccentForeground.color)};
   --sidebar-border: ${formatFn(data.grayScale.light[6])};
-  --sidebar-ring: ${formatFn(data.accent)};
+  --sidebar-ring: ${formatFn(lightRing)};
   --analogous: ${formatFn(data.analogous.accentScale.light[8])};
   --analogous-foreground: ${formatFn(lightAnalogousForeground.color)};
   --complementary: ${formatFn(data.complementary.accentScale.light[8])};
@@ -211,7 +260,7 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --card-foreground: ${formatFn(darkForeground.color)};
     --popover: ${formatFn(data.grayScale.dark[2])};
     --popover-foreground: ${formatFn(darkForeground.color)};
-    --primary: ${formatFn(data.accent)};
+    --primary: ${formatFn(darkPrimary)};
     --primary-foreground: ${formatFn(darkPrimaryForeground.color)};
     --secondary: ${formatFn(data.accentScale.dark[2])};
     --secondary-foreground: ${formatFn(darkSecondaryForeground.color)};
@@ -223,7 +272,7 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --destructive-foreground: ${formatFn(data.semantic.dark.danger.foreground)};
     --border: ${formatFn(data.grayScale.dark[6])};
     --input: ${formatFn(data.grayScale.dark[6])};
-    --ring: ${formatFn(data.accent)};
+    --ring: ${formatFn(darkRing)};
     --chart-1: ${formatFn(data.accentScale.dark[8])};
     --chart-2: ${formatFn(data.analogous.accentScale.dark[8])};
     --chart-3: ${formatFn(data.complementary.accentScale.dark[8])};
@@ -231,12 +280,12 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --chart-5: ${formatFn(data.semantic.dark.success.base)};
     --sidebar: ${formatFn(data.grayScale.dark[1])};
     --sidebar-foreground: ${formatFn(darkForeground.color)};
-    --sidebar-primary: ${formatFn(data.accent)};
+    --sidebar-primary: ${formatFn(darkPrimary)};
     --sidebar-primary-foreground: ${formatFn(darkPrimaryForeground.color)};
     --sidebar-accent: ${formatFn(data.accentScale.dark[2])};
     --sidebar-accent-foreground: ${formatFn(darkAccentForeground.color)};
     --sidebar-border: ${formatFn(data.grayScale.dark[6])};
-    --sidebar-ring: ${formatFn(data.accent)};
+    --sidebar-ring: ${formatFn(darkRing)};
     --analogous: ${formatFn(data.analogous.accentScale.dark[8])};
     --analogous-foreground: ${formatFn(darkAnalogousForeground.color)};
     --complementary: ${formatFn(data.complementary.accentScale.dark[8])};
@@ -352,6 +401,9 @@ function formatRadixMode(data, mode, format, indent) {
   const complementaryScale = data.complementary.accentScale[mode];
   const foreground = getBestForeground(background, grayScale, grayScale);
   const grayContrast = getBestForeground(radix.grayScale[8], radix.grayScale, radix.grayScale);
+  const accentContrast = getContrastRatio(radix.accentContrast, radix.accentScale[8]) >= 4.5
+    ? radix.accentContrast
+    : getBestForeground(radix.accentScale[8], radix.accentScale, radix.grayScale).color;
   const analogousForeground = getBestForeground(
     analogousScale[8],
     analogousScale,
@@ -372,7 +424,7 @@ ${indent}--color-background: ${formatFn(radix.background)};
 ${indent}/* Radix accent */
 ${radix.accentScale.map((color, i) => `${indent}--accent-${i + 1}: ${formatFn(color)};`).join("\n")}
 ${radix.accentScaleAlpha.map((color, i) => `${indent}--accent-a${i + 1}: ${formatFn(color)};`).join("\n")}
-${indent}--accent-contrast: ${formatFn(radix.accentContrast)};
+${indent}--accent-contrast: ${formatFn(accentContrast)};
 ${indent}--accent-surface: ${formatFn(radix.accentSurface)};
 ${indent}--accent-indicator: ${formatFn(radix.accentScale[8])};
 ${indent}--accent-track: ${formatFn(radix.accentScale[8])};

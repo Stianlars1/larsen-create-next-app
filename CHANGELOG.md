@@ -21,9 +21,9 @@ npm.
 - The shadcn preset now exposes its Card, Popover, chart, Sidebar, and radius
   contracts. It emits 81 color names in both modes plus root-level
   `--radius`, while retaining `--destructive-foreground` for compatibility.
-- The radix preset is now labeled `Radix Themes tokens` and emits the full
-  57-name Radix Themes contract plus 26 existing Larsen tokens. CSS Variables
-  remains the generic 50-name preset.
+- The radix preset is now labeled `Radix Themes custom-palette tokens` and
+  emits the 57-name custom-palette override contract plus 26 existing Larsen
+  tokens. CSS Variables remains the generic 50-name preset.
 - Current palette documentation now describes the implemented 82/81, 83, and
   50-name contracts. The dated audit remains research and provenance input.
 
@@ -35,6 +35,18 @@ npm.
   theme applies its final brand background, foreground, and ring overrides.
 - Mechanical shadcn contrast verification now includes Card and Popover text
   in both generated modes.
+- Custom shadcn primary and ring roles now retain the requested seed only when
+  it reaches their 1.5 and 3 contrast floors. Otherwise the closest passing
+  accent-scale value is used, and primary foreground is recomputed with the
+  existing scale-first chooser.
+- Radix accent contrast now keeps the upstream value only when it reaches 4.5
+  against accent step 9, otherwise using the scale-first foreground chooser.
+- HSL and HSL Values now retain up to four decimal places instead of rounding
+  every component to an integer, preventing serialization from lowering a
+  passing foreground pair below 4.5.
+- Release-style smoke coverage now scaffolds shadcn, Radix custom-palette, and
+  generic CSS Variables artifacts and asserts their 82/81, 83, and 50-name
+  contracts plus representative Radix alpha syntax.
 
 ---
 
