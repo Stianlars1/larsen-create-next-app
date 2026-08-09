@@ -1,63 +1,148 @@
-# Palette contract and known gaps
+# Palette contracts
 
-Current package-only reference for `palette/index.js` and the generated
-`theme.css` output. Counts and equivalence were checked on 2026-08-09 by
-running the public generator for all 18 preset-format combinations. The test
-fixture in `create-next-app/test/palette-contract.test.mjs` now locks this
-implemented contract.
+Current package-only reference for `palette/index.js` and generated
+`theme.css`. The deterministic fixture in
+`create-next-app/test/palette-contract.test.mjs` runs the public generator for
+all 18 preset-format combinations.
 
-This document does not describe any product site or the live Rampkit preview.
-`palette/NOTICE.md` is authoritative for vendored source provenance and local
-engine deviations.
+This document does not describe a product site or Rampkit preview.
+`palette/NOTICE.md` owns vendored source provenance and local deviations.
 
 ## Current matrix
 
-The matrix uses seed `#4DA0FF` and scheme `analogous`. Each light, automatic
-dark, explicit light, and explicit dark block has the same declaration names.
+The matrix uses seed `#4DA0FF` and scheme `analogous`. The light root and
+explicit-light blocks match each other. The automatic and explicit dark
+blocks match each other. shadcn's structural `--radius` is declared in the
+light/root contract and inherited by dark mode; every color name exists in
+both modes.
 
-| Preset | Format | Declarations per block | Format syntax checked | Equivalent declaration set |
-| --- | --- | ---: | --- | --- |
-| shadcn | hex | 64 | yes | none |
-| shadcn | rgb | 64 | yes | none |
-| shadcn | hsl | 64 | yes | none |
-| shadcn | hsl-values | 64 | yes | none |
-| shadcn | oklab | 64 | yes | none |
-| shadcn | oklch | 64 | yes | none |
-| radix | hex | 50 | yes | css-variables x hex |
-| radix | rgb | 50 | yes | css-variables x rgb |
-| radix | hsl | 50 | yes | css-variables x hsl |
-| radix | hsl-values | 50 | yes | css-variables x hsl-values |
-| radix | oklab | 50 | yes | css-variables x oklab |
-| radix | oklch | 50 | yes | css-variables x oklch |
-| css-variables | hex | 50 | yes | radix x hex |
-| css-variables | rgb | 50 | yes | radix x rgb |
-| css-variables | hsl | 50 | yes | radix x hsl |
-| css-variables | hsl-values | 50 | yes | radix x hsl-values |
-| css-variables | oklab | 50 | yes | radix x oklab |
-| css-variables | oklch | 50 | yes | radix x oklch |
+| Preset | Format | Light names | Dark names | Opaque syntax | Alpha syntax |
+| --- | --- | ---: | ---: | --- | --- |
+| shadcn | hex | 82 | 81 | checked | not emitted |
+| shadcn | rgb | 82 | 81 | checked | not emitted |
+| shadcn | hsl | 82 | 81 | checked | not emitted |
+| shadcn | hsl-values | 82 | 81 | checked | not emitted |
+| shadcn | oklab | 82 | 81 | checked | not emitted |
+| shadcn | oklch | 82 | 81 | checked | not emitted |
+| radix | hex | 83 | 83 | checked | checked |
+| radix | rgb | 83 | 83 | checked | checked |
+| radix | hsl | 83 | 83 | checked | checked |
+| radix | hsl-values | 83 | 83 | checked | checked |
+| radix | oklab | 83 | 83 | checked | checked |
+| radix | oklch | 83 | 83 | checked | checked |
+| css-variables | hex | 50 | 50 | checked | not emitted |
+| css-variables | rgb | 50 | 50 | checked | not emitted |
+| css-variables | hsl | 50 | 50 | checked | not emitted |
+| css-variables | hsl-values | 50 | 50 | checked | not emitted |
+| css-variables | oklab | 50 | 50 | checked | not emitted |
+| css-variables | oklch | 50 | 50 | checked | not emitted |
 
-The radix and css-variables declaration names, values, and ordering are equal
-within each format. Full generated files differ only where comments name the
-preset. The current engine implementation delegates the radix exporter to the
-CSS-variables exporter.
+Radix Themes and CSS Variables are distinct declaration contracts in every
+format. The generated file header also names the selected preset and format.
 
-### shadcn names
+## shadcn approved token-name contract
 
-The 64 names are:
+shadcn emits 81 color names in both modes plus root-level `--radius`:
 
-- 20 current semantic names: background, foreground, foreground-subtle,
-  primary and foreground, secondary and foreground, muted and foreground,
-  accent and foreground, destructive and foreground, border, input, ring,
-  analogous and foreground, complementary and foreground.
-- `accent-1` through `accent-12`.
-- `gray-1` through `gray-12`.
-- 20 status names: success, danger, warning, and info, each with foreground,
-  muted, muted-foreground, and border variants.
+- The approved 32-name shadcn semantic token-name contract: background,
+  foreground, card, popover, primary, secondary, muted, accent, destructive,
+  border, input, ring, radius, five chart names, and eight sidebar names with
+  their foreground variants.
+- 12-step solid accent and gray scales.
+- Larsen foreground-subtle, analogous, complementary, and 20 status names.
+- The legacy `--destructive-foreground` extra for projects generated by older
+  package versions.
 
-### radix and css-variables names
+The approved derived roles are:
 
-The 50 names are background, foreground, both 12-step scales, both harmony
-pairs, and the same 20 status names.
+| Token | Light source | Dark source |
+| --- | --- | --- |
+| card | background | gray step 2 |
+| card-foreground | foreground | foreground |
+| popover | background | gray step 3 |
+| popover-foreground | foreground | foreground |
+| primary | requested seed when it reaches 1.5, otherwise closest passing accent step | same rule |
+| primary-foreground | scale-first chooser against corrected primary | same rule |
+| ring | requested seed when it reaches 3, otherwise closest passing accent step | same rule |
+| radius | `var(--radius-md)` | inherited |
+| chart-1 | accent step 9 | accent step 9 |
+| chart-2 | analogous step 9 | analogous step 9 |
+| chart-3 | complementary step 9 | complementary step 9 |
+| chart-4 | warning base | warning base |
+| chart-5 | success base | success base |
+| sidebar | card | card |
+| sidebar-foreground | foreground | foreground |
+| sidebar-primary and foreground | primary pair | primary pair |
+| sidebar-accent and foreground | accent pair | accent pair |
+| sidebar-border | border | border |
+| sidebar-ring | ring | ring |
+
+Aliases are emitted as resolved color values so each mode remains
+self-contained and format-consistent. `--radius` is the one structural alias.
+This is a token-name and value contract, not a promise that shadcn components
+work without their separate Tailwind and runtime assumptions.
+
+## Radix Themes custom-palette override contract
+
+The `radix` preset is labeled `Radix Themes custom-palette tokens`. It emits
+83 unique names:
+
+- The 57-name Radix Themes custom-palette override contract:
+  `--color-background`, both 12-step solid scales, both 12-step alpha scales,
+  and contrast, surface, indicator, and track for accent and gray.
+- 26 retained Larsen names: background, foreground, four harmony names, and
+  20 status names.
+
+The exact Radix mappings are:
+
+| Radix token | Engine source |
+| --- | --- |
+| color-background | Radix mode background |
+| accent-1 through accent-12 | accent solid scale |
+| accent-a1 through accent-a12 | accent alpha scale |
+| accent-contrast | upstream value when it reaches 4.5 against accent step 9, otherwise scale-first foreground chooser |
+| accent-surface | generated accent surface |
+| accent-indicator and accent-track | accent step 9 |
+| gray-1 through gray-12 | gray solid scale |
+| gray-a1 through gray-a12 | gray alpha scale |
+| gray-contrast | foreground chooser against gray step 9 |
+| gray-surface | generated gray surface |
+| gray-indicator and gray-track | gray step 9 |
+
+P3 wide-gamut blocks are deliberately deferred and can be added later. This
+contract does not claim full Radix Themes runtime or framework compatibility.
+
+## CSS Variables contract
+
+`css-variables` remains the generic 50-name Larsen preset: background,
+foreground, both 12-step solid scales, four harmony names, and 20 status
+names. It makes no shadcn or Radix Themes compatibility promise.
+
+## Alpha serialization
+
+The shared formatter accepts 8-digit HEX and CSS colors with alpha. It
+preserves alpha in every requested format instead of dropping the final HEX
+byte in the RGB and HSL helper paths.
+
+For source `#1E73C806`, the deterministic examples are:
+
+| Format | Output |
+| --- | --- |
+| HEX | `#1E73C806` |
+| RGB | `rgba(30, 115, 200, 0.0235)` |
+| HSL | `hsla(210, 73.913%, 45.098%, 0.0235)` |
+| HSL Values | `210 73.913% 45.098% / 0.0235` |
+| OKLAB | `oklab(55.21% -0.0451 -0.1462 / 0.0235)` |
+| OKLCH | `oklch(55.21% 0.153 252.9 / 0.0235)` |
+
+Some final alpha-scale steps are intentionally opaque and therefore use the
+normal opaque syntax. Tests require representative alpha scale and surface
+values to retain an alpha-bearing syntax in every mode and format.
+
+HSL and HSL Values retain up to four decimal places. Integer rounding changed
+some source colors enough to move a 4.506 foreground pair to 4.486 after
+serialization. Precision is therefore part of the contrast contract, not
+only a cosmetic formatting choice.
 
 ## Default theme
 
@@ -72,83 +157,45 @@ The baked theme uses:
 
 The generator then pins background, foreground, and ring to the exact
 `#FAFAFA` and `#0A0A0A` surface pair and appends the three brand-blue tokens.
+Card, Popover, and Sidebar aliases are overridden with the same final values
+where their approved mapping depends on those pinned tokens.
 Regenerate the implemented default with `npm run gen:theme` and no argument.
 
-## Extreme-seed correction
+## Automatic role correction
 
-The engine normally keeps primary and ring at the input seed in both modes.
-For seed lightness below 15 percent or above 85 percent, this package instead
-uses the seed in the mode where it has useful contrast and a
-lightness-inverted counterpart in the other mode. The tested near-black case
-uses `#0A0A0A` for light mode and `#F5F5F5` for dark mode.
+For seed lightness below 15 percent or above 85 percent, the package pairs the
+seed with a lightness-inverted counterpart. The tested near-black case uses
+`#0A0A0A` for light mode and `#F5F5F5` for dark mode. Every newly derived
+shadcn and Radix value is rendered after this mode selection.
 
-This wrapper behavior intentionally differs from rendering both modes from
-the same extreme seed. It is part of the package contract and is covered by
-required-token and contrast tests.
-
-## Known upstream coverage gaps
-
-These are known limits, not implemented work.
-
-### shadcn
-
-The 2026-08-09 audit compared the output with the 32 light-mode names in the
-then-current shadcn neutral registry. The package emitted 14 of those names.
-It did not emit card, popover, radius, chart, or sidebar contracts. It also
-retained `--destructive-foreground`, which was absent from that registry but
-remains compatible with older generated projects.
-
-Adding the missing names requires an approved compatibility decision,
-deterministic fixtures, generated-project coverage, and a migration decision
-for the legacy extra. No such expansion is implemented in 0.3.0.
-
-### Radix Themes
-
-The current radix output is a 50-name generic scale contract, not the complete
-Radix Themes custom-palette contract. It omits alpha scales,
-`--color-background`, contrast, surface, indicator, and track roles. The
-engine already computes much of the underlying data, but the exporter and
-formatters do not expose it.
-
-The audit proposed an 83-name result: 57 relevant Radix Themes names plus the
-26 existing package extras. That number is a design proposal only. It is not
-implemented and is not asserted by current tests.
-
-### Alpha formatting
-
-Exposing stored alpha scales requires alpha-aware serialization for every
-format. The current RGB and HSL helper path discards alpha from eight-digit
-HEX input. Token expansion must not proceed until alpha preservation has its
-own failing tests and implemented formatter contract.
-
-## Tailwind review
-
-Tailwind remains out of scope. The CLI always passes `--no-tailwind`. Adding
-Tailwind would create a second styling API, require a token-to-utility bridge,
-and introduce reset ownership and cascade questions beside this package's
-vanilla CSS reset. The vendored engine's Tailwind exporter is not a supported
-bridge for this package.
-
-Do not add a Tailwind flag, guide, or companion output to this package. Reopen
-the product decision only on explicit user demand, and treat a separately
-named package as a new product rather than silently widening this contract.
+Mode selection alone is not sufficient for every mid-range hue. The shadcn
+exporter therefore preserves the selected seed only when primary reaches the
+1.5 visibility floor and ring reaches 3 against the mode background. A
+failing role uses the perceptually closest passing color from the same accent
+scale. Primary foreground is recomputed against the corrected primary with
+the accent-scale-first, gray-scale-second chooser. Radix accent contrast keeps
+the upstream value at 4.5 or higher and otherwise uses the same chooser.
 
 ## Test boundary
 
 The mechanical contrast parser supports only `shadcn` with `hsl-values` and
 checks both generated modes:
 
-- `--foreground` vs `--background` must reach 4.5.
-- `--ring` vs `--background` must reach 3.
-- `--primary-foreground` vs `--primary` must reach 4.5.
-- `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
-  visibility floor.
+- foreground against background at 4.5.
+- card-foreground against card at 4.5.
+- popover-foreground against popover at 4.5.
+- ring against background at 3.
+- primary-foreground against primary at 4.5.
+- primary against background at the deliberately non-WCAG 1.5 visibility
+  floor.
 
-It fails on missing required tokens. It does not guarantee contrast for any
-other preset-format matrix entry.
+It fails on missing required tokens. The generator performs the shadcn role
+correction before all six serialization formats, but this parser does not
+claim to parse the other formats. Representative Radix accent contrast pairs
+are checked separately at 4.5 in all six formats. The deterministic matrix
+separately proves names, order, mode structure, selected syntax, alpha
+preservation, exact approved mappings, and the distinction between Radix
+Themes and CSS Variables.
 
-The deterministic matrix proves the names, order, four-block structure, and
-selected serialization syntax of the current output. It deliberately records
-the current incomplete preset contracts. It does not prove future parity with
-shadcn or Radix Themes. Upstream drift checks belong in a separately approved,
-networked verification job.
+Upstream drift checks remain a separate networked verification concern. The
+runtime suite is intentionally offline and pinned.

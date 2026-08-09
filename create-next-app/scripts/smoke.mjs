@@ -79,6 +79,26 @@ function runSync(cmd, args, cwd) {
   };
 }
 
+/** @param {string} css */
+function themeBlocks(css) {
+  const mediaStart = css.indexOf("@media (prefers-color-scheme: dark)");
+  const explicitLightStart = css.indexOf('[data-theme="light"]');
+  const explicitDarkStart = css.indexOf('[data-theme="dark"]');
+  const defaultsStart = css.indexOf("/* Document defaults");
+  return [
+    css.slice(css.indexOf(":root {"), mediaStart),
+    css.slice(mediaStart, explicitLightStart),
+    css.slice(explicitLightStart, explicitDarkStart),
+    css.slice(explicitDarkStart, defaultsStart),
+  ];
+}
+
+/** @param {string} block */
+function themeDeclarations(block) {
+  return [...block.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)]
+    .map((match) => ({ name: match[1], value: match[2] }));
+}
+
 const work = mkdtempSync(join(tmpdir(), "lu-smoke-"));
 const mode = dev ? "dev" : suppliedTarball ? "supplied tarball" : "packed tarball";
 console.log(`smoke: workdir ${work} (${mode}${full ? ", full" : ""} mode)`);
@@ -253,6 +273,90 @@ try {
   check(
     customContrastFailures.length === 0,
     `extreme-seed shadcn hsl-values contrast checks (${customContrastFailures.join("; ") || "all pairs pass"})`,
+  );
+  const requiredShadcnNames = [
+    "radius", "chart-1", "chart-2", "chart-3", "chart-4", "chart-5",
+    "sidebar", "sidebar-foreground", "sidebar-primary",
+    "sidebar-primary-foreground", "sidebar-accent",
+    "sidebar-accent-foreground", "sidebar-border", "sidebar-ring",
+  ];
+  const customBlocks = themeBlocks(customTheme).map(themeDeclarations);
+  check(
+    customBlocks.every((block, index) => block.length === (index % 2 === 0 ? 82 : 81)),
+    "custom shadcn artifact keeps the 82/81 declaration contract",
+  );
+  check(
+    requiredShadcnNames.every((name) => customBlocks[0].some((item) => item.name === name))
+      && requiredShadcnNames.filter((name) => name !== "radius")
+        .every((name) => customBlocks[1].some((item) => item.name === name)),
+    "custom shadcn artifact includes radius, chart, and sidebar contracts",
+  );
+
+  // Run 3: Radix Themes custom-palette override contract with alpha output.
+  const run3 = runSync(
+    cliCmd[0],
+    [
+      ...cliCmd.slice(1),
+      "app-radix",
+      "--hex", "F59E0B",
+      "--preset", "radix",
+      "--format", "oklch",
+      "--scheme", "complementary",
+      "--linter", "biome",
+      "--pm", "npm",
+      "--no-git",
+      "--no-install",
+      "--no-skills",
+    ],
+    work,
+  );
+  check(run3.ok, "scaffold with Radix custom-palette override exits 0");
+  const radixTheme = readFileSync(
+    join(work, "app-radix", "src", "lib", "design-system", "theme.css"),
+    "utf8",
+  );
+  const radixBlocks = themeBlocks(radixTheme).map(themeDeclarations);
+  check(
+    radixBlocks.every((block) => block.length === 83),
+    "Radix artifact keeps 83 declarations in every mode block",
+  );
+  check(
+    radixBlocks.every((block) => ["accent-a1", "gray-a1", "accent-surface", "gray-surface"]
+      .every((name) => block.find((item) => item.name === name)?.value.includes(" / "))),
+    "Radix artifact preserves alpha in representative OKLCH tokens",
+  );
+
+  // Run 4: generic CSS Variables contract remains independent and compact.
+  const run4 = runSync(
+    cliCmd[0],
+    [
+      ...cliCmd.slice(1),
+      "app-css-variables",
+      "--hex", "F5F5F5",
+      "--preset", "css-variables",
+      "--format", "oklab",
+      "--scheme", "triadic",
+      "--linter", "none",
+      "--pm", "npm",
+      "--no-git",
+      "--no-install",
+      "--no-skills",
+    ],
+    work,
+  );
+  check(run4.ok, "scaffold with generic CSS Variables exits 0");
+  const cssVariablesTheme = readFileSync(
+    join(work, "app-css-variables", "src", "lib", "design-system", "theme.css"),
+    "utf8",
+  );
+  const cssVariablesBlocks = themeBlocks(cssVariablesTheme).map(themeDeclarations);
+  check(
+    cssVariablesBlocks.every((block) => block.length === 50),
+    "CSS Variables artifact keeps 50 declarations in every mode block",
+  );
+  check(
+    !cssVariablesTheme.includes("--sidebar:") && !cssVariablesTheme.includes("--accent-a1:"),
+    "CSS Variables artifact does not acquire shadcn or Radix-only names",
   );
 
   // Full mode: install + production build

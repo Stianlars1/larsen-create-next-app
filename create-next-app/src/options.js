@@ -6,9 +6,12 @@ import { FORMATS, PRESETS, SCHEMES } from "../palette/index.js";
 const PRESET_DISPLAY = {
   shadcn: {
     label: "shadcn/ui",
-    hint: "semantic tokens + scales (recommended)",
+    hint: "approved semantic token names + Larsen scales (recommended)",
   },
-  radix: { label: "Radix Colors", hint: "accent + gray scales" },
+  radix: {
+    label: "Radix Themes custom-palette tokens",
+    hint: "57 override names + 26 Larsen tokens",
+  },
   "css-variables": { label: "CSS Variables", hint: "accent + gray scales" },
 };
 

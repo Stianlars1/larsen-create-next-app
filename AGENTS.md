@@ -29,11 +29,14 @@ about npm publication.
 - Clarify decisions with more than one defensible answer. Do not guess.
 - Never publish to npm or handle an npm OTP. Stian publishes.
 - Test the generated app and release artifact, not only source helpers.
-- The mechanical contrast gate supports only `shadcn` with `hsl-values`:
+- The mechanical CSS contrast parser supports only `shadcn` with `hsl-values`:
   `--foreground` vs `--background` at 4.5, `--ring` vs `--background` at 3,
-  `--primary-foreground` vs `--primary` at 4.5, and `--primary` vs
-  `--background` at the deliberately non-WCAG 1.5 visibility floor. It does
-  not guarantee any other preset-format entry.
+  `--card-foreground` vs `--card` at 4.5, `--popover-foreground` vs
+  `--popover` at 4.5, `--primary-foreground` vs `--primary` at 4.5, and
+  `--primary` vs `--background` at the deliberately non-WCAG 1.5 visibility
+  floor. The generator applies primary and ring corrections before all format
+  serialization. Representative Radix accent contrast pairs are checked
+  separately at 4.5 in all six formats.
 
 ## Edit map
 

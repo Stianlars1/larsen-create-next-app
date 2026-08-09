@@ -17,8 +17,8 @@
 
 import Color from "colorjs.io";
 import { generatePalette } from "./engine/generatePalette.js";
-import { generateExportCode } from "./engine/export-formats.js";
-import { hexToHSL, hexToRGB, isValidHex } from "./engine/color-utils.js";
+import { formatColor, generateExportCode } from "./engine/export-formats.js";
+import { hexToHSL, isValidHex } from "./engine/color-utils.js";
 
 /** CLI-facing names -> engine enums */
 export const PRESETS = /** @type {const} */ ({
@@ -52,11 +52,10 @@ export const DEFAULT_THEME = /** @type {const} */ ({
 });
 
 /**
- * The engine keeps --primary and --ring at the seed color in BOTH modes, so
- * an extreme seed makes one mode unusable: a near-black seed yields a
- * near-black primary on the near-black dark surface (about 1:1 contrast -
- * invisible buttons and focus rings), and a near-white seed does the same to
- * light mode. Past these thresholds each mode is generated from its own seed.
+ * The raw engine starts --primary and --ring from the seed color in both
+ * modes. Extreme seeds therefore need separate mode seeds before export. The
+ * shadcn exporter then keeps each selected seed only where the role-specific
+ * visibility floor passes, or chooses the closest passing accent-scale step.
  */
 const EXTREME_LIGHTNESS = { min: 15, max: 85 };
 
@@ -87,35 +86,6 @@ export function seedsForModes(hex, explicitDark) {
     : { lightSeed: counterpart, darkSeed: hex };
 }
 
-/**
- * Formats a hex color the same way the engine formats palette values, so
- * token overrides match the rest of the file.
- * @param {string} hex
- * @param {keyof typeof FORMATS} format
- */
-function formatValue(hex, format) {
-  switch (format) {
-    case "hsl-values": {
-      const { h, s, l } = hexToHSL(hex);
-      return `${h} ${s}% ${l}%`;
-    }
-    case "hsl": {
-      const { h, s, l } = hexToHSL(hex);
-      return `hsl(${h}, ${s}%, ${l}%)`;
-    }
-    case "rgb": {
-      const { r, g, b } = hexToRGB(hex);
-      return `rgb(${r}, ${g}, ${b})`;
-    }
-    case "oklab":
-      return new Color(hex).to("oklab").toString({ precision: 4 });
-    case "oklch":
-      return new Color(hex).to("oklch").toString({ precision: 4 });
-    default:
-      return hex;
-  }
-}
-
 export { isValidHex };
 
 /** @param {string} hex */
@@ -144,7 +114,9 @@ export function usageIdioms(format) {
 
 /**
  * Semantic roles -> the real token name each preset provides for that role.
- * shadcn emits semantic tokens; radix/css-variables emit only the scales.
+ * shadcn emits approved semantic token names. Radix Themes and CSS Variables
+ * retain the Larsen base roles, while only Radix adds custom-palette override
+ * names.
  */
 const ROLE_TOKENS = {
   shadcn: {
@@ -155,8 +127,8 @@ const ROLE_TOKENS = {
     accentSoft: "accent-3",
     line: "border",
   },
-  // The scale presets emit --background and --foreground too, but no --muted
-  // or --border, so those two roles fall back to the gray scale.
+  // Both non-shadcn presets emit --background and --foreground, but neither
+  // promises --muted or --border, so those roles use the shared gray scale.
   radix: {
     background: "background",
     foreground: "foreground",
@@ -310,7 +282,7 @@ function applyOverrides(block, overrides, format) {
   if (!overrides) return block;
   let out = block;
   for (const [token, hex] of Object.entries(overrides)) {
-    const value = formatValue(normalizeHex(hex), format);
+    const value = formatColor(normalizeHex(hex), FORMATS[format]);
     const pattern = new RegExp(`(--${token}:)[^;]*;`);
     out = pattern.test(out)
       ? out.replace(pattern, `$1 ${value};`)

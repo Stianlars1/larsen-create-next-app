@@ -84,6 +84,16 @@ const explicitBase = [
   "--no-install",
 ];
 
+test("the radix preset is presented as a Radix Themes custom-palette contract", () => {
+  const preset = OPTION_CONTRACT.find((option) => option.name === "preset");
+  const radix = preset?.choices.find((choice) => choice.value === "radix");
+  assert.deepEqual(radix, {
+    value: "radix",
+    label: "Radix Themes custom-palette tokens",
+    hint: "57 override names + 26 Larsen tokens",
+  });
+});
+
 test("help exposes every explicit yes and no flag", () => {
   const result = spawnSync(process.execPath, [cli, "--help"], {
     cwd: packageDir,

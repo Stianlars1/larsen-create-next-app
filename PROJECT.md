@@ -34,9 +34,9 @@ is enabled, and optional skills.
 | Current package behavior and boundaries | This file |
 | Flags, prompts, defaults, interactions, and CI use | [docs/reference/cli.md](docs/reference/cli.md) |
 | Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
-| Current palette matrix and known gaps | [docs/reference/palette.md](docs/reference/palette.md) |
+| Current palette contracts and boundaries | [docs/reference/palette.md](docs/reference/palette.md) |
 | Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
-| Dated local 0.3.0 verification | [docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md) |
+| Dated local verification | [0.3.0](docs/verification/local-0.3.0.md), [0.4.0](docs/verification/local-0.4.0.md) |
 | User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
 | Approved 0.1.0 planning snapshot | [docs/plans/2026-08-07-create-next-app-template.md](docs/plans/2026-08-07-create-next-app-template.md) |
 
@@ -196,8 +196,9 @@ horizontal-rule colors using real tokens for the selected preset and format.
 The baked default is `#4DA0FF`, `shadcn`, `hsl-values`, and
 `monochromatic`. Its background, foreground, and ring are pinned to the
 `#FAFAFA` and `#0A0A0A` surface pair. It also adds `--brand-blue`,
-`--brand-blue-soft`, and `--brand-blue-subtle`. Regenerate that exact default
-from the repository root with:
+`--brand-blue-soft`, and `--brand-blue-subtle`. Card, Popover, and Sidebar
+aliases stay aligned with the final pinned background, foreground, and ring
+values. Regenerate that exact default from the repository root with:
 
 ```bash
 npm run gen:theme
@@ -234,21 +235,37 @@ Current custom choices are:
 - Schemes: `analogous`, `monochromatic`, `complementary`, `triadic`.
 
 For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
-so the accent works on both light and dark surfaces. The mechanical verifier
-supports only `shadcn` with `hsl-values` and both generated modes:
+before export. For every seed, shadcn keeps the selected seed as primary and
+ring only when it reaches the role's floor in that mode. Otherwise it selects
+the perceptually closest passing accent-scale color. Primary foreground is
+then recomputed with the existing accent-scale-first chooser. Radix keeps the
+upstream accent contrast only when it reaches 4.5 against accent step 9 and
+otherwise uses that same scale-first chooser.
+
+The mechanical CSS verifier parses only `shadcn` with `hsl-values` and checks
+both generated modes:
 
 - `--foreground` vs `--background` must reach 4.5.
+- `--card-foreground` vs `--card` must reach 4.5.
+- `--popover-foreground` vs `--popover` must reach 4.5.
 - `--ring` vs `--background` must reach 3.
 - `--primary-foreground` vs `--primary` must reach 4.5.
 - `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
   visibility floor.
 
-These checks do not guarantee any other preset-format matrix entry.
+The generator applies these role corrections before serialization, so format
+selection cannot bypass them. The CSS parser itself makes no broader
+preset-format claim. Representative Radix accent pairs are checked separately
+at 4.5 in all six generated formats.
 
-The deterministic 3 x 6 preset-format matrix records the current contract,
-including known incompleteness. It does not claim upstream shadcn or Radix
-Themes completeness. See [docs/reference/palette.md](docs/reference/palette.md)
-for exact token counts, current gaps, and proposals that are not implemented.
+The deterministic 3 x 6 preset-format matrix locks the implemented contracts:
+shadcn exposes 81 color names in both modes plus root-level `--radius`, Radix
+Themes exposes 83 names in both modes, and CSS Variables remains the generic
+50-name contract. Radix alpha scales and surfaces preserve alpha in all six
+formats. HSL and HSL Values retain enough component precision to preserve
+contrast through serialization. See
+[docs/reference/palette.md](docs/reference/palette.md) for exact names,
+mappings, serialization, and deliberately deferred P3 output.
 
 ## Optional Larsen Skills
 
@@ -301,8 +318,7 @@ After those local gates, Stian may publish the same reported tarball. Exact
 registry verification and tag creation are separate post-publication steps.
 The current published record is in
 [docs/verification/releases.md](docs/verification/releases.md). Dated local
-0.3.0 release-readiness evidence is in
-[docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md).
+release-readiness evidence is in `docs/verification/local-<version>.md`.
 
 ## Explicit non-goals
 
@@ -311,6 +327,9 @@ The current published record is in
 - No JavaScript theme controller.
 - No font selection.
 - No automatic updates to existing generated projects.
-- No package publication, tag push, branch push, or deployment by an agent.
-- No claim that current shadcn or Radix output implements each upstream token.
+- No npm publication or OTP handling by an agent. Stian publishes the exact
+  verified tarball. Git and GitHub release actions require explicit owner
+  authorization.
+- No claim of full shadcn component compatibility, full Radix Themes runtime
+  compatibility, every upstream token, or the deferred Radix P3 blocks.
 - No product-site, blog, domain, or deployment status in this package contract.

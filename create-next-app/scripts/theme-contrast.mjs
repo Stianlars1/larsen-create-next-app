@@ -9,6 +9,18 @@ export const CONTRAST_CHECKS = Object.freeze([
     minimum: 4.5,
     standard: "WCAG",
   }),
+  Object.freeze({
+    token: "card-foreground",
+    against: "card",
+    minimum: 4.5,
+    standard: "WCAG",
+  }),
+  Object.freeze({
+    token: "popover-foreground",
+    against: "popover",
+    minimum: 4.5,
+    standard: "WCAG",
+  }),
   Object.freeze({ token: "ring", against: "background", minimum: 3, standard: "WCAG" }),
   Object.freeze({
     token: "primary-foreground",
@@ -25,11 +37,7 @@ export const CONTRAST_CHECKS = Object.freeze([
 ]);
 
 const REQUIRED_TOKENS = [
-  "background",
-  "foreground",
-  "ring",
-  "primary",
-  "primary-foreground",
+  ...new Set(CONTRAST_CHECKS.flatMap(({ token, against }) => [token, against])),
 ];
 
 /**

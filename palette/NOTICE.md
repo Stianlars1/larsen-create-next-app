@@ -17,9 +17,25 @@ authored by Stian Larsen.
    falls back to HEX).
 4. Type-only modules (`types/index.ts`, `types/radix.ts`) not vendored -
    types are erased in the JS build.
+5. `export-formats.js`: alpha-aware serialization preserves 8-digit HEX and
+   CSS color alpha in HEX, RGB, HSL, HSL Values, OKLAB, and OKLCH output.
+6. `generateShadcnCSS`: completed the approved shadcn semantic token-name
+   contract with card, popover, radius, chart, and sidebar tokens while
+   retaining the legacy `--destructive-foreground` extra.
+7. `generateRadixCSS`: replaced the upstream CSS Variables alias with the
+   57-name Radix Themes custom-palette override contract plus the existing 26
+   Larsen tokens. P3 wide-gamut blocks remain deferred.
+8. `export-formats.js`: shadcn primary and ring roles keep the requested seed
+   when it passes their contrast floor, otherwise use the closest passing
+   accent-scale color. Radix accent contrast keeps the upstream value only
+   when it reaches WCAG AA, otherwise it uses the existing scale-first
+   foreground chooser.
+9. `formatColor`: HSL and HSL Values retain up to four decimal places instead
+   of rounding every component to an integer. This prevents serialization
+   from moving a passing foreground pair below its WCAG threshold.
 
-When re-syncing with upstream, re-apply deviations 2 and 3 (or port them
-upstream first).
+When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 9 (or
+port them upstream first).
 
 ## License
 

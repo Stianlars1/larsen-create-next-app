@@ -100,6 +100,7 @@ test("contrast authorities state the exact supported boundary and thresholds", (
     assert.match(normalized, /primary-foreground.*primary.*4\.5/i);
     assert.match(normalized, /primary.*background.*1\.5/i);
     assert.match(normalized, /non-WCAG/i);
-    assert.match(normalized, /other preset-format/i);
+    assert.match(normalized, /generator.*before.*serializ/i);
+    assert.match(normalized, /Radix.*accent.*4\.5/i);
   }
 });

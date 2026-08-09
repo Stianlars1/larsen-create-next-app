@@ -1,7 +1,7 @@
 # Published release evidence
 
 Registry evidence for `@larsen-utvikling/create-next-app` versions 0.1.0
-through 0.2.2, queried from npm on 2026-08-09. This is a publication trace,
+through 0.3.0, queried from npm on 2026-08-09. This is a publication trace,
 not proof that current local source matches a published artifact.
 
 ## Evidence method
@@ -27,9 +27,10 @@ the registry for that tarball.
 | 0.2.0 | 2026-08-08T08:04:27.184Z | `dca3f698eae25e9813b96dbbbbb0f9982138d111` | `3ea96dc948efa0d9a19c9a088dff36bbd0771fee` |
 | 0.2.1 | 2026-08-08T17:12:31.749Z | `d056122bfdaa4c9b591b9db02838b688635e7eee` | `396704e92a027305ebfbdf9462a9dde4c06bf66f` |
 | 0.2.2 | 2026-08-08T20:39:55.720Z | `9029dd023024b20ce5288f46831bb91013f2b632` | `c08a4792aaa74117eb0eb2bb9b9459b44589f25b` |
+| 0.3.0 | 2026-08-09T08:37:31.570Z | `2ee1ccb60e2f0e7a15acaa3b55f6dabe043386a3` | `5e3fc3d23d53461533eadf518f916c5360d421a5` |
 
-At query time, npm listed exactly those five versions and the `latest` dist
-tag pointed to 0.2.2.
+At query time, npm listed exactly those six versions and the `latest` dist
+tag pointed to 0.3.0.
 
 ## Actual release deltas
 
@@ -83,17 +84,31 @@ Changes between the 0.2.1 and 0.2.2 registry `gitHead` objects:
 - added maintainer-oriented project, agent, and changelog documentation
 - no generated-project behavior change was recorded for this version
 
-## 0.3.0 boundary
+### 0.3.0
 
-The current branch manifest says 0.3.0, but npm did not list 0.3.0 on
-2026-08-09. Therefore 0.3.0 is local and unpublished. A local commit, test
-run, release tarball, or tag cannot change that statement. Only an owner-run
-publish followed by exact registry verification can add a 0.3.0 row here.
+Changes between the 0.2.2 and 0.3.0 registry `gitHead` objects:
 
-The repository must not create or claim a 0.3.0 release tag before that
-publication boundary. Existing-version tag work is a separate verification
-task and is not evidence that 0.3.0 has shipped.
+- centralized the wrapper option contract and generated the CLI reference
+  from that source
+- added explicit palette, git, and install flags with conflict and input
+  validation
+- characterized all 18 current palette preset and format combinations and
+  pinned the 64/50/50 contracts, format syntax, contrast boundaries, and the
+  radix and css-variables equivalence
+- strengthened generated-project, overlay, packaging, and full install and
+  production-build verification
+- introduced the one-artifact release flow with clean-source enforcement and
+  exact committed `gitHead` provenance
+- separated current package authority, historical plans, local verification,
+  published evidence, and version history
 
-The dated local 0.3.0 source, artifact, smoke, build, and reconstructed-tag
-evidence is recorded separately in
-[local-0.3.0.md](local-0.3.0.md). That local record is not registry evidence.
+## 0.3.0 publication verification
+
+npm listed 0.3.0 with `latest` pointing to it. The published `gitHead` is the
+current `main` commit. Annotated tag `v0.3.0` peels to that same object, and
+the matching GitHub Release is published as
+[v0.3.0 - Verified CLI and release foundation](https://github.com/Stianlars1/larsen-create-next-app/releases/tag/v0.3.0).
+
+The dated pre-publication source, artifact, smoke, build, and reconstructed-tag
+evidence remains in [local-0.3.0.md](local-0.3.0.md). That local record and the
+registry trace above are separate evidence layers.

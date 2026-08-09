@@ -66,8 +66,27 @@ const BRAND_ACCENTS = `
  */
 const WHITE = "#FAFAFA";
 const BLACK = "#0A0A0A";
-const brandLight = { background: WHITE, foreground: BLACK, ring: BLACK };
-const brandDark = { background: BLACK, foreground: WHITE, ring: WHITE };
+const brandLight = {
+  background: WHITE,
+  foreground: BLACK,
+  card: WHITE,
+  "card-foreground": BLACK,
+  popover: WHITE,
+  "popover-foreground": BLACK,
+  ring: BLACK,
+  sidebar: WHITE,
+  "sidebar-foreground": BLACK,
+  "sidebar-ring": BLACK,
+};
+const brandDark = {
+  background: BLACK,
+  foreground: WHITE,
+  "card-foreground": WHITE,
+  "popover-foreground": WHITE,
+  ring: WHITE,
+  "sidebar-foreground": WHITE,
+  "sidebar-ring": WHITE,
+};
 
 const css = generateThemeCss({
   hex: seed,

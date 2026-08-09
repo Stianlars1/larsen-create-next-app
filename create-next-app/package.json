@@ -1,6 +1,6 @@
 {
   "name": "@larsen-utvikling/create-next-app",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Request create-next-app, then add the Larsen Utvikling vanilla CSS design system, agent docs, and an optional palette generated from one HEX.",
   "keywords": [
     "create-next-app",
