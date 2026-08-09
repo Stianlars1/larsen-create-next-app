@@ -28,6 +28,7 @@ import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packRelease } from "./pack-release.mjs";
+import { generatedDocsChecks } from "./smoke-contract.mjs";
 import { checkThemeContrast } from "./theme-contrast.mjs";
 
 const pkgDir = fileURLToPath(new URL("..", import.meta.url));
@@ -141,13 +142,7 @@ try {
     motion.includes("prefers-reduced-motion") && motion.includes("--enter-distance: 0px"),
     "motion.css collapses movement under reduced motion",
   );
-  for (const file of ["AGENTS.md", "CLAUDE.md", "DESIGN.md", "README.md", "NEXTJS.md"]) {
-    check(existsSync(join(app, file)), `${file} exists`);
-  }
-  if (existsSync(join(app, "NEXTJS.md"))) {
-    const nextJs = readFileSync(join(app, "NEXTJS.md"), "utf8");
-    check(nextJs.trim().length > 0, "NEXTJS.md preserves non-empty create-next-app guidance");
-  }
+  for (const docCheck of generatedDocsChecks(app)) check(docCheck.ok, docCheck.label);
   check(existsSync(join(app, "public", "larsen-utvikling", "logo.svg")), "logo assets exist");
   check(!existsSync(join(app, "src", "app", "page.module.css")), "page.module.css removed");
   check(!existsSync(join(app, "public", "next.svg")), "branding svgs removed");

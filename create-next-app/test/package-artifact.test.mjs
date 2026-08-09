@@ -42,13 +42,31 @@ test("release packing preserves maintainer metadata and removes dead scripts fro
     const artifactStem = sourceManifest.name.replace(/^@/, "").replace("/", "-");
     const expectedName = `${artifactStem}-${sourceManifest.version}.tgz`;
     assert.equal(basename(tarball), expectedName);
+
+    const publishDryRun = spawnSync(
+      "npm",
+      ["publish", "--dry-run", "--ignore-scripts=false", tarball],
+      {
+        cwd: outputDir,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    assert.equal(
+      publishDryRun.status,
+      0,
+      `the staged consumer tarball must remain publication-safe\n${publishDryRun.stdout}${publishDryRun.stderr}`,
+    );
   } finally {
     rmSync(outputDir, { recursive: true, force: true });
   }
 });
 
 test("source-directory publication is refused in favor of the verified tarball", () => {
-  const result = spawnSync(process.execPath, ["scripts/refuse-source-publish.mjs"], {
+  const manifest = JSON.parse(readFileSync(join(packageDir, "package.json"), "utf8"));
+  assert.equal(manifest.scripts.prepublishOnly, "node scripts/refuse-source-publish.mjs");
+
+  const result = spawnSync("npm", ["publish", "--dry-run", "--ignore-scripts=false"], {
     cwd: packageDir,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
