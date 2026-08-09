@@ -36,7 +36,7 @@ is enabled, and optional skills.
 | Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
 | Current palette contracts and boundaries | [docs/reference/palette.md](docs/reference/palette.md) |
 | Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
-| Dated local 0.3.0 verification | [docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md) |
+| Dated local verification | [0.3.0](docs/verification/local-0.3.0.md), [0.4.0](docs/verification/local-0.4.0.md) |
 | User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
 | Approved 0.1.0 planning snapshot | [docs/plans/2026-08-07-create-next-app-template.md](docs/plans/2026-08-07-create-next-app-template.md) |
 
@@ -318,8 +318,7 @@ After those local gates, Stian may publish the same reported tarball. Exact
 registry verification and tag creation are separate post-publication steps.
 The current published record is in
 [docs/verification/releases.md](docs/verification/releases.md). Dated local
-0.3.0 release-readiness evidence is in
-[docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md).
+release-readiness evidence is in `docs/verification/local-<version>.md`.
 
 ## Explicit non-goals
 
@@ -328,7 +327,9 @@ The current published record is in
 - No JavaScript theme controller.
 - No font selection.
 - No automatic updates to existing generated projects.
-- No package publication, tag push, branch push, or deployment by an agent.
+- No npm publication or OTP handling by an agent. Stian publishes the exact
+  verified tarball. Git and GitHub release actions require explicit owner
+  authorization.
 - No claim of full shadcn component compatibility, full Radix Themes runtime
   compatibility, every upstream token, or the deferred Radix P3 blocks.
 - No product-site, blog, domain, or deployment status in this package contract.

@@ -8,14 +8,15 @@ a generated project contains counts as user-facing.
 
 ---
 
-## [Unreleased] - 0.4.0 palette contracts
+## [0.4.0] - 2026-08-09
 
-0.4.0 is prepared in the local package manifest and has not been published to
-npm.
+Local release-readiness evidence is recorded separately in
+`docs/verification/local-0.4.0.md`. npm publication remains an owner action.
 
 ### Added
 - Deterministic desired-contract coverage for all 18 palette preset and format
-  combinations, including alpha syntax and exact framework mappings.
+  combinations, including alpha syntax and exact approved token-name and
+  custom-palette override mappings.
 
 ### Changed
 - The shadcn preset now exposes its Card, Popover, chart, Sidebar, and radius
