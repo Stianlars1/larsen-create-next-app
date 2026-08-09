@@ -40,6 +40,11 @@ function releaseFixture() {
         !source.endsWith(".tgz");
     },
   });
+  const fixtureManifestPath = join(fixtureRoot, "create-next-app", "package.json");
+  const fixtureManifest = JSON.parse(readFileSync(fixtureManifestPath, "utf8"));
+  const currentMajor = Number.parseInt(fixtureManifest.version.split(".")[0], 10);
+  fixtureManifest.version = `${currentMajor + 1}.0.${Date.now()}`;
+  writeFileSync(fixtureManifestPath, `${JSON.stringify(fixtureManifest, null, 2)}\n`);
   run("git", ["init", "-q"], fixtureRoot);
   run("git", ["config", "user.name", "Release Test"], fixtureRoot);
   run("git", ["config", "user.email", "release-test@example.invalid"], fixtureRoot);

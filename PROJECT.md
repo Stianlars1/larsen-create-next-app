@@ -304,6 +304,11 @@ in the staged consumer manifest. npm packing and tarball publication dry-run
 must preserve that exact value. A later evidence-only commit does not change
 the already packed artifact or its embedded source identity.
 
+The artifact-shape test uses an isolated synthetic unpublished version for its
+publication dry-run. This keeps `npm test` repeatable after the real version
+has been published, when npm correctly refuses another dry-run of that exact
+version.
+
 ## Release flow
 
 ```bash

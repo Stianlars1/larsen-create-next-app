@@ -8,10 +8,18 @@ a generated project contains counts as user-facing.
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- The isolated artifact publication dry-run now uses a synthetic unpublished
+  version, so `npm test` remains repeatable after the real version is already
+  published.
+
 ## [0.4.0] - 2026-08-09
 
-Local release-readiness evidence is recorded separately in
-`docs/verification/local-0.4.0.md`. npm publication remains an owner action.
+Publication evidence is recorded in `docs/verification/releases.md`. Local
+release-readiness evidence is recorded separately in
+`docs/verification/local-0.4.0.md`.
 
 ### Added
 - Deterministic desired-contract coverage for all 18 palette preset and format
