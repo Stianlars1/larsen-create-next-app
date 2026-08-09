@@ -1,441 +1,316 @@
 # PROJECT.md - @larsen-utvikling/create-next-app
 
-The complete reference for this solution. If you are an agent or a person
-picking this up cold, read this file first: it describes what exists, what it
-does, why it does it that way, and what it deliberately does not do. Nothing
-here should need to be guessed from the code.
+Current package contract. This document describes the behavior implemented in
+this repository, not the original plan, release history, or any separate site.
 
-Last verified against the codebase: 2026-08-08.
+Last checked against source and tests: 2026-08-09.
 
----
+## Product boundary
 
-## 1. What this is
-
-An npm-published CLI that scaffolds a Next.js project with a real design
-system already in it.
+`@larsen-utvikling/create-next-app` is a wrapper around the selected official
+`create-next-app` package plus a Larsen Utvikling overlay. It creates a
+TypeScript Next.js App Router project with a vanilla CSS design system, agent
+documentation, an optional generated palette, optional Larsen Skills,
+optional dependency installation, and optional git initialization.
 
 ```bash
-npx @larsen-utvikling/create-next-app my-app
+npx --yes @larsen-utvikling/create-next-app my-app
 ```
 
-It is a **wrapper plus an overlay**, not a fork. It runs the official
-`create-next-app@latest` non-interactively, then replaces and adds files on
-top. That is why the generated project always uses the newest stable Next.js
-without this package tracking Next.js releases.
+The default upstream spec requests npm's mutable `create-next-app@latest`
+dist-tag. That request does not pin or guarantee the version npm resolves or
+its stability. The CLI does not bundle or fork Next.js. `--cna-version <spec>`
+passes a different npm spec to create-next-app and names the requested spec in
+progress and generated-project text.
 
-The audience is primarily Stian Larsen (Larsen Utvikling). It is public and
-MIT licensed, but it encodes one person's opinions on purpose.
+The package requires Node.js `>=20.12.0`. Network access is required to fetch
+the wrapper, the selected create-next-app spec, dependencies when installation
+is enabled, and optional skills.
 
----
+## Documentation authority
 
-## 2. Where everything lives
-
-| Thing | Location |
+| Subject | Authority |
 | --- | --- |
-| Package source | `/Users/stian/Larsen Utvikling/prosjekter/_TEMPLATES` |
-| Package repo | https://github.com/Stianlars1/larsen-create-next-app |
-| npm package | https://www.npmjs.com/package/@larsen-utvikling/create-next-app |
-| Landing page source | `/Users/stian/Developer/nettsider/larsen-create-next-app-site` |
-| Landing page repo | https://github.com/Stianlars1/larsen-create-next-app-site |
-| Landing page domain | `create-next-app.larsenutvikling.no` (not yet attached in Vercel) |
-| Colour engine upstream | https://github.com/Stianlars1/rampkit-client (Stian's own) |
-| Skills collection | https://github.com/Stianlars1/larsen-skills (Stian's own) |
+| Current package behavior and boundaries | This file |
+| Flags, prompts, defaults, interactions, and CI use | [docs/reference/cli.md](docs/reference/cli.md) |
+| Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
+| Current palette matrix and known gaps | [docs/reference/palette.md](docs/reference/palette.md) |
+| Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
+| Dated local 0.3.0 verification | [docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md) |
+| User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
+| Approved 0.1.0 planning snapshot | [docs/plans/2026-08-07-create-next-app-template.md](docs/plans/2026-08-07-create-next-app-template.md) |
 
-### Repo layout
+README files are entry points, not competing contracts. The CLI tables in the
+internal reference and published package README are generated from
+`OPTION_CONTRACT`.
 
-```
-_TEMPLATES/
-├── PROJECT.md          this file - the source of truth
-├── AGENTS.md           rules for agents working ON this package
-├── CLAUDE.md           → @AGENTS.md
-├── CHANGELOG.md        version history
-├── README.md           public front door (GitHub + humans)
-│
-├── CSS/                MASTER design system - edit tokens HERE
-│   ├── index.css       the single entry point
-│   ├── core.css        spacing, widths, radii, type, layering
-│   ├── theme.css       colour, generated - regenerate, do not hand-edit lightly
-│   ├── motion.css      durations, curves, gesture, reduced-motion contract
-│   └── base.css        reset, deliberately colour-free
-│
-├── palette/            MASTER colour generator - edit HERE
-│   ├── index.js        the only public API (generateThemeCss, tokenRoles, …)
-│   ├── generate-default.mjs   regenerates CSS/theme.css
-│   ├── NOTICE.md       MIT attribution + upstream commit + local deviations
-│   └── engine/         vendored rampkit, transpiled to plain ESM JS
-│
-├── create-next-app/    THE PUBLISHED PACKAGE
-│   ├── bin/cli.js      orchestration: prompts → scaffold → skills → overlay → install → git
-│   ├── src/
-│   │   ├── prompts.js  the interactive flow + flag parsing + TTY guards
-│   │   ├── scaffold.js THE ONLY FILE THAT KNOWS ABOUT create-next-app
-│   │   ├── overlay.js  copy + {{VAR}} substitution + rename/remove
-│   │   ├── skills.js   Larsen Skills install
-│   │   └── run.js      spawn wrapper (arg arrays, shell:false, output buffer)
-│   ├── palette/        SYNCED copy of ../palette (gitignored - never edit)
-│   ├── template/       the files overlaid onto every generated project
-│   │   └── src/lib/design-system/   SYNCED copy of ../../CSS (gitignored)
-│   ├── scripts/
-│   │   ├── sync.mjs    copies both masters into the package
-│   │   └── smoke.mjs   scaffolds real apps and asserts on the output
-│   └── package.json
-│
-└── docs/plans/         design and implementation notes
+## Repository architecture
+
+The root contains the editable masters and the publishable package:
+
+```text
+CSS/                           editable design-system master
+palette/                       editable palette master and vendored engine
+create-next-app/               publishable npm package
+  bin/cli.js                   orchestration
+  src/options.js               wrapper option contract
+  src/prompts.js               prompt flow and validation
+  src/scaffold.js              only create-next-app integration point
+  src/overlay.js               preserve, copy, substitute, remove
+  src/skills.js                optional Larsen Skills installation
+  src/run.js                   child-process boundary
+  palette/                     synced package copy, never edit directly
+  template/                    generated-project overlay
+    src/lib/design-system/     synced package copy, never edit directly
+  scripts/                     sync, docs, smoke, contrast, release packing
+  test/                        focused behavior and artifact tests
+docs/reference/                maintained contracts
+docs/verification/             publication evidence and evidence boundaries
+docs/plans/                    historical and approved implementation plans
 ```
 
-**The two masters rule:** `CSS/` and `palette/` at the repo root are the
-originals. `create-next-app/` contains synced copies because npm cannot pack
-files from outside the package folder. `scripts/sync.mjs` copies them, runs
-automatically on `prepack`, and the smoke test asserts byte-equality. **Never
-edit the copies** - they are gitignored so the mistake is hard to make.
+`CSS/` and `palette/` are the only editable masters. npm cannot pack files
+outside `create-next-app/`, so `create-next-app/scripts/sync.mjs` copies both
+masters into the package. Direct package packing runs sync through `prepack`.
+The release packer syncs into an isolated staging copy. Smoke and source tests
+check that the artifact contains the intended copies.
 
----
+Package code imports only `palette/index.js`, never `palette/engine/`
+directly. Changes to the vendored engine require a corresponding entry in
+`palette/NOTICE.md`.
 
-## 3. The complete CLI surface
+## CLI contract
 
-### 3.1 The interactive flow
+The complete contract is [docs/reference/cli.md](docs/reference/cli.md). Its
+prompt tree is, in order:
 
-Seven top-level questions. Three follow-ups appear only if you ask for a
-custom palette. Every one has a flag.
+1. App name.
+2. Default or custom palette, followed by HEX, preset, and format only for a
+   custom interactive palette. Scheme is flag-only.
+3. Linter.
+4. Package manager.
+5. Optional Larsen Skills.
+6. Git initialization.
+7. Dependency installation.
 
-| # | Question | Choices (default first) | Flag |
-| --- | --- | --- | --- |
-| 1 | What is your app named? | any name matching `^[a-z0-9][a-z0-9._-]*$`, ≤214 chars | positional argument |
-| 2 | Generate a custom 12-step palette from a single HEX? | No · Yes | `--hex <color>` (omit for the default theme) |
-| 2a | Enter your HEX color | with or without `#`, 3 or 6 digits | `--hex 4DA0FF` |
-| 2b | Choose framework/style | shadcn/ui · Radix Colors · CSS Variables | `--preset shadcn \| radix \| css-variables` |
-| 2c | Choose color format | HSL Values · HEX · RGB · HSL · OKLAB · OKLCH | `--format hsl-values \| hex \| rgb \| hsl \| oklab \| oklch` |
-| 3 | Which linter? | ESLint · Biome · None | `--linter eslint \| biome \| none` |
-| 4 | Install Larsen Skills for AI agents? | Recommended · All · Let me pick · No | `--skills recommended \| all \| a,comma,list` · `--no-skills` |
-| 5 | Which package manager? | npm · pnpm · yarn · bun | `--pm npm \| pnpm \| yarn \| bun` |
-| 6 | Initialize a git repository? | Yes · No | `--no-git` |
-| 7 | Install dependencies? | Yes · No | `--no-install` |
+Every prompt has a non-interactive answer. With closed or piped stdin, the CLI
+fails at the first unanswered prompt and names the required flag. `--defaults`
+answers all prompts, installs no skills, and can be overridden by compatible
+explicit flags.
 
-**Accuracy notes** (these have been got wrong before):
+App names are checked by this package's local regex and directory rule. This
+is not npm package-name validation. See the canonical CLI reference for the
+exact accepted characters, length, and empty-directory behavior.
 
-- The name check is **this package's own regex**, not npm's validator. It is
-  the character set a folder and a `package.json` name both accept. It also
-  refuses a target directory that already contains files (ignoring
-  `.DS_Store`).
-- The linter answer is **passed straight through to create-next-app** as
-  `--eslint` / `--biome` / `--no-linter`, so you get its official config.
-- `--defaults` installs **no skills**. Skills are opt-in and an unattended run
-  never installs them unless `--skills` is passed explicitly.
-- `--scheme` exists as a flag but is **not** a prompt: `analogous` (default),
-  `monochromatic`, `complementary`, `triadic`.
+The wrapper always asks create-next-app for:
 
-### 3.2 Every flag
-
-| Flag | Effect |
-| --- | --- |
-| `-d, --defaults` | Skip every prompt, take the defaults (no skills) |
-| `--hex <color>` | Palette seed. Implies a custom palette |
-| `--preset <name>` | `shadcn` \| `radix` \| `css-variables` |
-| `--format <name>` | `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
-| `--scheme <name>` | `analogous` \| `monochromatic` \| `complementary` \| `triadic` |
-| `--linter <name>` | `eslint` \| `biome` \| `none` |
-| `--skills <list>` | `recommended` \| `all` \| comma-separated names |
-| `--no-skills` | Skip the skills install |
-| `--pm <name>` | `npm` \| `pnpm` \| `yarn` \| `bun` |
-| `--no-git` | Skip git init |
-| `--no-install` | Skip the dependency install |
-| `--cna-version <spec>` | Pin create-next-app instead of `latest` (escape hatch for upstream breakage) |
-| `-v, --version` · `-h, --help` | |
-
-### 3.3 Behaviour without a terminal
-
-Each prompt is guarded. In CI or with a piped/closed stdin the CLI exits 1
-immediately and names the flag that answers the question. It never hangs.
-Passing every flag explicitly works without `--defaults`.
-
----
-
-## 4. What lands in a generated project
-
-```
-my-app/
-├── AGENTS.md          project rules for agents (never Tailwind, token idiom, motion rules,
-│                      dash rule, always-clarify rule) + a list of installed skills
-├── CLAUDE.md          contains only `@AGENTS.md`
-├── DESIGN.md          token reference, written for the palette preset/format chosen
-├── NEXTJS.md          create-next-app's own agent guide, RENAMED not overwritten
-├── README.md          getting started + a post-scaffold checklist, commands match the chosen PM
-├── .agents/skills/    installed skills (+ symlinked into .claude/skills/)
-├── public/larsen-utvikling/   four brand SVGs (logo and logo-with-name, light and dark)
-└── src/
-    ├── app/
-    │   ├── layout.tsx     imports ./globals.css
-    │   ├── globals.css    one line: @import "../lib/design-system/index.css";
-    │   ├── page.tsx       welcome page demonstrating the tokens
-    │   └── page.css
-    └── lib/design-system/  index · core · theme · motion · base
+```text
+--ts --app --src-dir --no-tailwind <selected-linter>
+--import-alias @/* --skip-install --disable-git --yes
 ```
 
-Removed from the create-next-app output: `src/app/page.module.css`, the
-original `src/app/globals.css`, and the branding SVGs in `public/`.
+The `npx` invocation also receives its own leading `--yes`. Child stdin is
+closed so unexpected upstream prompts fail instead of hanging. The wrapper
+then owns overlay, optional installation, and optional git setup.
 
-Always passed to create-next-app: `--ts --app --src-dir --no-tailwind
---import-alias @/* --skip-install --disable-git --yes`.
+`@clack/prompts` is the terminal-interface library, not a scaffold engine. It
+owns the wrapper's prompt UI and cancellation messages. It also renders the
+intro and outro frames, logs, and spinner presentation. The official
+create-next-app package remains the scaffold engine. Child stdin is closed
+separately by the wrapper's process runner.
 
----
+## Generated project contract
 
-## 5. The design system
+Every successful overlay writes this structure:
+
+```text
+AGENTS.md
+CLAUDE.md
+DESIGN.md
+README.md
+NEXTJS.md                     only when upstream supplied AGENTS.md
+.agents/skills/               only when requested skills installed
+public/larsen-utvikling/
+  logo.svg
+  logo-dark.svg
+  logo-name.svg
+  logo-name-dark.svg
+src/
+  app/
+    layout.tsx
+    globals.css
+    page.tsx
+    page.css
+  lib/design-system/
+    index.css
+    core.css
+    theme.css
+    motion.css
+    base.css
+```
+
+The overlay preserves an upstream `AGENTS.md` as `NEXTJS.md` before writing
+the package's `AGENTS.md`. If upstream supplies no `AGENTS.md`, the overlay
+does not invent `NEXTJS.md`. `CLAUDE.md` contains only `@AGENTS.md`.
+
+`src/app/globals.css` is exactly the design-system comment plus one import of
+`../lib/design-system/index.css`. The overlay removes the upstream
+`page.module.css`, replaces the starter page, and removes upstream branding
+SVG files. Installed-skills documentation lists only skills found on disk
+after the installer returns.
+
+Generated projects are copies. This package does not update them later.
+
+## Design system contract
+
+`src/lib/design-system/index.css` imports the four modules in this order:
+`core.css`, `theme.css`, `motion.css`, and `base.css`.
 
 ### core.css
-- **Spacing**, 8 steps on a 4px base: 4, 8, 12, 16, 24, 32, 48, 64 (in rem)
-- **Widths**: `--width-prose` 65ch, `--width-content` 48rem, `--width-wide` 80rem
-- **Radii**: sm 4px, md 8px, lg 16px, full pill
-- **Type**: `--leading-heading` 1.1, `--leading-body` 1.5, `--leading-tight` 1.4;
-  `--tracking-display` -0.025em, `--tracking-label` 0.05em, `--tracking-body` 0
-- **Layering**: dropdown 100, sticky 200, overlay 300, modal 400, toast 500
-- Breakpoints are a comment, not tokens - media queries cannot read `var()`
 
-### theme.css (generated)
-Emitted by the palette engine. Structure:
+- Spacing: `--space-1` through `--space-8` are 4, 8, 12, 16, 24, 32, 48,
+  and 64px expressed in rem.
+- Widths: prose 65ch, content 48rem, wide 80rem.
+- Radii: 4px, 8px, 16px, and pill.
+- Line heights: heading 1.1, body 1.5, tight 1.4.
+- Tracking: display -0.025em, label 0.05em, body 0.
+- Layers: dropdown 100, sticky 200, overlay 300, modal 400, toast 500.
+- Breakpoints are comment-only reference values because media queries cannot
+  consume custom properties.
+
+### theme.css
+
+The palette generator emits the same declarations in four selector blocks:
+
+```text
+:root                              light
+prefers-color-scheme dark :root   dark
+[data-theme="light"]              explicit light
+[data-theme="dark"]               explicit dark
 ```
-:root { light }
-@media (prefers-color-scheme: dark) { :root { dark } }
-[data-theme="light"] { light }   ← after the media query, so it wins
-[data-theme="dark"]  { dark }
-/* document defaults: body, ::selection, hr - written for the chosen preset/format */
+
+Explicit selectors follow the media query and therefore override it without
+JavaScript. A generated document-defaults block supplies body, selection, and
+horizontal-rule colors using real tokens for the selected preset and format.
+
+The baked default is `#4DA0FF`, `shadcn`, `hsl-values`, and
+`monochromatic`. Its background, foreground, and ring are pinned to the
+`#FAFAFA` and `#0A0A0A` surface pair. It also adds `--brand-blue`,
+`--brand-blue-soft`, and `--brand-blue-subtle`. Regenerate that exact default
+from the repository root with:
+
+```bash
+npm run gen:theme
 ```
-Tokens depend on the preset. `shadcn` gives semantic names (`--background`,
-`--primary`, …) plus `--accent-1..12`, `--gray-1..12`, and status colours
-(`success`/`danger`/`warning`/`info`, each with foreground, muted and border
-variants). `radix` and `css-variables` give the scales plus `--background` and
-`--foreground`, but no `--muted` or `--border`.
 
-**The default theme** is monochromatic seeded `#0A0A0A`, with `--background`,
-`--foreground` and `--ring` pinned to the exact `#FAFAFA`/`#0A0A0A` pair, plus
-appended brand accents `--brand-blue: 212 100% 65%`, `--brand-blue-soft`,
-`--brand-blue-subtle`. This mirrors larsenutvikling.no exactly.
-
-Regenerate with `npm run gen:theme -- "#HEX"` from the repo root.
+Passing a HEX argument deliberately generates a different candidate and is
+not the command for reproducing the default contract.
 
 ### motion.css
-- **Durations**: press 140ms, fast 160ms, ui 200ms, slow 240ms, enter 300ms
-- **Curves**: `--ease-out` `cubic-bezier(0.23, 1, 0.32, 1)`, `--ease-in-out`
-  `cubic-bezier(0.77, 0, 0.175, 1)`, `--ease-drawer` `cubic-bezier(0.32, 0.72, 0, 1)`,
-  `--ease-soft` `cubic-bezier(0.2, 0, 0, 1)`
-- **Gesture**: `--press-scale` 0.97, `--press-scale-subtle` 0.985,
-  `--enter-scale` 0.96, `--enter-distance` 12px, `--enter-blur` 4px
-- **Stagger**: `--stagger-item` 50ms, `--stagger-group` 100ms
-- **Reduced motion**: distance, scale and stagger tokens collapse to zero.
-  Transitions keep running; movement stops. There is deliberately **no**
-  blanket `animation-duration: 0.01ms !important` rule, because that also kills
-  spinners and progress indicators. Continuous decoration opts out with
-  `data-motion="decorative"`.
 
-These values come from the `motion-craft` skill and match larsenutvikling.no.
+- Durations: press 140ms, fast 160ms, UI 200ms, slow 240ms, enter 300ms.
+- Curves: ease-out, ease-in-out, drawer, and soft.
+- Gesture and entry tokens: press scales, entry scale, distance, blur, and
+  stagger timings.
+- Reduced motion collapses movement and stagger tokens while retaining
+  transitions. Decorative continuous animation can be disabled through the
+  `data-motion="decorative"` selector.
 
 ### base.css
-A modern reset, deliberately **colour-free** - every colour rule lives in the
-generated `theme.css` so the reset works with any preset/format.
 
----
+The reset is color-free. Palette-dependent document colors belong to the
+generated `theme.css` block.
 
-## 6. The colour engine
+## Palette contract
 
-Vendored from rampkit (Stian's own project) at commit
-`48d6b33b10ebb38a007cbad67e6ea437b22ccf24`, transpiled from TypeScript to
-plain ESM JavaScript with esbuild, `@/*` aliases rewritten to relative paths.
+`palette/index.js` exposes palette generation, normalization, role mapping,
+usage idioms, and the supported choice constants. The vendored engine source
+and local deviations are recorded in `palette/NOTICE.md`.
 
-- Public API is `palette/index.js` only. **Never import from `engine/`
-  directly** - `bin/` and `src/` go through `index.js`.
-- Runtime dependencies: `colorjs.io`, `@radix-ui/colors`, `bezier-easing`
-  (all MIT, all Node- and browser-safe). ~95 kB gzipped in a browser bundle.
-- Pure functions, no DOM. ~40ms per palette.
-- Local deviations from upstream are listed in `palette/NOTICE.md`:
-  `getColorFromCSS` removed, and OKLAB/OKLCH output implemented (upstream lists
-  both formats but silently falls back to HEX).
+Current custom choices are:
 
-### The dual-seed rule (important)
+- Presets: `shadcn`, `radix`, `css-variables`.
+- Formats: `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, `oklch`.
+- Schemes: `analogous`, `monochromatic`, `complementary`, `triadic`.
 
-The engine keeps `--primary` and `--ring` at the seed colour in **both** modes.
-For a mid-range colour that is correct. For an extreme seed it is not: a
-near-black seed produced a near-black primary on a near-black dark surface -
-**1.03:1 contrast, invisible buttons and focus rings**.
+For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
+so the accent works on both light and dark surfaces. The mechanical verifier
+supports only `shadcn` with `hsl-values` and both generated modes:
 
-`seedsForModes()` therefore pairs an extreme seed (lightness <15% or >85%)
-with its lightness-inverted counterpart and assigns each to the mode it works
-in. Light mode needs a dark accent; dark mode needs a light one. Dark
-`--primary` went from 1.03:1 to 18.97:1.
+- `--foreground` vs `--background` must reach 4.5.
+- `--ring` vs `--background` must reach 3.
+- `--primary-foreground` vs `--primary` must reach 4.5.
+- `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
+  visibility floor.
 
-A contrast check runs in the smoke test before every publish. It asserts body
-text ≥4.5:1, focus ring ≥3:1, button label ≥4.5:1, and button surface ≥1.5:1 -
-the last one deliberately loose, because a brand accent is allowed to sit
-below the WCAG non-text threshold as a surface, but nothing is allowed to be
-invisible.
+These checks do not guarantee any other preset-format matrix entry.
 
----
+The deterministic 3 x 6 preset-format matrix records the current contract,
+including known incompleteness. It does not claim upstream shadcn or Radix
+Themes completeness. See [docs/reference/palette.md](docs/reference/palette.md)
+for exact token counts, current gaps, and proposals that are not implemented.
 
-## 7. Larsen Skills
+## Optional Larsen Skills
 
-Nine skills, installed optionally into the scaffolded project.
+`--skills` runs `npx skills add Stianlars1/larsen-skills` with one `--skill`
+argument per requested skill. Exit status is insufficient because the
+installer can exit successfully without installing the requested set. The CLI
+therefore verifies `.agents/skills/<name>/SKILL.md` and documents only entries
+with that file. It does not verify any agent-specific discovery or symlink.
 
-Recommended set: `motion-craft`, `interface-craft`, `interface-review`,
-`ui-primitive-picker`. Also available: `motion-vocabulary`,
-`liquid-interface`, `prototype-lab`, `reverse-engineer-motion`,
-`animated-logo-cycle`.
+Skills are installed before the overlay. A failed optional install produces a
+warning and the scaffold continues without claiming those skills exist.
 
-Installed with `npx skills add Stianlars1/larsen-skills --skill X --skill Y
---yes`, which writes to the universal `.agents/skills/` and symlinks each
-agent's own directory.
+## Verification boundaries
 
-**Installer gotcha:** multiple skills need one `--skill` flag **each**. A
-comma-separated list is silently ignored - the installer prints its
-available-skills list and **still exits 0**. So the result is verified on disk,
-not by exit code. Skills are installed *before* the overlay so `AGENTS.md`
-lists what actually landed, not what was requested.
+Different commands prove different things:
 
----
+| Command | Evidence produced | Does not prove |
+| --- | --- | --- |
+| `node scripts/generate-cli-reference.mjs --check` | Both generated CLI tables match `OPTION_CONTRACT` | CLI behavior or package publication |
+| `npm test` | Focused source behavior, palette contracts, docs, overlay, contrast, and artifact-shape checks | A real upstream scaffold or production build |
+| `npm run smoke` | Real generated projects from one release-style tarball with scaffold assertions | Dependency installation and `next build` |
+| `npm run pack:release` | One consumer-clean tarball from clean release-relevant source, with exact `gitHead`, plus standard tarball smoke | Full install/build or npm publication |
+| `npm run smoke:full -- <same-tarball>` | Installation and `next build` from the supplied artifact | npm publication |
+| `npm view <exact-version>` after owner publish | Registry metadata for that exact version | Local branch content beyond its recorded `gitHead` |
 
-## 8. Decisions, and why
+`pack:release` reports an absolute tarball path. The full smoke and owner-run
+publish must use that same file. Publishing the source directory is refused.
+Agents never run `npm publish` or handle 2FA.
 
-| Decision | Reason |
-| --- | --- |
-| Never Tailwind | When every value lives in a class name in markup, the design system stops being an artifact you can look at. Vanilla custom properties keep it as five readable files. |
-| Wrap `create-next-app@latest` rather than fork | The generated project always gets the newest stable Next.js without this package tracking releases. |
-| All CNA knowledge in one file (`scaffold.js`) | Upstream flag drift is the most likely breakage; it should be a one-line fix. |
-| `--yes` twice + `stdin: "ignore"` | First `--yes` is npx's, second is CNA's. Closed stdin makes an unexpected prompt a fast visible error instead of a hang. |
-| No invented alias tokens | An earlier version added `--surface`, `--on-surface`, … as a stable layer. Removed: apps now consume the generator's real token names, and `tokenRoles(preset, format)` maps roles for docs and starter CSS. |
-| Vendored engine, pinned by commit | The landing page imports it from the published package, so the demo cannot drift from the CLI. |
-| Skills opt-in, never on `--defaults` | An unattended run should not reach out to the network for optional extras. |
-| Test the generated app, not the generator | The smoke test scaffolds real projects and asserts on the files that come out. |
+Release-relevant source means every tracked or non-ignored untracked
+repository path except dated evidence under `docs/verification/`. Ignored
+dependencies and synced package copies are not source; the release packer
+recreates those copies from the root masters. Packing refuses when relevant
+source is dirty, resolves the full committed HEAD, and writes it as `gitHead`
+in the staged consumer manifest. npm packing and tarball publication dry-run
+must preserve that exact value. A later evidence-only commit does not change
+the already packed artifact or its embedded source identity.
 
-### What it deliberately does NOT do
-
-- No Tailwind, ever - not a configurable option.
-- No JavaScript for theming. Dark mode is CSS only.
-- No component library. It ships tokens and a reset, not buttons.
-- No font choice. The template uses a system stack; fonts are the project's call.
-- No `tailwind`, `css-in-js`, `scss`, `material-ui` or `chakra-ui` palette
-  presets, even though the engine supports them - they emit JS or SCSS that
-  cannot live in `theme.css`.
-- It does not update already-generated projects. They are frozen copies.
-
----
-
-## 9. Testing
-
-`create-next-app/scripts/smoke.mjs` - runs automatically on `prepublishOnly`.
-
-- **dev mode** (`--dev`): runs `bin/cli.js` directly. Fast.
-- **tarball mode** (default): `npm pack`, then `npx ./<tarball>` - catches
-  anything the `files` whitelist would have dropped.
-- **full mode** (`--full`): also installs and runs `next build` in the
-  generated app.
-
-Asserts: all five design-system files exist, `index.css` imports `motion.css`,
-`motion.css` has the easing set and the reduced-motion contract, all docs
-exist, `CLAUDE.md` is the pointer, `globals.css` is the single import, no
-leftover `{{PLACEHOLDERS}}`, no tailwind dependency, masters byte-equal to
-their synced copies, contrast passes, a requested skill lands on disk, and
-`AGENTS.md` lists exactly the installed skills.
-
-There is also a matrix script kept in the scratchpad during development that
-runs every package manager, every linter, several palette combinations and all
-invalid-input rejection paths. It is not committed; recreate it when doing a
-release sweep.
-
-**npx gotcha:** `npx /absolute/path.tgz` tries to *execute* the tarball
-("Permission denied"). Use `npx ./relative.tgz`.
-
----
-
-## 10. Release process
-
-2FA is enabled on the npm account, so **Stian publishes** - an agent cannot,
-and must never handle the OTP.
+## Release flow
 
 ```bash
 cd create-next-app
-npm version patch    # or minor
-npm publish          # prepack syncs masters, prepublishOnly runs the smoke test
+node scripts/generate-cli-reference.mjs --check
+npm test
+npm run pack:release
+npm run smoke:full -- /absolute/path/reported-by-pack-release.tgz
 ```
 
-Verify afterwards from a clean directory with the **exact** version, because
-the npx `@latest` cache can lie:
+After those local gates, Stian may publish the same reported tarball. Exact
+registry verification and tag creation are separate post-publication steps.
+The current published record is in
+[docs/verification/releases.md](docs/verification/releases.md). Dated local
+0.3.0 release-readiness evidence is in
+[docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md).
 
-```bash
-npx --yes @larsen-utvikling/create-next-app@<version> verify-app --defaults --no-git --no-install
-```
+## Explicit non-goals
 
-A brand-new scoped package 404s for anonymous registry reads for a couple of
-minutes (CDN propagation) while authenticated `npm view` already works.
-`npmjs.com/package/...` returns 403 to curl - not a useful health check.
-
-If publish fails with **E404 on PUT**, the auth token has expired. npm hides
-401 behind 404 for scoped packages. Fix: `npm login`.
-
----
-
-## 11. Current state
-
-| | |
-| --- | --- |
-| Published | 0.1.0, 0.1.1, 0.2.0, 0.2.1, **0.2.2 (current)** |
-| Landing page | Built and pushed; domain not yet attached in Vercel, DNS CNAME not yet created |
-| Blog posts | Written in `docs/blog/` in the site repo, Norwegian and English, not yet published |
-
-### Known issues, not yet fixed
-
-Verified 2026-08-08 against the upstream sources. Planned work and the exact
-questions to answer are in `docs/plans/next-session-prompts.md`.
-
-- **The `shadcn` preset covers 14 of shadcn's 32 official tokens.** Checked
-  against `https://ui.shadcn.com/r/colors/neutral.json`. Missing: `--card`,
-  `--card-foreground`, `--popover`, `--popover-foreground`, `--radius`,
-  `--chart-1..5` and all eight `--sidebar-*`.
-  **This is user-facing breakage.** Running `npx shadcn@latest add card` in a
-  generated project yields a Card that references `--card`, which does not
-  exist. Same for Popover, Chart and Sidebar.
-  shadcn has also dropped `--destructive-foreground` in current versions while
-  we still emit it - removing it would match upstream but breaks projects
-  generated by older versions of this CLI, so it needs a decision.
-
-- **The `radix` preset is missing most of Radix Themes' contract.** Checked
-  against `@radix-ui/themes@3.3.0`. We emit `--accent-1..12` and `--gray-1..12`
-  but not the alpha scales (`--accent-a1..a12`), `--accent-contrast`,
-  `--accent-surface`, `--accent-indicator`, `--accent-track` or
-  `--gray-surface`. The engine already computes `accentScaleAlpha`,
-  `accentContrast`, `accentSurface` and `graySurface` on every call - they are
-  simply never emitted.
-  The naming itself is right: 1-12 is Radix's own convention
-  (`@radix-ui/colors` ships `blue1`…`blue12`). 50-950 is Tailwind's.
-
-- **`radix` and `css-variables` produce identical output** - the same 50 token
-  names, byte for byte. Upstream rampkit's `generateRadixCSS` is
-  `return generateCSSVariables(data, format)`, a no-op alias, and the vendored
-  engine inherits it. The CLI offers a choice that changes nothing.
-
-- **No test asserts a preset's contract.** The smoke test checks that tokens
-  exist and that contrast passes, but nothing checks that the `shadcn` preset
-  emits what shadcn actually requires. That is how the gap above survived.
-
-See `CHANGELOG.md` for what changed in each version.
-
----
-
-## 12. History
-
-The original plan is in `docs/plans/2026-08-07-create-next-app-template.md`.
-The short version of how it evolved:
-
-1. **Started** as a scaffolder wrapping `create-next-app@latest` with a vanilla
-   CSS design system and agent docs.
-2. **Colour** was added by vendoring the rampkit engine so a palette could be
-   generated from one HEX at install time.
-3. **An alias token layer** was built, then removed - apps use the generator's
-   real token names instead.
-4. **The default palette** went from blue-seeded, to strictly monochrome, to
-   the current monochrome-surfaces-with-blue-accents, after Stian judged pure
-   black and white "too much black and white".
-5. **A real contrast bug** was found and fixed (the dual-seed rule above).
-6. **Motion tokens** and the reduced-motion contract were added from the
-   `motion-craft` skill, along with the optional skills install.
-7. **A full option matrix** was run, which found the wrong surface token for
-   the scale presets and a CLI that hung without a TTY. Both fixed in 0.2.1.
-8. **A landing page** was built at `create-next-app.larsenutvikling.no`,
-   importing the palette engine from the published package so the demo is
-   provably identical to the CLI's output.
+- No Tailwind option, bridge, companion path, or generated Tailwind artifact.
+- No CSS framework, CSS-in-JS output, Sass output, or component library.
+- No JavaScript theme controller.
+- No font selection.
+- No automatic updates to existing generated projects.
+- No package publication, tag push, branch push, or deployment by an agent.
+- No claim that current shadcn or Radix output implements each upstream token.
+- No product-site, blog, domain, or deployment status in this package contract.

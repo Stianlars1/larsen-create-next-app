@@ -8,8 +8,49 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
-import { FORMATS, PRESETS, SCHEMES, isValidHex } from "../palette/index.js";
+import { isValidHex } from "../palette/index.js";
+import {
+  optionChoices,
+  optionDefault,
+  optionPromptDefault,
+  validateOptionRelationships,
+} from "./options.js";
 import { ALL_SKILLS, RECOMMENDED_SKILLS, SKILLS } from "./skills.js";
+
+/**
+ * Canonical interactive skills branch. Runtime prompts and generated
+ * maintainer documentation consume the same messages, choices, defaults, and
+ * multiselect contract.
+ */
+export const SKILLS_PROMPT_CONTRACT = Object.freeze({
+  confirmation: Object.freeze({
+    message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
+    initialValue: optionPromptDefault("skills") !== undefined,
+  }),
+  selection: Object.freeze({
+    message: "Which skills?",
+    options: Object.freeze([
+      Object.freeze({
+        value: "recommended",
+        label: "Recommended",
+        hint: RECOMMENDED_SKILLS.join(", "),
+      }),
+      Object.freeze({ value: "all", label: "All", hint: `${ALL_SKILLS.length} skills` }),
+      Object.freeze({ value: "pick", label: "Let me pick" }),
+    ]),
+    initialValue: optionPromptDefault("skills"),
+  }),
+  picker: Object.freeze({
+    message: "Select skills (space to toggle, enter to confirm)",
+    options: Object.freeze(
+      SKILLS.map((skill) =>
+        Object.freeze({ value: skill.name, label: skill.label, hint: skill.hint }),
+      ),
+    ),
+    initialValues: Object.freeze([...RECOMMENDED_SKILLS]),
+    required: false,
+  }),
+});
 
 const NAME_RE = /^[a-z0-9][a-z0-9._-]*$/;
 
@@ -63,6 +104,12 @@ export function validateAppName(name, cwd) {
  * @param {string} cwd
  */
 export async function promptConfig(flags, positionalName, cwd) {
+  const relationshipError = validateOptionRelationships(flags);
+  if (relationshipError) {
+    p.cancel(relationshipError);
+    process.exit(1);
+  }
+
   const useDefaults = Boolean(flags.defaults);
 
   // App name
@@ -94,28 +141,29 @@ export async function promptConfig(flags, positionalName, cwd) {
   // Palette
   /** @type {null | { hex: string, preset: string, format: string, scheme: string }} */
   let palette = null;
-  const scheme = flags.scheme ?? "analogous";
-  if (!SCHEMES.includes(scheme)) {
-    p.cancel(`Unknown --scheme "${scheme}" (expected ${SCHEMES.join(" | ")})`);
+  const scheme = flags.scheme ?? optionDefault("scheme");
+  const schemes = optionChoices("scheme").map((choice) => choice.value);
+  if (!schemes.includes(scheme)) {
+    p.cancel(`Unknown --scheme "${scheme}" (expected ${schemes.join(" | ")})`);
     process.exit(1);
   }
 
-  if (flags.hex) {
+  if (flags.hex !== undefined) {
     if (!isValidHex(flags.hex)) {
       p.cancel(`Invalid --hex "${flags.hex}" (expected e.g. 4DA0FF or #4DA0FF)`);
       process.exit(1);
     }
     palette = {
       hex: flags.hex,
-      preset: flags.preset ?? "shadcn",
-      format: flags.format ?? "hsl-values",
+      preset: flags.preset ?? optionDefault("preset"),
+      format: flags.format ?? optionDefault("format"),
       scheme,
     };
-  } else if (!useDefaults) {
-    requireInteractive("the palette choice", "--hex <color>");
+  } else if (!flags["default-palette"] && !useDefaults) {
+    requireInteractive("the palette choice", "--hex <color> or --default-palette");
     const wantsCustom = await p.confirm({
       message: "Generate a custom 12-step palette from a single HEX?",
-      initialValue: false,
+      initialValue: optionPromptDefault("default-palette"),
     });
     handleCancel(/** @type {never} */ (wantsCustom));
 
@@ -131,24 +179,15 @@ export async function promptConfig(flags, positionalName, cwd) {
 
       const preset = await p.select({
         message: "Choose framework/style",
-        options: [
-          { value: "shadcn", label: "shadcn/ui", hint: "semantic tokens + scales (recommended)" },
-          { value: "radix", label: "Radix Colors", hint: "accent + gray scales" },
-          { value: "css-variables", label: "CSS Variables", hint: "accent + gray scales" },
-        ],
+        options: optionChoices("preset"),
+        initialValue: optionDefault("preset"),
       });
       handleCancel(/** @type {never} */ (preset));
 
       const format = await p.select({
         message: "Choose color format",
-        options: [
-          { value: "hsl-values", label: "HSL Values", hint: "0 0% 100% - supports hsl(var(--x) / alpha) (recommended)" },
-          { value: "hex", label: "HEX" },
-          { value: "rgb", label: "RGB" },
-          { value: "hsl", label: "HSL" },
-          { value: "oklab", label: "OKLAB" },
-          { value: "oklch", label: "OKLCH" },
-        ],
+        options: optionChoices("format"),
+        initialValue: optionDefault("format"),
       });
       handleCancel(/** @type {never} */ (format));
 
@@ -157,34 +196,34 @@ export async function promptConfig(flags, positionalName, cwd) {
   }
 
   if (palette) {
-    if (!(palette.preset in PRESETS)) {
-      p.cancel(`Unknown --preset "${palette.preset}" (expected ${Object.keys(PRESETS).join(" | ")})`);
+    const presets = optionChoices("preset").map((choice) => choice.value);
+    if (!presets.includes(palette.preset)) {
+      p.cancel(`Unknown --preset "${palette.preset}" (expected ${presets.join(" | ")})`);
       process.exit(1);
     }
-    if (!(palette.format in FORMATS)) {
-      p.cancel(`Unknown --format "${palette.format}" (expected ${Object.keys(FORMATS).join(" | ")})`);
+    const formats = optionChoices("format").map((choice) => choice.value);
+    if (!formats.includes(palette.format)) {
+      p.cancel(`Unknown --format "${palette.format}" (expected ${formats.join(" | ")})`);
       process.exit(1);
     }
   }
 
   // Linter
   let linter = flags.linter;
-  if (linter && !["eslint", "biome", "none"].includes(linter)) {
-    p.cancel(`Unknown --linter "${linter}" (expected eslint | biome | none)`);
+  const linters = optionChoices("linter").map((choice) => choice.value);
+  if (linter && !linters.includes(linter)) {
+    p.cancel(`Unknown --linter "${linter}" (expected ${linters.join(" | ")})`);
     process.exit(1);
   }
   if (!linter) {
     if (useDefaults) {
-      linter = "eslint";
+      linter = optionDefault("linter");
     } else {
       requireInteractive("the linter", "--linter <name>");
       const answer = await p.select({
         message: "Which linter?",
-        options: [
-          { value: "eslint", label: "ESLint" },
-          { value: "biome", label: "Biome" },
-          { value: "none", label: "None" },
-        ],
+        options: optionChoices("linter"),
+        initialValue: optionDefault("linter"),
       });
       handleCancel(/** @type {never} */ (answer));
       linter = String(answer);
@@ -193,23 +232,20 @@ export async function promptConfig(flags, positionalName, cwd) {
 
   // Package manager
   let pm = flags.pm;
-  if (pm && !["npm", "pnpm", "yarn", "bun"].includes(pm)) {
-    p.cancel(`Unknown --pm "${pm}" (expected npm | pnpm | yarn | bun)`);
+  const packageManagers = optionChoices("pm").map((choice) => choice.value);
+  if (pm && !packageManagers.includes(pm)) {
+    p.cancel(`Unknown --pm "${pm}" (expected ${packageManagers.join(" | ")})`);
     process.exit(1);
   }
   if (!pm) {
     if (useDefaults) {
-      pm = "npm";
+      pm = optionDefault("pm");
     } else {
       requireInteractive("the package manager", "--pm <name>");
       const answer = await p.select({
         message: "Which package manager?",
-        options: [
-          { value: "npm", label: "npm" },
-          { value: "pnpm", label: "pnpm" },
-          { value: "yarn", label: "yarn" },
-          { value: "bun", label: "bun" },
-        ],
+        options: optionChoices("pm"),
+        initialValue: optionDefault("pm"),
       });
       handleCancel(/** @type {never} */ (answer));
       pm = String(answer);
@@ -223,10 +259,13 @@ export async function promptConfig(flags, positionalName, cwd) {
   let git = flags["no-git"] ? false : flags.git;
   if (git === undefined) {
     if (useDefaults) {
-      git = true;
+      git = optionDefault("git");
     } else {
-      requireInteractive("git init", "--no-git");
-      const answer = await p.confirm({ message: "Initialize a git repository?", initialValue: true });
+      requireInteractive("git init", "--git or --no-git");
+      const answer = await p.confirm({
+        message: "Initialize a git repository?",
+        initialValue: optionDefault("git"),
+      });
       handleCancel(/** @type {never} */ (answer));
       git = Boolean(answer);
     }
@@ -235,10 +274,13 @@ export async function promptConfig(flags, positionalName, cwd) {
   let install = flags["no-install"] ? false : flags.install;
   if (install === undefined) {
     if (useDefaults) {
-      install = true;
+      install = optionDefault("install");
     } else {
-      requireInteractive("the dependency install", "--no-install");
-      const answer = await p.confirm({ message: "Install dependencies?", initialValue: true });
+      requireInteractive("the dependency install", "--install or --no-install");
+      const answer = await p.confirm({
+        message: "Install dependencies?",
+        initialValue: optionDefault("install"),
+      });
       handleCancel(/** @type {never} */ (answer));
       install = Boolean(answer);
     }
@@ -252,7 +294,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     pm,
     git,
     install,
-    cnaVersion: flags["cna-version"] ?? "latest",
+    cnaVersion: flags["cna-version"] ?? optionDefault("cna-version"),
   };
 }
 
@@ -283,35 +325,20 @@ async function resolveSkills(flags, useDefaults) {
   }
 
   // Opt-in only: an unattended run installs nothing.
-  if (useDefaults) return [];
+  if (useDefaults) return optionDefault("skills");
 
   requireInteractive("the skills choice", "--skills <list> or --no-skills");
-  const wants = await p.confirm({
-    message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
-    initialValue: true,
-  });
+  const wants = await p.confirm(SKILLS_PROMPT_CONTRACT.confirmation);
   handleCancel(/** @type {never} */ (wants));
   if (!wants) return [];
 
-  const choice = await p.select({
-    message: "Which skills?",
-    options: [
-      { value: "recommended", label: "Recommended", hint: RECOMMENDED_SKILLS.join(", ") },
-      { value: "all", label: "All", hint: `${ALL_SKILLS.length} skills` },
-      { value: "pick", label: "Let me pick" },
-    ],
-  });
+  const choice = await p.select(SKILLS_PROMPT_CONTRACT.selection);
   handleCancel(/** @type {never} */ (choice));
 
   if (choice === "recommended") return RECOMMENDED_SKILLS;
   if (choice === "all") return ALL_SKILLS;
 
-  const picked = await p.multiselect({
-    message: "Select skills (space to toggle, enter to confirm)",
-    options: SKILLS.map((s) => ({ value: s.name, label: s.label, hint: s.hint })),
-    initialValues: RECOMMENDED_SKILLS,
-    required: false,
-  });
+  const picked = await p.multiselect(SKILLS_PROMPT_CONTRACT.picker);
   handleCancel(/** @type {never} */ (picked));
   return /** @type {string[]} */ (picked);
 }

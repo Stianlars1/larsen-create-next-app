@@ -12,42 +12,57 @@
  */
 
 import { cpSync, existsSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
-const pkgDir = join(repoRoot, "create-next-app");
+const defaultRepoRoot = fileURLToPath(new URL("../..", import.meta.url));
 
-const jobs = [
-  {
-    name: "CSS master",
-    source: join(repoRoot, "CSS"),
-    target: join(pkgDir, "template", "src", "lib", "design-system"),
-    required: ["index.css", "core.css", "theme.css", "base.css"],
-  },
-  {
-    name: "palette master",
-    source: join(repoRoot, "palette"),
-    target: join(pkgDir, "palette"),
-    required: ["index.js", "NOTICE.md", join("engine", "generatePalette.js")],
-  },
-];
+/**
+ * @param {{ repoRoot?: string, packageDir?: string }} [options]
+ */
+export function syncMasters({
+  repoRoot = defaultRepoRoot,
+  packageDir = join(repoRoot, "create-next-app"),
+} = {}) {
+  const jobs = [
+    {
+      name: "CSS master",
+      source: join(repoRoot, "CSS"),
+      target: join(packageDir, "template", "src", "lib", "design-system"),
+      required: ["index.css", "core.css", "theme.css", "base.css"],
+    },
+    {
+      name: "palette master",
+      source: join(repoRoot, "palette"),
+      target: join(packageDir, "palette"),
+      required: ["index.js", "NOTICE.md", join("engine", "generatePalette.js")],
+    },
+  ];
 
-for (const job of jobs) {
-  if (!existsSync(job.source)) {
-    console.error(`sync: ${job.name} missing at ${job.source}`);
+  for (const job of jobs) {
+    if (!existsSync(job.source)) {
+      throw new Error(`sync: ${job.name} missing at ${job.source}`);
+    }
+    for (const rel of job.required) {
+      if (!existsSync(join(job.source, rel))) {
+        throw new Error(`sync: ${job.name} is incomplete - missing ${rel}`);
+      }
+    }
+    rmSync(job.target, { recursive: true, force: true });
+    cpSync(job.source, job.target, {
+      recursive: true,
+      filter: (source) => !source.includes("node_modules") && !source.endsWith(".DS_Store"),
+    });
+    console.log(`sync: ${job.name} -> ${job.target}`);
+  }
+}
+
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  try {
+    syncMasters();
+  } catch (error) {
+    console.error(/** @type {Error} */ (error).message);
     process.exit(1);
   }
-  for (const rel of job.required) {
-    if (!existsSync(join(job.source, rel))) {
-      console.error(`sync: ${job.name} is incomplete - missing ${rel}`);
-      process.exit(1);
-    }
-  }
-  rmSync(job.target, { recursive: true, force: true });
-  cpSync(job.source, job.target, {
-    recursive: true,
-    filter: (src) => !src.includes("node_modules") && !src.endsWith(".DS_Store"),
-  });
-  console.log(`sync: ${job.name} -> ${job.target}`);
 }

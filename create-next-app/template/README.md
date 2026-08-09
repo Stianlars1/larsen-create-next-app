@@ -7,7 +7,7 @@
 
 # {{APP_NAME}}
 
-Built with the Larsen Utvikling Next.js template: newest stable Next.js,
+Built with the Larsen Utvikling Next.js template: {{NEXTJS_CLAIM}},
 App Router, TypeScript, and a vanilla CSS design system. No Tailwind, no
 CSS framework - just tokens.
 
@@ -44,8 +44,9 @@ src/
 public/larsen-utvikling/  Brand assets
 ```
 
-Docs: `DESIGN.md` (token reference), `AGENTS.md` (project rules for AI
-agents), `NEXTJS.md` (Next.js agent guide).
+Docs: `DESIGN.md` (token reference) and `AGENTS.md` (project rules for AI
+agents). If `NEXTJS.md` exists, it is the upstream agent guide preserved from
+create-next-app.
 
 ## After scaffolding - checklist
 
@@ -59,18 +60,17 @@ agents), `NEXTJS.md` (Next.js agent guide).
 ## Agent skills
 
 The [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection
-covers UI craft, motion, accessibility and prototyping. Installed skills live
-in `.agents/skills/` and are symlinked into each agent's own directory.
+covers UI craft, motion, accessibility and prototyping. The wrapper verifies
+only each requested `.agents/skills/<name>/SKILL.md` file. It does not verify
+agent-specific discovery or symlinks.
 
 ```bash
 npx skills add Stianlars1/larsen-skills   # add or change skills
-npx skills list                           # see what is installed
-npx skills update                         # update to the latest versions
 ```
 
 ## Tech
 
-Next.js (newest at scaffold time) - TypeScript - App Router - vanilla CSS
+{{NEXTJS_CLAIM}} - TypeScript - App Router - vanilla CSS
 design tokens
 
 ---
