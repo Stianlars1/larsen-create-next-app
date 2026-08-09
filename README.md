@@ -78,8 +78,9 @@ This repo holds the published package and the masters it is built from.
 | [`palette/`](palette) | Master color generator (rampkit engine, vendored - see [NOTICE](palette/NOTICE.md)) |
 | [`docs/plans/`](docs/plans) | Design and implementation notes |
 
-`create-next-app/scripts/sync.mjs` copies both masters into the package, and
-runs automatically on `prepack`, so a publish can never ship stale tokens.
+`create-next-app/scripts/sync.mjs` copies both masters into the package. Direct
+packs run it on `prepack`; the release packer syncs the same masters into an
+isolated staging package before it builds the consumer tarball.
 
 ## Development
 
@@ -89,6 +90,7 @@ npm run gen:theme -- "#4DA0FF"           # regenerate the default theme
 npm run sync                             # copy masters into the package
 cd create-next-app && npm run smoke      # packaging + scaffold assertions
 cd create-next-app && npm run smoke:full # + install and production build
+cd create-next-app && npm run pack:release # verified release tarball
 ```
 
 ## License

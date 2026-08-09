@@ -67,6 +67,7 @@ npm test                         # focused behavior + documentation checks
 node scripts/generate-cli-reference.mjs --check
 npm run smoke                    # packaging + scaffold assertions
 npm run smoke:full               # + install and production build
+npm run pack:release             # verified consumer-clean release tarball
 node bin/cli.js my-app           # run the CLI from source
 ```
 

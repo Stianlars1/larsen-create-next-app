@@ -31,6 +31,15 @@ function createControlledCommands(root) {
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 const args = process.argv.slice(2);
+if (args.includes("skills") && args.includes("add")) {
+  for (let index = 0; index < args.length; index++) {
+    if (args[index] !== "--skill" || !args[index + 1]) continue;
+    const skillDir = join(process.cwd(), ".agents", "skills", args[index + 1]);
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(join(skillDir, "SKILL.md"), "# Installed skill\\n");
+  }
+  process.exit(0);
+}
 const specIndex = args.findIndex((arg) => arg.startsWith("create-next-app@"));
 if (specIndex === -1 || !args[specIndex + 1]) process.exit(2);
 const appDir = join(process.cwd(), args[specIndex + 1]);
@@ -203,6 +212,36 @@ test("--defaults remains shorthand and accepts valid explicit overrides", () => 
     assert.equal(run.status, 0, run.output);
     const agents = readFileSync(join(run.root, "defaults-override", "AGENTS.md"), "utf8");
     assert.doesNotMatch(agents, /## Installed skills/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("AGENTS.md documents exactly the skills that landed", () => {
+  const run = runCli([
+    "skills-app",
+    "--defaults",
+    "--skills",
+    "motion-craft,interface-craft",
+    "--no-git",
+    "--no-install",
+  ]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    const agents = readFileSync(join(run.root, "skills-app", "AGENTS.md"), "utf8");
+    assert.equal(
+      agents.slice(agents.indexOf("## Installed skills")).trimEnd(),
+      `## Installed skills
+
+Larsen Skills live in \`.agents/skills/\`, symlinked into each agent's own
+directory. Use them when the work matches:
+
+- \`motion-craft\`
+- \`interface-craft\`
+
+Update them with \`npx skills update\`, add more with
+\`npx skills add Stianlars1/larsen-skills\`.`,
+    );
   } finally {
     run.cleanup();
   }

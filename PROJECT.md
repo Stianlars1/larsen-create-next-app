@@ -79,6 +79,8 @@ _TEMPLATES/
 │   │   └── src/lib/design-system/   SYNCED copy of ../../CSS (gitignored)
 │   ├── scripts/
 │   │   ├── generate-cli-reference.mjs  generates/checks README CLI table
+│   │   ├── pack-release.mjs  builds a consumer-clean tarball in staging
+│   │   ├── theme-contrast.mjs  required-token and contrast release checks
 │   │   ├── sync.mjs    copies both masters into the package
 │   │   └── smoke.mjs   scaffolds real apps and asserts on the output
 │   └── package.json
@@ -253,11 +255,12 @@ with its lightness-inverted counterpart and assigns each to the mode it works
 in. Light mode needs a dark accent; dark mode needs a light one. Dark
 `--primary` went from 1.03:1 to 18.97:1.
 
-A contrast check runs in the smoke test before every publish. It asserts body
-text ≥4.5:1, focus ring ≥3:1, button label ≥4.5:1, and button surface ≥1.5:1 -
-the last one deliberately loose, because a brand accent is allowed to sit
-below the WCAG non-text threshold as a surface, but nothing is allowed to be
-invisible.
+A contrast check runs against a real `#0A0A0A` custom palette in the release
+tarball smoke test. It fails if any required token is absent, then asserts body
+text at least 4.5:1, focus ring at least 3:1, button label at least 4.5:1, and
+button surface at least 1.5:1. The last threshold is deliberately loose,
+because a brand accent may sit below the WCAG non-text threshold as a surface,
+but nothing may be invisible.
 
 ---
 
@@ -310,20 +313,30 @@ lists what actually landed, not what was requested.
 
 ## 9. Testing
 
-`create-next-app/scripts/smoke.mjs` - runs automatically on `prepublishOnly`.
+`npm test` runs focused option, overlay, documentation, package-artifact,
+contrast and 18-combination palette contract tests.
+
+`create-next-app/scripts/smoke.mjs` scaffolds real applications:
 
 - **dev mode** (`--dev`): runs `bin/cli.js` directly. Fast.
-- **tarball mode** (default): `npm pack`, then `npx ./<tarball>` - catches
-  anything the `files` whitelist would have dropped.
+- **tarball mode** (default): syncs masters into a temporary staging package,
+  removes repository-only scripts from its manifest, runs
+  `npm pack --ignore-scripts`, then executes that exact tarball with `npx`.
+- **supplied-tarball mode** (`--tarball <path>`): exercises an already packed
+  release candidate rather than creating another artifact.
 - **full mode** (`--full`): also installs and runs `next build` in the
-  generated app.
+  generated app. This remains a separate explicit gate.
 
 Asserts: all five design-system files exist, `index.css` imports `motion.css`,
 `motion.css` has the easing set and the reduced-motion contract, all docs
-exist, `CLAUDE.md` is the pointer, `globals.css` is the single import, no
-leftover `{{PLACEHOLDERS}}`, no tailwind dependency, masters byte-equal to
-their synced copies, contrast passes, a requested skill lands on disk, and
-`AGENTS.md` lists exactly the installed skills.
+exist, `NEXTJS.md` preserves create-next-app guidance when provided,
+`CLAUDE.md` is the pointer, `globals.css` is exactly the single import, no
+leftover `{{PLACEHOLDERS}}`, no Tailwind dependency, directive or config
+artifact, masters byte-equal to their synced copies, required contrast tokens
+exist, contrast passes, a requested skill lands on disk, and `AGENTS.md`
+documents exactly the skills that landed. Focused overlay tests also cover the
+branch where create-next-app provides no `AGENTS.md` and `NEXTJS.md` must not be
+invented.
 
 There is also a matrix script kept in the scratchpad during development that
 runs every package manager, every linter, several palette combinations and all
@@ -342,9 +355,18 @@ and must never handle the OTP.
 
 ```bash
 cd create-next-app
-npm version patch    # or minor
-npm publish          # prepack syncs masters, prepublishOnly runs the smoke test
+npm test
+npm run smoke:full
+npm run pack:release
+npm publish ./larsen-utvikling-create-next-app-0.3.0.tgz
 ```
+
+`pack:release` syncs the masters into a temporary copy, removes all maintainer
+scripts from the consumer manifest, packs with lifecycle scripts disabled, and
+runs the standard smoke test against the reported tarball path. Publishing the
+source directory is refused so the repository-only script metadata cannot be
+published accidentally. The full install plus production build remains the
+separate `smoke:full` gate above.
 
 Verify afterwards from a clean directory with the **exact** version, because
 the npx `@latest` cache can lie:
@@ -401,9 +423,11 @@ questions to answer are in `docs/plans/next-session-prompts.md`.
   `return generateCSSVariables(data, format)`, a no-op alias, and the vendored
   engine inherits it. The CLI offers a choice that changes nothing.
 
-- **No test asserts a preset's contract.** The smoke test checks that tokens
-  exist and that contrast passes, but nothing checks that the `shadcn` preset
-  emits what shadcn actually requires. That is how the gap above survived.
+- **Preset tests record the current incomplete contract, not upstream
+  completeness.** The deterministic matrix checks exact declaration names and
+  structure for all three presets in all six formats, including the current
+  Radix and CSS Variables equivalence. It deliberately does not pretend the
+  missing upstream tokens above exist.
 
 See `CHANGELOG.md` for what changed in each version.
 

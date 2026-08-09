@@ -42,10 +42,11 @@
     "test": "node --test",
     "sync": "node scripts/sync.mjs",
     "gen:theme": "node ../palette/generate-default.mjs",
+    "pack:release": "node scripts/pack-release.mjs --verify",
     "smoke": "node scripts/smoke.mjs",
     "smoke:full": "node scripts/smoke.mjs --full",
     "prepack": "node scripts/sync.mjs",
-    "prepublishOnly": "node scripts/smoke.mjs --dev"
+    "prepublishOnly": "node scripts/refuse-source-publish.mjs"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",

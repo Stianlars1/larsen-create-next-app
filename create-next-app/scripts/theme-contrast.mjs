@@ -1,0 +1,94 @@
+// @ts-check
+
+const REQUIRED_TOKENS = [
+  "background",
+  "foreground",
+  "ring",
+  "primary",
+  "primary-foreground",
+];
+
+/**
+ * Verifies an hsl-values theme in both modes. Required tokens are reported as
+ * failures instead of being skipped, then the readable text, focus ring and
+ * button pairs are checked against their release thresholds.
+ *
+ * @param {string} css
+ * @returns {string[]} human-readable failures
+ */
+export function checkThemeContrast(css) {
+  const block = (/** @type {string} */ from, /** @type {string} */ to) => {
+    const start = css.indexOf(from);
+    const end = to === "" ? css.length : css.indexOf(to, start);
+    if (start === -1 || end === -1) return {};
+    const segment = css.slice(start, end);
+    /** @type {Record<string, string>} */
+    const tokens = {};
+    for (const match of segment.matchAll(
+      /--([a-z0-9-]+):\s*([0-9.]+ [0-9.]+% [0-9.]+%)/g,
+    )) {
+      if (!(match[1] in tokens)) tokens[match[1]] = match[2];
+    }
+    return tokens;
+  };
+
+  /** Relative luminance from an H S% L% triplet using the WCAG formula. */
+  const luminance = (/** @type {string} */ triplet) => {
+    const [h, s, l] = triplet.split(" ").map(parseFloat);
+    const saturation = s / 100;
+    const lightness = l / 100;
+    const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+    const second = chroma * (1 - Math.abs(((h / 60) % 2) - 1));
+    const offset = lightness - chroma / 2;
+    const [r, g, b] = (
+      h < 60 ? [chroma, second, 0]
+      : h < 120 ? [second, chroma, 0]
+      : h < 180 ? [0, chroma, second]
+      : h < 240 ? [0, second, chroma]
+      : h < 300 ? [second, 0, chroma]
+      : [chroma, 0, second]
+    ).map((value) => {
+      const channel = value + offset;
+      return channel <= 0.03928
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+
+  const ratio = (/** @type {string} */ a, /** @type {string} */ b) => {
+    const [lighter, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (lighter + 0.05) / (darker + 0.05);
+  };
+
+  /** @type {string[]} */
+  const failures = [];
+  for (const [mode, tokens] of [
+    ["light", block(":root {", "@media")],
+    ["dark", block("@media", '[data-theme="light"]')],
+  ]) {
+    const values = /** @type {Record<string, string>} */ (tokens);
+    for (const token of REQUIRED_TOKENS) {
+      if (!values[token]) failures.push(`${mode}: missing --${token}`);
+    }
+    if (REQUIRED_TOKENS.some((token) => !values[token])) continue;
+
+    for (const [name, against, minimum] of [
+      ["foreground", "background", 4.5],
+      ["ring", "background", 3],
+      ["primary-foreground", "primary", 4.5],
+      ["primary", "background", 1.5],
+    ]) {
+      const actual = ratio(
+        values[/** @type {string} */ (name)],
+        values[/** @type {string} */ (against)],
+      );
+      if (actual < /** @type {number} */ (minimum)) {
+        failures.push(
+          `${mode} --${name} vs --${against} = ${actual.toFixed(2)} (needs ${minimum})`,
+        );
+      }
+    }
+  }
+  return failures;
+}
