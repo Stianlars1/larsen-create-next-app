@@ -16,7 +16,9 @@ or via the `create` alias:
 npm create @larsen-utvikling/next-app my-app
 ```
 
-The CLI always fetches the latest stable `create-next-app` at run time, so every project starts on the newest Next.js.
+The CLI fetches the latest stable `create-next-app` by default, so the normal
+path starts on the newest Next.js. Use `--cna-version <spec>` as an explicit
+escape hatch when the upstream latest release breaks.
 
 ## What you get
 
@@ -67,21 +69,22 @@ npx @larsen-utvikling/create-next-app my-app \
 | Flag | Description |
 | --- | --- |
 | `-d, --defaults` | Skip all prompts, use defaults |
+| `--default-palette` | Use the default Larsen Utvikling palette |
 | `--hex <color>` | Palette seed HEX (with or without `#`) |
-| `--preset <name>` | `shadcn` \| `radix` \| `css-variables` |
-| `--format <name>` | `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
-| `--scheme <name>` | `analogous` (default) \| `monochromatic` \| `complementary` \| `triadic` |
+| `--preset <name>` | Requires `--hex`: `shadcn` \| `radix` \| `css-variables` |
+| `--format <name>` | Requires `--hex`: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
+| `--scheme <name>` | Requires `--hex`: `analogous` (default) \| `monochromatic` \| `complementary` \| `triadic` |
 | `--pm <name>` | `npm` \| `pnpm` \| `yarn` \| `bun` |
 | `--linter <name>` | `eslint` \| `biome` \| `none` |
 | `--skills <list>` | `recommended` \| `all` \| comma-separated skill names |
 | `--no-skills` | Skip the skills install (the default for `--defaults`) |
-| `--no-git` | Skip git init |
-| `--no-install` | Skip dependency install |
+| `--git` / `--no-git` | Initialize or skip git init. The two forms conflict |
+| `--install` / `--no-install` | Install or skip dependencies. The two forms conflict |
 | `--cna-version <spec>` | Pin the create-next-app version (escape hatch, default `latest`) |
 
 ## Requirements
 
-- Node.js >= 20.9
+- Node.js >= 20.12.0
 - Network access (fetches `create-next-app@latest`)
 
 ## License

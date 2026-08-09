@@ -7,7 +7,7 @@
 
 # {{APP_NAME}}
 
-Built with the Larsen Utvikling Next.js template: newest stable Next.js,
+Built with the Larsen Utvikling Next.js template: {{NEXTJS_CLAIM}},
 App Router, TypeScript, and a vanilla CSS design system. No Tailwind, no
 CSS framework - just tokens.
 
@@ -70,7 +70,7 @@ npx skills update                         # update to the latest versions
 
 ## Tech
 
-Next.js (newest at scaffold time) - TypeScript - App Router - vanilla CSS
+{{NEXTJS_CLAIM}} - TypeScript - App Router - vanilla CSS
 design tokens
 
 ---

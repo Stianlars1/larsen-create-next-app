@@ -1,6 +1,6 @@
 {
   "name": "@larsen-utvikling/create-next-app",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Scaffold the newest Next.js with the Larsen Utvikling design system: vanilla CSS design tokens, agent docs (AGENTS.md), and an optional 12-step color palette generated from a single HEX.",
   "keywords": [
     "create-next-app",
@@ -33,12 +33,13 @@
     "template"
   ],
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=20.12.0"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "test": "node --test",
     "sync": "node scripts/sync.mjs",
     "gen:theme": "node ../palette/generate-default.mjs",
     "smoke": "node scripts/smoke.mjs",

@@ -23,7 +23,8 @@ npx @larsen-utvikling/create-next-app my-app
 
 ## What you get
 
-- **The newest stable Next.js**, fetched at scaffold time - never a pinned version going stale
+- **The newest stable Next.js by default**, with `--cna-version <spec>` as an
+  explicit escape hatch for upstream breakage
 - **TypeScript, App Router, `src/` directory** - and never Tailwind
 - **A vanilla CSS design system** in `src/lib/design-system/`: spacing, widths, type, color and motion tokens, light and dark, with zero JS
 - **A color palette generated from one HEX** - a full 12-step accent scale, gray scale and semantic colors in both modes, powered by the [rampkit](https://rampkit.app) engine running locally during install

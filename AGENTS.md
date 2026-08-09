@@ -32,7 +32,8 @@ it in the same commit when behaviour changes.
 | Design tokens | `CSS/*.css` | `create-next-app/template/src/lib/design-system/` |
 | Colour generation | `palette/index.js` | `create-next-app/palette/` |
 | Vendored engine | `palette/engine/` + record it in `palette/NOTICE.md` | anything under `create-next-app/palette/engine/` |
-| create-next-app flags | `create-next-app/src/scaffold.js` only | scattered across other files |
+| Wrapper CLI options | `create-next-app/src/options.js` | scattered across other files |
+| Upstream create-next-app flags | `create-next-app/src/scaffold.js` only | scattered across other files |
 | What a generated app contains | `create-next-app/template/` | |
 
 `create-next-app/palette/` and `create-next-app/template/src/lib/design-system/`

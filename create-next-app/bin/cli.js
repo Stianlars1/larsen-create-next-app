@@ -13,9 +13,14 @@
 
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
+import {
+  nextJsClaim,
+  parseCliArgs,
+  renderHelp,
+  scaffoldCompleteMessage,
+} from "../src/options.js";
 import { promptConfig } from "../src/prompts.js";
 import { scaffold } from "../src/scaffold.js";
 import { overlay } from "../src/overlay.js";
@@ -33,27 +38,7 @@ const templateDir = fileURLToPath(new URL("../template", import.meta.url));
 
 const PM_RUN = { npm: "npm run", pnpm: "pnpm", yarn: "yarn", bun: "bun run" };
 
-const { values: flags, positionals } = parseArgs({
-  allowPositionals: true,
-  options: {
-    defaults: { type: "boolean", short: "d", default: false },
-    hex: { type: "string" },
-    preset: { type: "string" },
-    format: { type: "string" },
-    scheme: { type: "string" },
-    pm: { type: "string" },
-    linter: { type: "string" },
-    skills: { type: "string" },
-    "no-skills": { type: "boolean", default: false },
-    git: { type: "boolean" },
-    "no-git": { type: "boolean", default: false },
-    install: { type: "boolean" },
-    "no-install": { type: "boolean", default: false },
-    "cna-version": { type: "string", default: "latest" },
-    help: { type: "boolean", short: "h", default: false },
-    version: { type: "boolean", short: "v", default: false },
-  },
-});
+const { values: flags, positionals } = parseCliArgs();
 
 if (flags.version) {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
@@ -62,27 +47,7 @@ if (flags.version) {
 }
 
 if (flags.help) {
-  console.log(`
-Usage: create-next-app [app-name] [options]
-
-Scaffolds the newest Next.js with the Larsen Utvikling design system.
-
-Options:
-  -d, --defaults        Skip all prompts, use defaults
-  --hex <color>         Palette seed HEX (with or without #) - implies a custom palette
-  --preset <name>       Palette preset: shadcn | radix | css-variables
-  --format <name>       Color format: hex | rgb | hsl | hsl-values | oklab | oklch
-  --scheme <name>       Color scheme: analogous | monochromatic | complementary | triadic
-  --pm <name>           Package manager: npm | pnpm | yarn | bun
-  --linter <name>       Linter: eslint | biome | none
-  --skills <list>       Larsen Skills: recommended | all | comma-separated names
-  --no-skills           Skip the Larsen Skills install
-  --no-git              Skip git init
-  --no-install          Skip dependency install
-  --cna-version <spec>  Pin create-next-app version (default: latest)
-  -v, --version         Print version
-  -h, --help            Show this help
-`);
+  console.log(renderHelp());
   process.exit(0);
 }
 
@@ -90,6 +55,7 @@ Options:
 let phase = "idle";
 let appDir = "";
 let createdDir = false;
+let cnaVersion = "latest";
 
 process.on("SIGINT", () => {
   if (createdDir && (phase === "scaffold" || phase === "overlay")) {
@@ -105,6 +71,7 @@ p.intro("Larsen Utvikling - create-next-app");
 
 try {
   const config = await promptConfig(flags, positionals[0], process.cwd());
+  cnaVersion = config.cnaVersion;
   appDir = join(process.cwd(), config.name);
 
   // Scaffold
@@ -116,7 +83,7 @@ try {
     { name: config.name, linter: config.linter, cnaVersion: config.cnaVersion },
     { cwd: process.cwd() },
   );
-  spinner.stop("Next.js scaffolded (newest stable)");
+  spinner.stop(scaffoldCompleteMessage(config.cnaVersion));
 
   // Larsen Skills - installed before the overlay so the docs it writes list
   // the skills that actually landed, not the ones that were requested.
@@ -153,6 +120,7 @@ try {
     appDir,
     vars: {
       APP_NAME: config.name,
+      NEXTJS_CLAIM: nextJsClaim(config.cnaVersion),
       PM: config.pm,
       PM_RUN: PM_RUN[/** @type {keyof typeof PM_RUN} */ (config.pm)],
       PALETTE_SEED: normalizeHex(paletteMeta.hex),
@@ -236,7 +204,7 @@ try {
   const tail = typeof error?.output === "string" ? error.output.slice(-2000) : "";
   if (tail) console.error(tail);
   if (/ENOTFOUND|ETIMEDOUT|EAI_AGAIN|network/i.test(String(error?.message) + tail)) {
-    p.cancel("Network error - an internet connection is required to fetch create-next-app@latest.");
+    p.cancel(`Network error - an internet connection is required to fetch create-next-app@${cnaVersion}.`);
   } else {
     p.cancel(`Failed: ${error?.message ?? error}`);
   }

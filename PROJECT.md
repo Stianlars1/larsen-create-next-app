@@ -5,7 +5,7 @@ picking this up cold, read this file first: it describes what exists, what it
 does, why it does it that way, and what it deliberately does not do. Nothing
 here should need to be guessed from the code.
 
-Last verified against the codebase: 2026-08-08.
+Last verified against the codebase: 2026-08-09.
 
 ---
 
@@ -18,10 +18,11 @@ system already in it.
 npx @larsen-utvikling/create-next-app my-app
 ```
 
-It is a **wrapper plus an overlay**, not a fork. It runs the official
-`create-next-app@latest` non-interactively, then replaces and adds files on
-top. That is why the generated project always uses the newest stable Next.js
-without this package tracking Next.js releases.
+It is a **wrapper plus an overlay**, not a fork. By default it runs the
+official `create-next-app@latest` non-interactively, then replaces and adds
+files on top. That keeps the default path on the newest stable Next.js without
+this package tracking Next.js releases. `--cna-version <spec>` can select a
+different create-next-app spec when the upstream latest release breaks.
 
 The audience is primarily Stian Larsen (Larsen Utvikling). It is public and
 MIT licensed, but it encodes one person's opinions on purpose.
@@ -67,7 +68,8 @@ _TEMPLATES/
 ├── create-next-app/    THE PUBLISHED PACKAGE
 │   ├── bin/cli.js      orchestration: prompts → scaffold → skills → overlay → install → git
 │   ├── src/
-│   │   ├── prompts.js  the interactive flow + flag parsing + TTY guards
+│   │   ├── options.js  canonical flags, help text, choices and defaults
+│   │   ├── prompts.js  the interactive flow + validation + TTY guards
 │   │   ├── scaffold.js THE ONLY FILE THAT KNOWS ABOUT create-next-app
 │   │   ├── overlay.js  copy + {{VAR}} substitution + rename/remove
 │   │   ├── skills.js   Larsen Skills install
@@ -101,15 +103,15 @@ custom palette. Every one has a flag.
 | # | Question | Choices (default first) | Flag |
 | --- | --- | --- | --- |
 | 1 | What is your app named? | any name matching `^[a-z0-9][a-z0-9._-]*$`, ≤214 chars | positional argument |
-| 2 | Generate a custom 12-step palette from a single HEX? | No · Yes | `--hex <color>` (omit for the default theme) |
+| 2 | Generate a custom 12-step palette from a single HEX? | No · Yes | `--default-palette` · `--hex <color>` |
 | 2a | Enter your HEX color | with or without `#`, 3 or 6 digits | `--hex 4DA0FF` |
 | 2b | Choose framework/style | shadcn/ui · Radix Colors · CSS Variables | `--preset shadcn \| radix \| css-variables` |
 | 2c | Choose color format | HSL Values · HEX · RGB · HSL · OKLAB · OKLCH | `--format hsl-values \| hex \| rgb \| hsl \| oklab \| oklch` |
 | 3 | Which linter? | ESLint · Biome · None | `--linter eslint \| biome \| none` |
 | 4 | Install Larsen Skills for AI agents? | Recommended · All · Let me pick · No | `--skills recommended \| all \| a,comma,list` · `--no-skills` |
 | 5 | Which package manager? | npm · pnpm · yarn · bun | `--pm npm \| pnpm \| yarn \| bun` |
-| 6 | Initialize a git repository? | Yes · No | `--no-git` |
-| 7 | Install dependencies? | Yes · No | `--no-install` |
+| 6 | Initialize a git repository? | Yes · No | `--git` · `--no-git` |
+| 7 | Install dependencies? | Yes · No | `--install` · `--no-install` |
 
 **Accuracy notes** (these have been got wrong before):
 
@@ -123,12 +125,20 @@ custom palette. Every one has a flag.
   never installs them unless `--skills` is passed explicitly.
 - `--scheme` exists as a flag but is **not** a prompt: `analogous` (default),
   `monochromatic`, `complementary`, `triadic`.
+- `--default-palette` explicitly answers No to the custom palette question and
+  conflicts with `--hex`. `--preset`, `--format` and `--scheme` require
+  `--hex`; they are rejected instead of being silently ignored.
+- `--git` conflicts with `--no-git`, and `--install` conflicts with
+  `--no-install`.
+- `--defaults` is a shorthand, not a mode lock. Valid explicit options may
+  override its defaults.
 
 ### 3.2 Every flag
 
 | Flag | Effect |
 | --- | --- |
 | `-d, --defaults` | Skip every prompt, take the defaults (no skills) |
+| `--default-palette` | Use the default Larsen Utvikling palette |
 | `--hex <color>` | Palette seed. Implies a custom palette |
 | `--preset <name>` | `shadcn` \| `radix` \| `css-variables` |
 | `--format <name>` | `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
@@ -137,8 +147,8 @@ custom palette. Every one has a flag.
 | `--skills <list>` | `recommended` \| `all` \| comma-separated names |
 | `--no-skills` | Skip the skills install |
 | `--pm <name>` | `npm` \| `pnpm` \| `yarn` \| `bun` |
-| `--no-git` | Skip git init |
-| `--no-install` | Skip the dependency install |
+| `--git` · `--no-git` | Initialize or skip git init. The two forms conflict |
+| `--install` · `--no-install` | Install or skip dependencies. The two forms conflict |
 | `--cna-version <spec>` | Pin create-next-app instead of `latest` (escape hatch for upstream breakage) |
 | `-v, --version` · `-h, --help` | |
 
@@ -146,7 +156,8 @@ custom palette. Every one has a flag.
 
 Each prompt is guarded. In CI or with a piped/closed stdin the CLI exits 1
 immediately and names the flag that answers the question. It never hangs.
-Passing every flag explicitly works without `--defaults`.
+Passing every flag explicitly works without `--defaults`, including the
+positive and negative palette, git and install answers.
 
 ---
 
@@ -295,7 +306,7 @@ lists what actually landed, not what was requested.
 | Decision | Reason |
 | --- | --- |
 | Never Tailwind | When every value lives in a class name in markup, the design system stops being an artifact you can look at. Vanilla custom properties keep it as five readable files. |
-| Wrap `create-next-app@latest` rather than fork | The generated project always gets the newest stable Next.js without this package tracking releases. |
+| Wrap `create-next-app@latest` by default rather than fork | The normal path gets the newest stable Next.js without this package tracking releases, while `--cna-version` remains an explicit escape hatch. |
 | All CNA knowledge in one file (`scaffold.js`) | Upstream flag drift is the most likely breakage; it should be a one-line fix. |
 | `--yes` twice + `stdin: "ignore"` | First `--yes` is npx's, second is CNA's. Closed stdin makes an unexpected prompt a fast visible error instead of a hang. |
 | No invented alias tokens | An earlier version added `--surface`, `--on-surface`, … as a stable layer. Removed: apps now consume the generator's real token names, and `tokenRoles(preset, format)` maps roles for docs and starter CSS. |
