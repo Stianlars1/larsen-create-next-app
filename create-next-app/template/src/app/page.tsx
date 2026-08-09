@@ -42,7 +42,7 @@ export default function Home() {
         <section>
           <h1>{{APP_NAME}}</h1>
           <p className="lead">
-            A clean Next.js start: {{NEXTJS_CLAIM}}, App Router, and a
+            A clean Next.js start: { {{NEXTJS_CLAIM_TSX}} }, App Router, and a
             vanilla CSS design system. No utility framework - just tokens.
           </p>
         </section>

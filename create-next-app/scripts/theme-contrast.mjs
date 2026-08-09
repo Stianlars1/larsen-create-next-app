@@ -1,5 +1,29 @@
 // @ts-check
 
+export const CONTRAST_PRESET = "shadcn";
+export const CONTRAST_FORMAT = "hsl-values";
+export const CONTRAST_CHECKS = Object.freeze([
+  Object.freeze({
+    token: "foreground",
+    against: "background",
+    minimum: 4.5,
+    standard: "WCAG",
+  }),
+  Object.freeze({ token: "ring", against: "background", minimum: 3, standard: "WCAG" }),
+  Object.freeze({
+    token: "primary-foreground",
+    against: "primary",
+    minimum: 4.5,
+    standard: "WCAG",
+  }),
+  Object.freeze({
+    token: "primary",
+    against: "background",
+    minimum: 1.5,
+    standard: "visibility-floor",
+  }),
+]);
+
 const REQUIRED_TOKENS = [
   "background",
   "foreground",
@@ -9,9 +33,10 @@ const REQUIRED_TOKENS = [
 ];
 
 /**
- * Verifies an hsl-values theme in both modes. Required tokens are reported as
- * failures instead of being skipped, then the readable text, focus ring and
- * button pairs are checked against their release thresholds.
+ * Verifies a shadcn hsl-values theme in both modes. Required tokens are
+ * reported as failures instead of being skipped, then the exact exported
+ * contrast checks are evaluated. Other preset-format combinations are not
+ * supported by this parser.
  *
  * @param {string} css
  * @returns {string[]} human-readable failures
@@ -73,12 +98,7 @@ export function checkThemeContrast(css) {
     }
     if (REQUIRED_TOKENS.some((token) => !values[token])) continue;
 
-    for (const [name, against, minimum] of [
-      ["foreground", "background", 4.5],
-      ["ring", "background", 3],
-      ["primary-foreground", "primary", 4.5],
-      ["primary", "background", 1.5],
-    ]) {
+    for (const { token: name, against, minimum } of CONTRAST_CHECKS) {
       const actual = ratio(
         values[/** @type {string} */ (name)],
         values[/** @type {string} */ (against)],

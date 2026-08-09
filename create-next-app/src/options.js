@@ -117,6 +117,7 @@ export const OPTION_CONTRACT = Object.freeze([
     defaultValue: [],
     defaultContext: "--defaults",
     promptDefault: "recommended",
+    conflicts: "no-skills",
     description: "Larsen Skills: recommended, all, or comma-separated names",
   },
   {
@@ -207,13 +208,8 @@ function optionWasProvided(flags, name) {
   return option?.type === "boolean" ? flags[name] === true : flags[name] !== undefined;
 }
 
-/**
- * Returns the first invalid relationship, or undefined when the explicitly
- * supplied options can be resolved without ignoring an answer.
- *
- * @param {Record<string, any>} flags
- */
-export function validateOptionRelationships(flags) {
+/** @param {Record<string, any>} flags */
+function validateOptionConflicts(flags) {
   for (const option of OPTION_CONTRACT) {
     if (
       option.conflicts &&
@@ -223,6 +219,11 @@ export function validateOptionRelationships(flags) {
       return `--${option.name} cannot be combined with --${option.conflicts}.`;
     }
   }
+  return undefined;
+}
+
+/** @param {Record<string, any>} flags */
+function validateOptionRequirements(flags) {
   for (const option of OPTION_CONTRACT) {
     if (
       option.requires &&
@@ -233,6 +234,45 @@ export function validateOptionRelationships(flags) {
     }
   }
   return undefined;
+}
+
+/**
+ * Returns the first invalid relationship, or undefined when the explicitly
+ * supplied options can be resolved without ignoring an answer.
+ *
+ * @param {Record<string, any>} flags
+ */
+export function validateOptionRelationships(flags) {
+  return validateOptionConflicts(flags) ?? validateOptionRequirements(flags);
+}
+
+/**
+ * Validates the complete parsed command line before any prompt or scaffold
+ * work. Presence is checked independently from truthiness so explicit empty
+ * string values cannot fall back to defaults.
+ *
+ * @param {Record<string, any>} flags
+ * @param {string[]} positionals
+ */
+export function validateCliInput(flags, positionals) {
+  const conflictError = validateOptionConflicts(flags);
+  if (conflictError) return conflictError;
+
+  if (positionals.length > 1) {
+    return `Expected at most one app name, received ${positionals.length}.`;
+  }
+
+  for (const option of OPTION_CONTRACT) {
+    if (
+      option.type === "string" &&
+      flags[option.name] !== undefined &&
+      String(flags[option.name]).trim() === ""
+    ) {
+      return `--${option.name} requires a non-empty value.`;
+    }
+  }
+
+  return validateOptionRequirements(flags);
 }
 
 function optionSyntax(option) {
@@ -276,6 +316,9 @@ function optionDescription(option, { markdown = false } = {}) {
   if (option.promptDefault !== undefined && option.promptDefault !== option.defaultValue) {
     sentences.push(`Interactive default: ${formatValue(option.promptDefault, markdown)}`);
   }
+  if (option.type === "string") {
+    sentences.push("Value must not be empty");
+  }
   if (option.requires) {
     sentences.push(`Requires ${formatValue(`--${option.requires}`, markdown)}`);
   }
@@ -317,4 +360,14 @@ export function nextJsClaim(spec) {
 /** @param {string} spec */
 export function scaffoldCompleteMessage(spec) {
   return `Next.js scaffolded - requested create-next-app@${spec}`;
+}
+
+/** @param {string} value */
+export function serializeTsxText(value) {
+  return JSON.stringify(value)
+    .replaceAll("<", "\\u003c")
+    .replaceAll(">", "\\u003e")
+    .replaceAll("&", "\\u0026")
+    .replaceAll("\u2028", "\\u2028")
+    .replaceAll("\u2029", "\\u2029");
 }

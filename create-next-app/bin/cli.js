@@ -20,6 +20,8 @@ import {
   parseCliArgs,
   renderHelp,
   scaffoldCompleteMessage,
+  serializeTsxText,
+  validateCliInput,
 } from "../src/options.js";
 import { promptConfig } from "../src/prompts.js";
 import { scaffold } from "../src/scaffold.js";
@@ -70,6 +72,11 @@ process.on("SIGINT", () => {
 p.intro("Larsen Utvikling - create-next-app");
 
 try {
+  const inputError = validateCliInput(flags, positionals);
+  if (inputError) {
+    p.cancel(inputError);
+    process.exit(1);
+  }
   const config = await promptConfig(flags, positionals[0], process.cwd());
   cnaVersion = config.cnaVersion;
   appDir = join(process.cwd(), config.name);
@@ -121,6 +128,7 @@ try {
     vars: {
       APP_NAME: config.name,
       NEXTJS_CLAIM: nextJsClaim(config.cnaVersion),
+      NEXTJS_CLAIM_TSX: serializeTsxText(nextJsClaim(config.cnaVersion)),
       PM: config.pm,
       PM_RUN: PM_RUN[/** @type {keyof typeof PM_RUN} */ (config.pm)],
       PALETTE_SEED: normalizeHex(paletteMeta.hex),

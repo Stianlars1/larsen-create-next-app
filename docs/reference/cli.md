@@ -65,19 +65,19 @@ prompt or scaffold operation.
 | --- | --- |
 | `-d, --defaults` | Skip all prompts, use defaults (no skills) |
 | `--default-palette` | Answer No to a custom palette and use the default palette. Interactive default: `no`. Conflicts with `--hex` |
-| `--hex <color>` | Palette seed HEX - implies a custom palette. Conflicts with `--default-palette` |
-| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Requires `--hex` |
-| `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Requires `--hex` |
-| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Requires `--hex` |
-| `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm` |
-| `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint` |
-| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended` |
-| `--no-skills` | Skip the Larsen Skills install |
+| `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
+| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
+| `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
+| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Value must not be empty. Requires `--hex` |
+| `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
+| `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
+| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
+| `--no-skills` | Skip the Larsen Skills install. Conflicts with `--skills` |
 | `--git` | Initialize a git repository. Default: `yes`. Conflicts with `--no-git` |
 | `--no-git` | Skip git init. Conflicts with `--git` |
 | `--install` | Install dependencies. Default: `yes`. Conflicts with `--no-install` |
 | `--no-install` | Skip dependency install. Conflicts with `--install` |
-| `--cna-version <spec>` | Select the create-next-app version spec. Default: `latest` |
+| `--cna-version <spec>` | Select the create-next-app version spec. Default: `latest`. Value must not be empty |
 | `-v, --version` | Print version |
 | `-h, --help` | Show this help |
 <!-- END GENERATED CLI REFERENCE -->
@@ -118,22 +118,31 @@ Additional behavior that is intentionally explicit:
   `--no-linter` flags.
 - The selected package manager is used only for dependency installation and
   generated commands. The upstream scaffold always runs through `npx`.
-- `--no-skills` currently takes precedence if it is combined with `--skills`.
-  This pair is not rejected by the current contract.
+
+## Prompt presentation and scaffold ownership
+
+`@clack/prompts` is the terminal-interface library used by the wrapper. It
+owns the prompt UI and cancellation messages. It also renders intro and outro
+frames, logs, and spinner presentation. It does not create the Next.js app.
+The selected official create-next-app package remains the scaffold engine.
+Child stdin is closed separately by the wrapper's process runner so an
+unexpected upstream prompt fails instead of hanging.
 
 ## Rejected combinations and values
 
 The CLI rejects these pairs before prompting or scaffolding:
 
 - `--default-palette` with `--hex`
+- `--skills` with `--no-skills`
 - `--git` with `--no-git`
 - `--install` with `--no-install`
 
 `--preset`, `--format`, and `--scheme` each require `--hex`. They cannot be
 silently applied to the baked default palette. Unknown presets, formats,
 schemes, package managers, linters, and skill names are rejected. Invalid HEX
-and invalid app names are rejected. Node's argument parser rejects unknown
-flags and missing flag values.
+and invalid app names are rejected. Every string flag rejects an explicitly
+empty or whitespace-only value. More than one positional app name is rejected.
+Node's argument parser rejects unknown flags and missing flag values.
 
 ## Non-interactive and CI use
 

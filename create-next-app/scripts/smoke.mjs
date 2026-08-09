@@ -162,11 +162,12 @@ try {
 
   // Regression guard: an extreme seed used to leave --primary and --ring at
   // the seed color in both modes, so dark mode rendered near-black on
-  // near-black (about 1:1 contrast - invisible buttons and focus rings).
+  // The checker supports only shadcn hsl-values themes. The default and this
+  // custom smoke case both use that exact preset-format combination.
   const contrastFailures = checkThemeContrast(theme);
   check(
     contrastFailures.length === 0,
-    `default theme contrast (${contrastFailures.join("; ") || "all pairs pass"})`,
+    `default shadcn hsl-values contrast checks (${contrastFailures.join("; ") || "all pairs pass"})`,
   );
 
   // No unsubstituted {{VARS}} in text files (JSX style={{...}} is fine)
@@ -251,7 +252,7 @@ try {
   const customContrastFailures = checkThemeContrast(customTheme);
   check(
     customContrastFailures.length === 0,
-    `extreme-seed contrast (${customContrastFailures.join("; ") || "all pairs pass"})`,
+    `extreme-seed shadcn hsl-values contrast checks (${customContrastFailures.join("; ") || "all pairs pass"})`,
   );
 
   // Full mode: install + production build

@@ -66,19 +66,19 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
 | --- | --- |
 | `-d, --defaults` | Skip all prompts, use defaults (no skills) |
 | `--default-palette` | Answer No to a custom palette and use the default palette. Interactive default: `no`. Conflicts with `--hex` |
-| `--hex <color>` | Palette seed HEX - implies a custom palette. Conflicts with `--default-palette` |
-| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Requires `--hex` |
-| `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Requires `--hex` |
-| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Requires `--hex` |
-| `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm` |
-| `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint` |
-| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended` |
-| `--no-skills` | Skip the Larsen Skills install |
+| `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
+| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
+| `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
+| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Value must not be empty. Requires `--hex` |
+| `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
+| `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
+| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
+| `--no-skills` | Skip the Larsen Skills install. Conflicts with `--skills` |
 | `--git` | Initialize a git repository. Default: `yes`. Conflicts with `--no-git` |
 | `--no-git` | Skip git init. Conflicts with `--git` |
 | `--install` | Install dependencies. Default: `yes`. Conflicts with `--no-install` |
 | `--no-install` | Skip dependency install. Conflicts with `--install` |
-| `--cna-version <spec>` | Select the create-next-app version spec. Default: `latest` |
+| `--cna-version <spec>` | Select the create-next-app version spec. Default: `latest`. Value must not be empty |
 | `-v, --version` | Print version |
 | `-h, --help` | Show this help |
 <!-- END GENERATED CLI REFERENCE -->

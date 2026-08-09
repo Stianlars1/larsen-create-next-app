@@ -135,6 +135,18 @@ named package as a new product rather than silently widening this contract.
 
 ## Test boundary
 
+The mechanical contrast parser supports only `shadcn` with `hsl-values` and
+checks both generated modes:
+
+- `--foreground` vs `--background` must reach 4.5.
+- `--ring` vs `--background` must reach 3.
+- `--primary-foreground` vs `--primary` must reach 4.5.
+- `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
+  visibility floor.
+
+It fails on missing required tokens. It does not guarantee contrast for any
+other preset-format matrix entry.
+
 The deterministic matrix proves the names, order, four-block structure, and
 selected serialization syntax of the current output. It deliberately records
 the current incomplete preset contracts. It does not prove future parity with

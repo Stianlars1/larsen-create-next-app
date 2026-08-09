@@ -17,6 +17,11 @@ import { syncMasters } from "./sync.mjs";
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = join(packageDir, "..");
 
+const RELEASE_STATUS_PATHS = Object.freeze([
+  ".",
+  ":(exclude)docs/verification/**",
+]);
+
 /** @param {string} command @param {string[]} args @param {string} cwd */
 function run(command, args, cwd) {
   const result = spawnSync(command, args, {
@@ -31,6 +36,34 @@ function run(command, args, cwd) {
 }
 
 /**
+ * Resolves the immutable source identity and rejects source changes that can
+ * affect package contents, release tooling, tests, or the maintained current
+ * contract. Dated files under docs/verification are evidence written after an
+ * artifact exists, so they are deliberately outside this cleanliness gate.
+ *
+ * @param {{ repoRoot: string }} options
+ * @returns {string} full HEAD object id
+ */
+export function releaseSourceHead({ repoRoot: sourceRoot }) {
+  const head = run("git", ["rev-parse", "--verify", "HEAD"], sourceRoot).trim();
+  if (!/^[0-9a-f]{40,64}$/.test(head)) {
+    throw new Error(`git rev-parse did not report a full HEAD object id: ${head}`);
+  }
+
+  const status = run(
+    "git",
+    ["status", "--porcelain=v1", "--untracked-files=all", "--", ...RELEASE_STATUS_PATHS],
+    sourceRoot,
+  ).trim();
+  if (status) {
+    throw new Error(
+      `Release-relevant source is dirty. Commit or remove these changes before packing:\n${status}`,
+    );
+  }
+  return head;
+}
+
+/**
  * Builds the consumer artifact from a temporary copy. Repository-only scripts
  * remain available to maintainers but are removed from the packed manifest.
  *
@@ -38,6 +71,7 @@ function run(command, args, cwd) {
  * @returns {string} absolute tarball path
  */
 export function packRelease({ destination }) {
+  const gitHead = releaseSourceHead({ repoRoot });
   const destinationPath = resolve(destination);
   mkdirSync(destinationPath, { recursive: true });
   const temporaryRoot = mkdtempSync(join(tmpdir(), "lu-release-pack-"));
@@ -57,6 +91,7 @@ export function packRelease({ destination }) {
 
     const manifestPath = join(stagedPackage, "package.json");
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    manifest.gitHead = gitHead;
     delete manifest.scripts;
     writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 

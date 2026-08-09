@@ -29,7 +29,11 @@ about npm publication.
 - Clarify decisions with more than one defensible answer. Do not guess.
 - Never publish to npm or handle an npm OTP. Stian publishes.
 - Test the generated app and release artifact, not only source helpers.
-- Check contrast mechanically; do not approve it by sight alone.
+- The mechanical contrast gate supports only `shadcn` with `hsl-values`:
+  `--foreground` vs `--background` at 4.5, `--ring` vs `--background` at 3,
+  `--primary-foreground` vs `--primary` at 4.5, and `--primary` vs
+  `--background` at the deliberately non-WCAG 1.5 visibility floor. It does
+  not guarantee any other preset-format entry.
 
 ## Edit map
 

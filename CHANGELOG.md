@@ -35,6 +35,8 @@ a generated project contains counts as user-facing.
 - Release preparation now produces one consumer-clean tarball, runs standard
   smoke against that file, and requires the same reported file for the
   separate install and production-build gate.
+- Release packing now refuses dirty release-relevant source and embeds the
+  exact committed `gitHead` in the consumer manifest.
 - Repository documentation now separates current contract, historical plan,
   version history, and publication evidence. Landing-page and blog state is
   outside this package contract.
@@ -48,6 +50,13 @@ a generated project contains counts as user-facing.
   `NEXTJS.md` creation.
 - Source-directory publication is refused so maintainers publish only a
   verified release tarball.
+- `--skills` with `--no-skills`, extra positional names, and explicitly empty
+  string options are rejected before scaffolding instead of being discarded
+  or replaced by defaults.
+- Requested create-next-app specs are serialized as TSX string expressions so
+  semver ranges containing JSX punctuation cannot corrupt the welcome page.
+- Contrast documentation now states the exact `shadcn` and `hsl-values`
+  parser boundary, WCAG thresholds, and non-WCAG visibility floor.
 
 ---
 

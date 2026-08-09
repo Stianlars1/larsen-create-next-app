@@ -68,3 +68,38 @@ test("the internal CLI reference includes the complete runtime skills prompt con
   assert.match(generated, /Let me pick/);
   assert.match(generated, /empty selection is allowed/i);
 });
+
+test("the current authorities explain the Clack and scaffold ownership boundary", () => {
+  const project = readFileSync(join(packageDir, "..", "PROJECT.md"), "utf8");
+  const cliReference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
+  for (const document of [project, cliReference]) {
+    const normalized = document.replaceAll(/\s+/g, " ");
+    assert.match(normalized, /@clack\/prompts/);
+    assert.match(normalized, /prompt UI/i);
+    assert.match(normalized, /cancellation/i);
+    assert.match(normalized, /intro.*outro/i);
+    assert.match(normalized, /logs/i);
+    assert.match(normalized, /spinner/i);
+    assert.match(normalized, /official create-next-app/i);
+    assert.match(normalized, /stdin.*closed/i);
+  }
+});
+
+test("contrast authorities state the exact supported boundary and thresholds", () => {
+  const agents = readFileSync(join(packageDir, "..", "AGENTS.md"), "utf8");
+  const project = readFileSync(join(packageDir, "..", "PROJECT.md"), "utf8");
+  const paletteReference = readFileSync(
+    join(packageDir, "..", "docs", "reference", "palette.md"),
+    "utf8",
+  );
+  for (const document of [agents, project, paletteReference]) {
+    const normalized = document.replaceAll(/\s+/g, " ");
+    assert.match(normalized, /shadcn.*hsl-values/i);
+    assert.match(normalized, /foreground.*background.*4\.5/i);
+    assert.match(normalized, /ring.*background.*3(?:\.0)?/i);
+    assert.match(normalized, /primary-foreground.*primary.*4\.5/i);
+    assert.match(normalized, /primary.*background.*1\.5/i);
+    assert.match(normalized, /non-WCAG/i);
+    assert.match(normalized, /other preset-format/i);
+  }
+});

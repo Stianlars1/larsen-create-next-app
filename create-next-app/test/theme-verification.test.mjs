@@ -70,3 +70,17 @@ test("contrast verification reports every required token that is absent", () => 
 
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 });
+
+test("contrast verification exposes its exact shadcn hsl-values checks", async () => {
+  const { CONTRAST_CHECKS, CONTRAST_FORMAT, CONTRAST_PRESET } = await import(
+    "../scripts/theme-contrast.mjs"
+  );
+  assert.equal(CONTRAST_PRESET, "shadcn");
+  assert.equal(CONTRAST_FORMAT, "hsl-values");
+  assert.deepEqual(CONTRAST_CHECKS, [
+    { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
+    { token: "ring", against: "background", minimum: 3, standard: "WCAG" },
+    { token: "primary-foreground", against: "primary", minimum: 4.5, standard: "WCAG" },
+    { token: "primary", against: "background", minimum: 1.5, standard: "visibility-floor" },
+  ]);
+});

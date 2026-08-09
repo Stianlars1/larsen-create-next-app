@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { OPTION_CONTRACT, serializeTsxText } from "../src/options.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const cli = join(packageDir, "bin", "cli.js");
@@ -164,16 +165,59 @@ test("closed stdin accepts explicit custom palette, no-git, and no-install answe
 
 for (const [left, right] of [
   ["--default-palette", "--hex"],
+  ["--skills", "--no-skills"],
   ["--git", "--no-git"],
   ["--install", "--no-install"],
 ]) {
   test(`rejects contradictory ${left} and ${right}`, () => {
-    const args = ["conflict-app", left, right];
+    const args = left === "--skills"
+      ? ["conflict-app", left, "unknown", right]
+      : ["conflict-app", left, right];
     if (right === "--hex") args.push("4DA0FF");
     const run = runCli([...args, "--defaults"]);
     try {
       assert.equal(run.status, 1, run.output);
       assert.match(run.output, new RegExp(`${left} cannot be combined with ${right}`));
+    } finally {
+      run.cleanup();
+    }
+  });
+}
+
+test("rejects extra positional app names before scaffolding", () => {
+  const run = runCli(["first-app", "second-app", "--defaults"]);
+  try {
+    assert.equal(run.status, 1, run.output);
+    assert.match(run.output, /Expected at most one app name/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+const stringOptions = [
+  "hex",
+  "preset",
+  "format",
+  "scheme",
+  "pm",
+  "linter",
+  "skills",
+  "cna-version",
+];
+
+test("empty-value coverage names every string option in OPTION_CONTRACT", () => {
+  assert.deepEqual(
+    OPTION_CONTRACT.filter((option) => option.type === "string").map((option) => option.name),
+    stringOptions,
+  );
+});
+
+for (const option of stringOptions) {
+  test(`rejects an explicitly empty --${option} value`, () => {
+    const run = runCli(["empty-value-app", "--defaults", `--${option}=`]);
+    try {
+      assert.equal(run.status, 1, run.output);
+      assert.match(run.output, new RegExp(`--${option} requires a non-empty value`));
     } finally {
       run.cleanup();
     }
@@ -232,6 +276,36 @@ test("--defaults remains shorthand and accepts valid explicit overrides", () => 
   } finally {
     run.cleanup();
   }
+});
+
+test("a create-next-app range spec is serialized as TSX text instead of JSX markup", () => {
+  const spec = ">=16 <17";
+  const run = runCli([
+    "range-spec-app",
+    "--defaults",
+    "--no-git",
+    "--no-install",
+    "--cna-version",
+    spec,
+  ]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    const page = readFileSync(join(run.root, "range-spec-app", "src", "app", "page.tsx"), "utf8");
+    const serialized = page.match(/A clean Next\.js start: \{ ("[^"]+") \}, App Router/)?.[1];
+    assert.ok(serialized, page);
+    assert.equal(JSON.parse(serialized), `the wrapper requested create-next-app@${spec}`);
+    assert.match(serialized, /\\u003e=16 \\u003c17/);
+    assert.doesNotMatch(page, /start: the wrapper requested create-next-app@>=16 <17/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("TSX text serialization cannot close the expression or inject markup", () => {
+  const attemptedInjection = `next\" }<Injected value={1} />{"`;
+  const serialized = serializeTsxText(attemptedInjection);
+  assert.equal(JSON.parse(serialized), attemptedInjection);
+  assert.doesNotMatch(serialized, /[<>&]/);
 });
 
 test("AGENTS.md documents exactly the skills that landed", () => {

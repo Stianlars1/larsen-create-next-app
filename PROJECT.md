@@ -113,6 +113,12 @@ The `npx` invocation also receives its own leading `--yes`. Child stdin is
 closed so unexpected upstream prompts fail instead of hanging. The wrapper
 then owns overlay, optional installation, and optional git setup.
 
+`@clack/prompts` is the terminal-interface library, not a scaffold engine. It
+owns the wrapper's prompt UI and cancellation messages. It also renders the
+intro and outro frames, logs, and spinner presentation. The official
+create-next-app package remains the scaffold engine. Child stdin is closed
+separately by the wrapper's process runner.
+
 ## Generated project contract
 
 Every successful overlay writes this structure:
@@ -228,9 +234,16 @@ Current custom choices are:
 - Schemes: `analogous`, `monochromatic`, `complementary`, `triadic`.
 
 For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
-so the accent works on both light and dark surfaces. The contrast verifier
-checks required tokens and evaluates body text, focus ring, button label, and
-button-surface visibility in both modes.
+so the accent works on both light and dark surfaces. The mechanical verifier
+supports only `shadcn` with `hsl-values` and both generated modes:
+
+- `--foreground` vs `--background` must reach 4.5.
+- `--ring` vs `--background` must reach 3.
+- `--primary-foreground` vs `--primary` must reach 4.5.
+- `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
+  visibility floor.
+
+These checks do not guarantee any other preset-format matrix entry.
 
 The deterministic 3 x 6 preset-format matrix records the current contract,
 including known incompleteness. It does not claim upstream shadcn or Radix
@@ -257,13 +270,22 @@ Different commands prove different things:
 | `node scripts/generate-cli-reference.mjs --check` | Both generated CLI tables match `OPTION_CONTRACT` | CLI behavior or package publication |
 | `npm test` | Focused source behavior, palette contracts, docs, overlay, contrast, and artifact-shape checks | A real upstream scaffold or production build |
 | `npm run smoke` | Real generated projects from one release-style tarball with scaffold assertions | Dependency installation and `next build` |
-| `npm run pack:release` | One consumer-clean tarball plus standard tarball smoke | Full install/build or npm publication |
+| `npm run pack:release` | One consumer-clean tarball from clean release-relevant source, with exact `gitHead`, plus standard tarball smoke | Full install/build or npm publication |
 | `npm run smoke:full -- <same-tarball>` | Installation and `next build` from the supplied artifact | npm publication |
 | `npm view <exact-version>` after owner publish | Registry metadata for that exact version | Local branch content beyond its recorded `gitHead` |
 
 `pack:release` reports an absolute tarball path. The full smoke and owner-run
 publish must use that same file. Publishing the source directory is refused.
 Agents never run `npm publish` or handle 2FA.
+
+Release-relevant source means every tracked or non-ignored untracked
+repository path except dated evidence under `docs/verification/`. Ignored
+dependencies and synced package copies are not source; the release packer
+recreates those copies from the root masters. Packing refuses when relevant
+source is dirty, resolves the full committed HEAD, and writes it as `gitHead`
+in the staged consumer manifest. npm packing and tarball publication dry-run
+must preserve that exact value. A later evidence-only commit does not change
+the already packed artifact or its embedded source identity.
 
 ## Release flow
 
