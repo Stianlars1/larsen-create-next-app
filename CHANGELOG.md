@@ -8,6 +8,49 @@ a generated project contains counts as user-facing.
 
 ---
 
+## [Unreleased] - 0.3.0 foundation
+
+0.3.0 exists in the local package manifest and has not been published to npm.
+
+### Added
+- A machine-readable wrapper option contract that drives parsing, help,
+  prompt defaults, and generated documentation tables.
+- Explicit `--default-palette`, `--git`, and `--install` flags, including
+  conflict and dependency validation for palette modifiers and positive or
+  negative flag pairs.
+- Focused Node tests for option behavior, generated documentation, overlay
+  boundaries, palette contracts, contrast, release packaging, and full-smoke
+  argument handling.
+- Deterministic current-contract coverage for all 18 palette preset and format
+  combinations. shadcn emits 64 names per selector block; radix and
+  css-variables each emit 50 and remain declaration-equivalent per format.
+- A canonical internal CLI reference, package-only palette reference, exact
+  approved-plan provenance, and npm release evidence for 0.1.0 through 0.2.2.
+
+### Changed
+- Raised the Node.js requirement to `>=20.12.0` to match the installed
+  `@clack/prompts` dependency.
+- Pinned create-next-app specs are named truthfully in progress and generated
+  output instead of being described as newest stable.
+- Release preparation now produces one consumer-clean tarball, runs standard
+  smoke against that file, and requires the same reported file for the
+  separate install and production-build gate.
+- Repository documentation now separates current contract, historical plan,
+  version history, and publication evidence. Landing-page and blog state is
+  outside this package contract.
+- The default-theme command is `npm run gen:theme` with no HEX argument.
+
+### Fixed
+- Required-token verification reports each absent token before contrast is
+  evaluated.
+- Generated-project checks now cover exact `globals.css`, exact installed
+  skills documentation, Tailwind artifact absence, and conditional
+  `NEXTJS.md` creation.
+- Source-directory publication is refused so maintainers publish only a
+  verified release tarball.
+
+---
+
 ## [0.2.2] - 2026-08-08
 
 ### Added
@@ -20,9 +63,6 @@ a generated project contains counts as user-facing.
 ---
 
 ## [0.2.1] - 2026-08-08
-
-Found by running the full option matrix: every package manager, every linter,
-several palette combinations, and every invalid-input path.
 
 ### Fixed
 - **Wrong page surface with the scale presets.** `radix` and `css-variables` do
@@ -46,8 +86,7 @@ several palette combinations, and every invalid-input path.
 ### Added
 - **`motion.css`** in the design system: durations named for what moves
   (press 140ms, fast 160ms, ui 200ms, slow 240ms, enter 300ms), four easing
-  curves in one file, press and entrance scales, and stagger delays. Values
-  come from the `motion-craft` skill and match larsenutvikling.no.
+  curves in one file, press and entrance scales, and stagger delays.
 - **Type tokens** in `core.css`: unitless leading and size-specific tracking.
 - **Optional Larsen Skills install.** A prompt offers the recommended set, all
   nine, or a multi-select. Skills land in `.agents/skills/` with symlinks into
@@ -75,6 +114,11 @@ several palette combinations, and every invalid-input path.
 ---
 
 ## [0.1.1] - 2026-08-07
+
+### Changed
+- Changed the baked default seed from `#0A0A0A` to the Larsen Utvikling brand
+  blue `#4DA0FF`. The surface pair remained pinned independently from the
+  accent seed.
 
 ### Fixed
 - **Buttons and focus rings were invisible in dark mode.** The engine keeps
@@ -123,14 +167,3 @@ First release.
   hand.
 - The vendored engine carries MIT attribution and its upstream commit in
   `palette/NOTICE.md`.
-
----
-
-## Unreleased ideas
-
-Not committed to, recorded so they are not rediscovered from scratch:
-
-- Port the local engine fixes (OKLAB/OKLCH output) back upstream to rampkit.
-- A weekly smoke run to catch create-next-app flag drift early.
-- More palette presets, if the template ever targets something other than CSS
-  custom properties.

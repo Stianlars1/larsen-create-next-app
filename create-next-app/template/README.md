@@ -44,8 +44,9 @@ src/
 public/larsen-utvikling/  Brand assets
 ```
 
-Docs: `DESIGN.md` (token reference), `AGENTS.md` (project rules for AI
-agents), `NEXTJS.md` (Next.js agent guide).
+Docs: `DESIGN.md` (token reference) and `AGENTS.md` (project rules for AI
+agents). If `NEXTJS.md` exists, it is the upstream agent guide preserved from
+create-next-app.
 
 ## After scaffolding - checklist
 
@@ -64,8 +65,6 @@ in `.agents/skills/` and are symlinked into each agent's own directory.
 
 ```bash
 npx skills add Stianlars1/larsen-skills   # add or change skills
-npx skills list                           # see what is installed
-npx skills update                         # update to the latest versions
 ```
 
 ## Tech

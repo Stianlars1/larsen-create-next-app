@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { FORMATS, PRESETS, SCHEMES } from "../palette/index.js";
+import { renderMarkdownOptionTable } from "../src/options.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 
@@ -40,5 +42,10 @@ test("the published README CLI reference matches OPTION_CONTRACT", () => {
     stdio: ["ignore", "pipe", "pipe"],
   });
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-  assert.match(result.stdout, /CLI reference is current/);
+  assert.match(result.stdout, /CLI references are current/);
+});
+
+test("the internal CLI reference matches OPTION_CONTRACT", () => {
+  const reference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
+  assert.ok(reference.includes(renderMarkdownOptionTable()));
 });

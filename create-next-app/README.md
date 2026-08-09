@@ -29,19 +29,19 @@ escape hatch when the upstream latest release breaks.
   - `motion.css` - durations, easing curves and gesture tokens, plus a reduced-motion contract that keeps feedback and drops movement
   - `base.css` - modern reset
   - `index.css` - single entry importing all of the above
-- Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), `DESIGN.md` (token documentation), `NEXTJS.md` (Next.js agent guide, preserved from create-next-app)
+- Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), and `DESIGN.md` (token documentation). `NEXTJS.md` preserves upstream guidance only when create-next-app supplies `AGENTS.md`
 - A welcome page demonstrating the tokens
-- Optional **custom color palette**: answer one prompt with a HEX color and get a complete 12-step accent scale, gray scale, and semantic colors in both light and dark mode - powered by the [rampkit](https://rampkit.app) engine
+- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine
 - Optional **agent skills**: install the [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection (UI craft, motion, accessibility, prototyping) into the project, where every agent picks them up
-
-The motion tokens follow the `motion-craft` skill, so the design system and
-the agent guidance agree on the same numbers.
 
 ## Prompts
 
-The interactive flow asks for the app name, palette, linter, optional Larsen
-Skills, package manager, git initialization and dependency installation. The
-generated reference below is the canonical list of choices and defaults.
+The interactive flow asks for the app name, palette, linter, package manager,
+optional Larsen Skills, git initialization and dependency installation. The
+generated reference below is the complete published list of choices and
+defaults. Maintainers use the repository's
+[canonical CLI reference](https://github.com/Stianlars1/larsen-create-next-app/blob/main/docs/reference/cli.md)
+for prompt conditions, interactions, invalid pairs, and CI behavior.
 
 ## CLI reference
 
@@ -54,7 +54,8 @@ npx @larsen-utvikling/create-next-app my-app --defaults --pm npm
 ```bash
 npx @larsen-utvikling/create-next-app my-app \
   --hex 4DA6FF --preset shadcn --format hsl-values \
-  --linter eslint --pm pnpm --no-git --no-install
+  --scheme analogous --linter eslint --pm pnpm --no-skills \
+  --no-git --no-install
 ```
 
 <!-- BEGIN GENERATED CLI REFERENCE -->
