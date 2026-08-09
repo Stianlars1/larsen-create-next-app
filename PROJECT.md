@@ -5,7 +5,7 @@ picking this up cold, read this file first: it describes what exists, what it
 does, why it does it that way, and what it deliberately does not do. Nothing
 here should need to be guessed from the code.
 
-Last verified against the codebase: 2026-08-08.
+Last verified against the codebase: 2026-08-09.
 
 ---
 
@@ -205,7 +205,7 @@ Tokens depend on the preset. `shadcn` gives semantic names (`--background`,
 variants). `radix` and `css-variables` give the scales plus `--background` and
 `--foreground`, but no `--muted` or `--border`.
 
-**The default theme** is monochromatic seeded `#0A0A0A`, with `--background`,
+**The default theme** is monochromatic seeded `#4DA0FF`, with `--background`,
 `--foreground` and `--ring` pinned to the exact `#FAFAFA`/`#0A0A0A` pair, plus
 appended brand accents `--brand-blue: 212 100% 65%`, `--brand-blue-soft`,
 `--brand-blue-subtle`. This mirrors larsenutvikling.no exactly.
@@ -294,7 +294,7 @@ lists what actually landed, not what was requested.
 
 | Decision | Reason |
 | --- | --- |
-| Never Tailwind | When every value lives in a class name in markup, the design system stops being an artifact you can look at. Vanilla custom properties keep it as five readable files. |
+| Never Tailwind | Tailwind is already the official create-next-app default. This package exists to provide the opposite, opinionated path: a complete vanilla CSS design system that remains five readable files instead of adding a second styling API. |
 | Wrap `create-next-app@latest` rather than fork | The generated project always gets the newest stable Next.js without this package tracking releases. |
 | All CNA knowledge in one file (`scaffold.js`) | Upstream flag drift is the most likely breakage; it should be a one-line fix. |
 | `--yes` twice + `stdin: "ignore"` | First `--yes` is npx's, second is CNA's. Closed stdin makes an unexpected prompt a fast visible error instead of a hang. |
@@ -302,6 +302,42 @@ lists what actually landed, not what was requested.
 | Vendored engine, pinned by commit | The landing page imports it from the published package, so the demo cannot drift from the CLI. |
 | Skills opt-in, never on `--defaults` | An unattended run should not reach out to the network for optional extras. |
 | Test the generated app, not the generator | The smoke test scaffolds real projects and asserts on the files that come out. |
+
+### Tailwind support review (2026-08-09)
+
+**Decision: do not add Tailwind support.** Do not add a `--tailwind` flag,
+create a companion package, or publish an add-on guide. The CLI continues to
+pass `--no-tailwind` on every run.
+
+Tailwind v4 makes integration technically possible, but not free. Its
+CSS-first `@theme` model would still require an `@theme inline` bridge from
+this package's runtime tokens to Tailwind's utility namespaces. That bridge is
+a second public styling API, not a replacement for the existing one. Tailwind
+also brings Preflight alongside this package's own reset, so their ownership
+and cascade would need a separate contract.
+
+The vendored rampkit Tailwind exporter is not that bridge. It emits a legacy
+`module.exports` configuration, includes only light-mode values, and names its
+scales 1-12. Tailwind v4 uses CSS theme variables such as `--color-*`, so using
+the existing exporter would ship an obsolete integration.
+
+Supporting both paths honestly would branch the prompt and flags, scaffold
+arguments, template rules, `AGENTS.md`, `DESIGN.md`, welcome page, dependency
+assertions, smoke matrix, package copy, landing page and both launch articles.
+It would turn one deliberately narrow product into two products with one name.
+The official create-next-app already serves users who want the general-purpose
+Tailwind starting point better and with less indirection.
+
+A guide is also rejected: generated projects explicitly prohibit Tailwind, so
+an add-on guide would contradict the project contract and leave reset order,
+theme mapping and dark-mode behavior as an ongoing untested compatibility
+surface.
+
+Only reopen this decision after repeated, concrete demand for the Larsen
+palette and motion system inside Tailwind projects that official
+create-next-app plus a standalone palette export cannot satisfy. If that
+happens, evaluate a separately named package as a new product rather than a
+flag in this one.
 
 ### What it deliberately does NOT do
 
@@ -380,8 +416,11 @@ If publish fails with **E404 on PUT**, the auth token has expired. npm hides
 
 ### Known issues, not yet fixed
 
-Verified 2026-08-08 against the upstream sources. Planned work and the exact
-questions to answer are in `docs/plans/next-session-prompts.md`.
+Verified 2026-08-08 against the upstream sources, re-verified 2026-08-09 by
+the full palette audit: `docs/plans/2026-08-09-palette-audit.md` has the
+complete 3x6 matrix numbers, the rampkit parity proof, the derivation plan for
+the missing tokens, and the decisions awaiting approval. Planned work and the
+exact questions are in `docs/plans/next-session-prompts.md`.
 
 - **The `shadcn` preset covers 14 of shadcn's 32 official tokens.** Checked
   against `https://ui.shadcn.com/r/colors/neutral.json`. Missing: `--card`,
@@ -396,22 +435,43 @@ questions to answer are in `docs/plans/next-session-prompts.md`.
 
 - **The `radix` preset is missing most of Radix Themes' contract.** Checked
   against `@radix-ui/themes@3.3.0`. We emit `--accent-1..12` and `--gray-1..12`
-  but not the alpha scales (`--accent-a1..a12`), `--accent-contrast`,
-  `--accent-surface`, `--accent-indicator`, `--accent-track` or
-  `--gray-surface`. The engine already computes `accentScaleAlpha`,
-  `accentContrast`, `accentSurface` and `graySurface` on every call - they are
-  simply never emitted.
+  but not the alpha scales, `--color-background`, or the accent and gray
+  contrast/surface/indicator/track roles. The full relevant Radix Themes
+  contract is 57 names. The engine already computes the solid and alpha
+  scales, accent contrast and surface, gray surface, and background. Indicator
+  and track map to step 9; gray contrast can use the existing foreground
+  chooser. The audit recommends all 57 Radix names plus the current 26 Larsen
+  extras, for an 83-name preset labeled `Radix Themes`.
   The naming itself is right: 1-12 is Radix's own convention
   (`@radix-ui/colors` ships `blue1`…`blue12`). 50-950 is Tailwind's.
 
-- **`radix` and `css-variables` produce identical output** - the same 50 token
-  names, byte for byte. Upstream rampkit's `generateRadixCSS` is
-  `return generateCSSVariables(data, format)`, a no-op alias, and the vendored
-  engine inherits it. The CLI offers a choice that changes nothing.
+- **`radix` and `css-variables` produce identical output** - the same 50
+  token names and values in all six formats; the files differ only where the
+  generated header comment embeds the preset name. Upstream rampkit's
+  `generateRadixCSS` is `return generateCSSVariables(data, format)`, a no-op
+  alias, and the vendored engine inherits it. The CLI offers a choice that
+  changes nothing.
+
+- **The rest of the current matrix is format-honest.** `shadcn` emits 64
+  unique names in every format; `radix` and `css-variables` emit 50. HEX, RGB,
+  HSL, HSL Values, OKLAB and OKLCH all use the selected syntax. The only
+  duplicate declaration sets are radix and css-variables in the same format.
+  Exposing the stored Radix alpha scales requires an alpha-aware formatter,
+  because the current RGB and HSL helpers discard alpha from 8-digit HEX.
+
+- **Rampkit parity is explained.** Local and remote Rampkit `main` still equal
+  the vendored `48d6b33` commit. Mid-lightness seed values match for HEX, RGB,
+  HSL and HSL Values. Rampkit's live OKLAB and OKLCH export falls back to HEX,
+  while this package implements them. Extreme seeds differ intentionally
+  because only the CLI applies the dual-seed rule. The landing page uses
+  package `0.2.1`, but its palette code is byte-identical to current `0.2.2`.
 
 - **No test asserts a preset's contract.** The smoke test checks that tokens
   exist and that contrast passes, but nothing checks that the `shadcn` preset
-  emits what shadcn actually requires. That is how the gap above survived.
+  emits what shadcn actually requires. That is how the gap above survived. The
+  audit recommends deterministic shadcn, Radix and css-variables contract
+  fixtures, all 18 preset-format combinations, alpha preservation, and a
+  separate scheduled upstream-drift alert.
 
 See `CHANGELOG.md` for what changed in each version.
 

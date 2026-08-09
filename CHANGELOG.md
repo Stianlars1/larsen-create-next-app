@@ -8,6 +8,21 @@ a generated project contains counts as user-facing.
 
 ---
 
+## [Unreleased]
+
+### Documentation
+- Audited all 18 palette preset and color-format combinations. The current
+  shadcn preset has 64 unique names in every format; radix and css-variables
+  have 50 and remain declaration-identical within each format.
+- Recorded the exact parity boundary between the CLI, the landing page's
+  installed package, and the live Rampkit exporter, including the intentional
+  extreme-seed correction and the local OKLAB/OKLCH implementation.
+- Documented approval-gated shadcn and Radix Themes contracts, alpha formatter
+  and test requirements, and the recommendation not to add a misleading
+  50-950 preset. No generated output changed in this audit.
+
+---
+
 ## [0.2.2] - 2026-08-08
 
 ### Added
