@@ -8,11 +8,12 @@ publication evidence.
 
 | Field | Value |
 | --- | --- |
-| Source commit used to pack | `dffca73ab290499d8c29fb366e21362e31c715a1` |
+| Source commit used to pack | `b26224c7fc54c6fb564e4078d8a4cc17d76afa96` |
+| Embedded manifest `gitHead` | `b26224c7fc54c6fb564e4078d8a4cc17d76afa96` |
 | Package version | `0.3.0` |
 | Artifact filename | `larsen-utvikling-create-next-app-0.3.0.tgz` |
-| Artifact size | 51,016 bytes |
-| Artifact SHA-256 | `8c96324c8a8b9b96a6f091738cddfa01a6d37dccc7aa579b6fb6fcc68e1f4cd6` |
+| Artifact size | 51,505 bytes |
+| Artifact SHA-256 | `210df836d7fb91a470ff87eb8289b642df3d52aa6c3ce4bea79b932cc23a5e26` |
 | Verification runtime | Node.js `v24.18.0`, npm `11.16.0` |
 
 The artifact was created exactly once through `npm run pack:release`. The
@@ -31,16 +32,18 @@ npm run smoke:full -- /absolute/path/reported-by-pack-release.tgz
 ```
 
 - Generated CLI references were current.
-- `npm test` passed 52 tests with 0 failures, skips, or cancellations.
+- `npm test` passed 70 tests with 0 failures, skips, or cancellations.
 - `pack:release` synchronized the root CSS and palette masters into an
-  isolated staging copy, produced the consumer-clean artifact, and passed the
-  standard tarball smoke.
+  isolated staging copy, verified release-relevant source was clean, embedded
+  the exact full source HEAD, produced the consumer-clean artifact, and passed
+  the standard tarball smoke. Temporary Git-fixture tests separately proved
+  both tracked and untracked release-source changes are rejected.
 - `smoke:full` consumed the same artifact, passed the same scaffold contract,
   installed dependencies, and completed `next build` successfully.
 - The source publication guard was exercised through `npm publish --dry-run`.
-  The source directory failed through its `prepublishOnly` wiring, while a
-  staged consumer tarball completed the dry run with repository-only scripts
-  absent.
+  The source directory failed through its `prepublishOnly` wiring. The exact
+  verified tarball completed publication dry-run with repository-only scripts
+  absent, the same embedded `gitHead`, and the same SHA-256 afterward.
 
 Both real scaffold paths ran with ignored stdin, so no prompt could be
 answered interactively:
@@ -51,10 +54,17 @@ answered interactively:
    --no-install --skills motion-craft`.
 
 The assertions covered the documented design-system files, exact global CSS,
-default and custom palette structure, four theme selector blocks, dual-mode
-extreme-seed contrast, exact installed-skills documentation, conditional
-`NEXTJS.md`, overlay replacements, brand assets, placeholder removal, and the
-absence of Tailwind dependencies, directives, and configuration artifacts.
+default and custom palette structure, four theme selector blocks, exact
+installed-skills documentation, conditional `NEXTJS.md`, overlay replacements,
+brand assets, placeholder removal, and the absence of Tailwind dependencies,
+directives, and configuration artifacts.
+
+The mechanical contrast assertion was deliberately bounded to the two
+`shadcn` plus `hsl-values` smoke themes. In both generated modes it checked
+`--foreground` vs `--background` at 4.5, `--ring` vs `--background` at 3,
+`--primary-foreground` vs `--primary` at 4.5, and `--primary` vs
+`--background` at the non-WCAG 1.5 visibility floor. This does not verify
+contrast for other preset-format matrix entries.
 
 ## Reconstructed historical tags
 
