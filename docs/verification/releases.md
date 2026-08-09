@@ -1,7 +1,7 @@
 # Published release evidence
 
 Registry evidence for `@larsen-utvikling/create-next-app` versions 0.1.0
-through 0.3.0, queried from npm on 2026-08-09. This is a publication trace,
+through 0.4.0, queried from npm on 2026-08-09. This is a publication trace,
 not proof that current local source matches a published artifact.
 
 ## Evidence method
@@ -28,9 +28,10 @@ the registry for that tarball.
 | 0.2.1 | 2026-08-08T17:12:31.749Z | `d056122bfdaa4c9b591b9db02838b688635e7eee` | `396704e92a027305ebfbdf9462a9dde4c06bf66f` |
 | 0.2.2 | 2026-08-08T20:39:55.720Z | `9029dd023024b20ce5288f46831bb91013f2b632` | `c08a4792aaa74117eb0eb2bb9b9459b44589f25b` |
 | 0.3.0 | 2026-08-09T08:37:31.570Z | `2ee1ccb60e2f0e7a15acaa3b55f6dabe043386a3` | `5e3fc3d23d53461533eadf518f916c5360d421a5` |
+| 0.4.0 | 2026-08-09T17:08:02.674Z | `e9c64798538285910e5cf31b45ce53bdc5926de7` | `ad7c2acd1695d5062f3132f07fe10b530454b4c5` |
 
-At query time, npm listed exactly those six versions and the `latest` dist
-tag pointed to 0.3.0.
+At query time, npm listed exactly those seven versions and the `latest` dist
+tag pointed to 0.4.0.
 
 ## Actual release deltas
 
@@ -102,6 +103,22 @@ Changes between the 0.2.2 and 0.3.0 registry `gitHead` objects:
 - separated current package authority, historical plans, local verification,
   published evidence, and version history
 
+### 0.4.0
+
+Changes between the 0.3.0 and 0.4.0 registry `gitHead` objects:
+
+- expanded shadcn from its characterized 64-name state to the approved 81
+  color names per mode plus root-level `--radius`
+- expanded radix from the characterized generic 50-name state to the
+  83-declaration Radix Themes custom-palette override contract
+- retained css-variables as an independent 50-name generic contract
+- preserved alpha through all six output formats and retained sufficient HSL
+  precision for contrast-safe serialization
+- enforced primary visibility, focus-ring, text-role, and Radix accent
+  contrast behavior against the generated mode surfaces
+- added desired-contract, alpha, syntax, mapping, serialized contrast, real
+  scaffold, install, production-build, and local HTTP verification
+
 ## 0.3.0 publication verification
 
 npm listed 0.3.0 with `latest` pointing to it. The published `gitHead` is the
@@ -112,3 +129,17 @@ the matching GitHub Release is published as
 The dated pre-publication source, artifact, smoke, build, and reconstructed-tag
 evidence remains in [local-0.3.0.md](local-0.3.0.md). That local record and the
 registry trace above are separate evidence layers.
+
+## 0.4.0 publication verification
+
+npm listed 0.4.0 with `latest` pointing to it. Its published artifact has 41
+files, unpacked size 206945 bytes, registry shasum
+`ad7c2acd1695d5062f3132f07fe10b530454b4c5`, and `gitHead`
+`e9c64798538285910e5cf31b45ce53bdc5926de7`. Annotated tag `v0.4.0` peels to
+that same object, and the matching GitHub Release is published as
+[v0.4.0 - Palette contracts and WCAG-safe output](https://github.com/Stianlars1/larsen-create-next-app/releases/tag/v0.4.0).
+
+The implementation, matrix, generated-app, install, production-build, local
+HTTP, and pre-publication artifact evidence remains in
+[local-0.4.0.md](local-0.4.0.md). That local record and the registry trace
+above are separate evidence layers.
