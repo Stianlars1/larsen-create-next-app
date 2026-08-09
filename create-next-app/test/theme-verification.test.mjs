@@ -1,10 +1,39 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
+
+test("the baked default keeps approved aliases aligned after brand overrides", () => {
+  const css = readFileSync(join(packageDir, "..", "CSS", "theme.css"), "utf8");
+  const declarationMap = (from, to) => {
+    const start = css.indexOf(from);
+    const end = css.indexOf(to, start);
+    return Object.fromEntries(
+      [...css.slice(start, end).matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)]
+        .map((match) => [match[1], match[2]]),
+    );
+  };
+  const light = declarationMap(":root {", "@media");
+  const dark = declarationMap("@media", '[data-theme="light"]');
+
+  assert.equal(light.card, light.background);
+  assert.equal(light["card-foreground"], light.foreground);
+  assert.equal(light.popover, light.background);
+  assert.equal(light["popover-foreground"], light.foreground);
+  assert.equal(light.sidebar, light.card);
+  assert.equal(light["sidebar-foreground"], light.foreground);
+  assert.equal(light["sidebar-ring"], light.ring);
+
+  assert.equal(dark["card-foreground"], dark.foreground);
+  assert.equal(dark["popover-foreground"], dark.foreground);
+  assert.equal(dark.sidebar, dark.card);
+  assert.equal(dark["sidebar-foreground"], dark.foreground);
+  assert.equal(dark["sidebar-ring"], dark.ring);
+});
 
 test("an extreme seed assigns separate mode seeds and passes every contrast check", () => {
   const script = `
@@ -79,6 +108,8 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
   assert.equal(CONTRAST_FORMAT, "hsl-values");
   assert.deepEqual(CONTRAST_CHECKS, [
     { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
+    { token: "card-foreground", against: "card", minimum: 4.5, standard: "WCAG" },
+    { token: "popover-foreground", against: "popover", minimum: 4.5, standard: "WCAG" },
     { token: "ring", against: "background", minimum: 3, standard: "WCAG" },
     { token: "primary-foreground", against: "primary", minimum: 4.5, standard: "WCAG" },
     { token: "primary", against: "background", minimum: 1.5, standard: "visibility-floor" },

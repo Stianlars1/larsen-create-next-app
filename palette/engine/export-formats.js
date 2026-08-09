@@ -23,27 +23,44 @@ function generateExportCode(data, options) {
       return generateShadcnCSS(data, options.format);
   }
 }
-function formatColor(hex, format) {
+function alphaFromHex(color) {
+  const clean = color.trim().replace(/^#/, "");
+  if (clean.length !== 8) return undefined;
+  return Number((parseInt(clean.slice(6, 8), 16) / 255).toFixed(4));
+}
+function formatColor(color, format) {
+  const isHex = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color);
+  const parsed = isHex ? undefined : new Color(color);
+  const hex = parsed
+    ? parsed.to("srgb").toString({ format: "hex", collapse: false })
+    : color;
+  const alpha = parsed && parsed.alpha < 1
+    ? Number(parsed.alpha.toFixed(4))
+    : alphaFromHex(hex);
   switch (format) {
     case "HSL_VALUES": {
       const hsl = hexToHSL(hex);
-      return `${hsl.h} ${hsl.s}% ${hsl.l}%`;
+      return `${hsl.h} ${hsl.s}% ${hsl.l}%${alpha === undefined ? "" : ` / ${alpha}`}`;
     }
     case "HSL": {
       const hsl = hexToHSL(hex);
-      return `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+      return alpha === undefined
+        ? `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`
+        : `hsla(${hsl.h}, ${hsl.s}%, ${hsl.l}%, ${alpha})`;
     }
     case "RGB": {
       const rgb = hexToRGB(hex);
-      return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+      return alpha === undefined
+        ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`
+        : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
     }
     // Local fix (not in upstream rampkit): OKLAB/OKLCH were listed but fell
     // through to HEX. Serialized via colorjs.io, which is already a dependency.
     case "OKLAB": {
-      return new Color(hex).to("oklab").toString({ precision: 4 });
+      return new Color(color).to("oklab").toString({ precision: 4 });
     }
     case "OKLCH": {
-      return new Color(hex).to("oklch").toString({ precision: 4 });
+      return new Color(color).to("oklch").toString({ precision: 4 });
     }
     case "HEX":
     default:
@@ -136,6 +153,10 @@ function generateShadcnCSS(data, format) {
   --background: ${formatFn(data.lightBackground)};
   --foreground: ${formatFn(lightForeground.color)};
   --foreground-subtle: ${formatFn(data.grayScale.light[9])};
+  --card: ${formatFn(data.lightBackground)};
+  --card-foreground: ${formatFn(lightForeground.color)};
+  --popover: ${formatFn(data.lightBackground)};
+  --popover-foreground: ${formatFn(lightForeground.color)};
   --primary: ${formatFn(data.accent)};
   --primary-foreground: ${formatFn(lightPrimaryForeground.color)};
   --secondary: ${formatFn(data.accentScale.light[2])};
@@ -149,6 +170,20 @@ function generateShadcnCSS(data, format) {
   --border: ${formatFn(data.grayScale.light[6])};
   --input: ${formatFn(data.grayScale.light[6])};
   --ring: ${formatFn(data.accent)};
+  --chart-1: ${formatFn(data.accentScale.light[8])};
+  --chart-2: ${formatFn(data.analogous.accentScale.light[8])};
+  --chart-3: ${formatFn(data.complementary.accentScale.light[8])};
+  --chart-4: ${formatFn(data.semantic.light.warning.base)};
+  --chart-5: ${formatFn(data.semantic.light.success.base)};
+  --radius: var(--radius-md);
+  --sidebar: ${formatFn(data.lightBackground)};
+  --sidebar-foreground: ${formatFn(lightForeground.color)};
+  --sidebar-primary: ${formatFn(data.accent)};
+  --sidebar-primary-foreground: ${formatFn(lightPrimaryForeground.color)};
+  --sidebar-accent: ${formatFn(data.accentScale.light[2])};
+  --sidebar-accent-foreground: ${formatFn(lightAccentForeground.color)};
+  --sidebar-border: ${formatFn(data.grayScale.light[6])};
+  --sidebar-ring: ${formatFn(data.accent)};
   --analogous: ${formatFn(data.analogous.accentScale.light[8])};
   --analogous-foreground: ${formatFn(lightAnalogousForeground.color)};
   --complementary: ${formatFn(data.complementary.accentScale.light[8])};
@@ -172,6 +207,10 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --background: ${formatFn(data.darkBackground)};
     --foreground: ${formatFn(darkForeground.color)};
     --foreground-subtle: ${formatFn(data.grayScale.dark[9])};
+    --card: ${formatFn(data.grayScale.dark[1])};
+    --card-foreground: ${formatFn(darkForeground.color)};
+    --popover: ${formatFn(data.grayScale.dark[2])};
+    --popover-foreground: ${formatFn(darkForeground.color)};
     --primary: ${formatFn(data.accent)};
     --primary-foreground: ${formatFn(darkPrimaryForeground.color)};
     --secondary: ${formatFn(data.accentScale.dark[2])};
@@ -185,6 +224,19 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --border: ${formatFn(data.grayScale.dark[6])};
     --input: ${formatFn(data.grayScale.dark[6])};
     --ring: ${formatFn(data.accent)};
+    --chart-1: ${formatFn(data.accentScale.dark[8])};
+    --chart-2: ${formatFn(data.analogous.accentScale.dark[8])};
+    --chart-3: ${formatFn(data.complementary.accentScale.dark[8])};
+    --chart-4: ${formatFn(data.semantic.dark.warning.base)};
+    --chart-5: ${formatFn(data.semantic.dark.success.base)};
+    --sidebar: ${formatFn(data.grayScale.dark[1])};
+    --sidebar-foreground: ${formatFn(darkForeground.color)};
+    --sidebar-primary: ${formatFn(data.accent)};
+    --sidebar-primary-foreground: ${formatFn(darkPrimaryForeground.color)};
+    --sidebar-accent: ${formatFn(data.accentScale.dark[2])};
+    --sidebar-accent-foreground: ${formatFn(darkAccentForeground.color)};
+    --sidebar-border: ${formatFn(data.grayScale.dark[6])};
+    --sidebar-ring: ${formatFn(data.accent)};
     --analogous: ${formatFn(data.analogous.accentScale.dark[8])};
     --analogous-foreground: ${formatFn(darkAnalogousForeground.color)};
     --complementary: ${formatFn(data.complementary.accentScale.dark[8])};
@@ -290,8 +342,71 @@ ${formatSemanticColorSet("info", data.semantic.dark.info, format, "    ")}
   }
 }`;
 }
+function formatRadixMode(data, mode, format, indent) {
+  const formatFn = (color) => formatColor(color, format);
+  const isLight = mode === "light";
+  const radix = isLight ? data.radixOriginalLight : data.radixOriginalDark;
+  const background = isLight ? data.lightBackground : data.darkBackground;
+  const grayScale = data.grayScale[mode];
+  const analogousScale = data.analogous.accentScale[mode];
+  const complementaryScale = data.complementary.accentScale[mode];
+  const foreground = getBestForeground(background, grayScale, grayScale);
+  const grayContrast = getBestForeground(radix.grayScale[8], radix.grayScale, radix.grayScale);
+  const analogousForeground = getBestForeground(
+    analogousScale[8],
+    analogousScale,
+    grayScale
+  );
+  const complementaryForeground = getBestForeground(
+    complementaryScale[8],
+    complementaryScale,
+    grayScale
+  );
+  const semantic = data.semantic[mode];
+
+  return `${indent}/* Larsen base */
+${indent}--background: ${formatFn(background)};
+${indent}--foreground: ${formatFn(foreground.color)};
+${indent}--color-background: ${formatFn(radix.background)};
+
+${indent}/* Radix accent */
+${radix.accentScale.map((color, i) => `${indent}--accent-${i + 1}: ${formatFn(color)};`).join("\n")}
+${radix.accentScaleAlpha.map((color, i) => `${indent}--accent-a${i + 1}: ${formatFn(color)};`).join("\n")}
+${indent}--accent-contrast: ${formatFn(radix.accentContrast)};
+${indent}--accent-surface: ${formatFn(radix.accentSurface)};
+${indent}--accent-indicator: ${formatFn(radix.accentScale[8])};
+${indent}--accent-track: ${formatFn(radix.accentScale[8])};
+
+${indent}/* Radix gray */
+${radix.grayScale.map((color, i) => `${indent}--gray-${i + 1}: ${formatFn(color)};`).join("\n")}
+${radix.grayScaleAlpha.map((color, i) => `${indent}--gray-a${i + 1}: ${formatFn(color)};`).join("\n")}
+${indent}--gray-contrast: ${formatFn(grayContrast.color)};
+${indent}--gray-surface: ${formatFn(radix.graySurface)};
+${indent}--gray-indicator: ${formatFn(radix.grayScale[8])};
+${indent}--gray-track: ${formatFn(radix.grayScale[8])};
+
+${indent}/* Larsen harmony */
+${indent}--analogous: ${formatFn(analogousScale[8])};
+${indent}--analogous-foreground: ${formatFn(analogousForeground.color)};
+${indent}--complementary: ${formatFn(complementaryScale[8])};
+${indent}--complementary-foreground: ${formatFn(complementaryForeground.color)};
+
+${indent}/* Larsen semantic colors */
+${formatSemanticColorSet("success", semantic.success, format, indent)}
+${formatSemanticColorSet("danger", semantic.danger, format, indent)}
+${formatSemanticColorSet("warning", semantic.warning, format, indent)}
+${formatSemanticColorSet("info", semantic.info, format, indent)}`;
+}
 function generateRadixCSS(data, format) {
-  return generateCSSVariables(data, format);
+  return `:root {
+${formatRadixMode(data, "light", format, "  ")}
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+${formatRadixMode(data, "dark", format, "    ")}
+  }
+}`;
 }
 function generateTailwindConfig(data, format) {
   const formatFn = (hex) => formatColor(hex, format);
@@ -632,5 +747,6 @@ ${data.grayScale.light.map((color, i) => `      ${i + 1}: '${formatFn(color)}',`
 export default theme;`;
 }
 export {
+  formatColor,
   generateExportCode
 };

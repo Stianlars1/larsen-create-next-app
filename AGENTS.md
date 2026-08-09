@@ -31,9 +31,10 @@ about npm publication.
 - Test the generated app and release artifact, not only source helpers.
 - The mechanical contrast gate supports only `shadcn` with `hsl-values`:
   `--foreground` vs `--background` at 4.5, `--ring` vs `--background` at 3,
-  `--primary-foreground` vs `--primary` at 4.5, and `--primary` vs
-  `--background` at the deliberately non-WCAG 1.5 visibility floor. It does
-  not guarantee any other preset-format entry.
+  `--card-foreground` vs `--card` at 4.5, `--popover-foreground` vs
+  `--popover` at 4.5, `--primary-foreground` vs `--primary` at 4.5, and
+  `--primary` vs `--background` at the deliberately non-WCAG 1.5 visibility
+  floor. It does not guarantee any other preset-format entry.
 
 ## Edit map
 

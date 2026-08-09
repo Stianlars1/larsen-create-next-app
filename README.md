@@ -57,7 +57,7 @@ tree, choices, defaults, interactions, invalid pairs, and CI requirements.
 | --- | --- |
 | [PROJECT.md](PROJECT.md) | The current package contract and evidence boundaries |
 | [docs/reference/cli.md](docs/reference/cli.md) | Canonical CLI and prompt reference |
-| [docs/reference/palette.md](docs/reference/palette.md) | Current palette matrix and known gaps |
+| [docs/reference/palette.md](docs/reference/palette.md) | Current palette contracts and boundaries |
 | [docs/verification/releases.md](docs/verification/releases.md) | npm evidence for published versions |
 | [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
 | [AGENTS.md](AGENTS.md) | Rules for agents and contributors working on this package |

@@ -34,7 +34,7 @@ is enabled, and optional skills.
 | Current package behavior and boundaries | This file |
 | Flags, prompts, defaults, interactions, and CI use | [docs/reference/cli.md](docs/reference/cli.md) |
 | Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
-| Current palette matrix and known gaps | [docs/reference/palette.md](docs/reference/palette.md) |
+| Current palette contracts and boundaries | [docs/reference/palette.md](docs/reference/palette.md) |
 | Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
 | Dated local 0.3.0 verification | [docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md) |
 | User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
@@ -196,8 +196,9 @@ horizontal-rule colors using real tokens for the selected preset and format.
 The baked default is `#4DA0FF`, `shadcn`, `hsl-values`, and
 `monochromatic`. Its background, foreground, and ring are pinned to the
 `#FAFAFA` and `#0A0A0A` surface pair. It also adds `--brand-blue`,
-`--brand-blue-soft`, and `--brand-blue-subtle`. Regenerate that exact default
-from the repository root with:
+`--brand-blue-soft`, and `--brand-blue-subtle`. Card, Popover, and Sidebar
+aliases stay aligned with the final pinned background, foreground, and ring
+values. Regenerate that exact default from the repository root with:
 
 ```bash
 npm run gen:theme
@@ -238,6 +239,8 @@ so the accent works on both light and dark surfaces. The mechanical verifier
 supports only `shadcn` with `hsl-values` and both generated modes:
 
 - `--foreground` vs `--background` must reach 4.5.
+- `--card-foreground` vs `--card` must reach 4.5.
+- `--popover-foreground` vs `--popover` must reach 4.5.
 - `--ring` vs `--background` must reach 3.
 - `--primary-foreground` vs `--primary` must reach 4.5.
 - `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
@@ -245,10 +248,12 @@ supports only `shadcn` with `hsl-values` and both generated modes:
 
 These checks do not guarantee any other preset-format matrix entry.
 
-The deterministic 3 x 6 preset-format matrix records the current contract,
-including known incompleteness. It does not claim upstream shadcn or Radix
-Themes completeness. See [docs/reference/palette.md](docs/reference/palette.md)
-for exact token counts, current gaps, and proposals that are not implemented.
+The deterministic 3 x 6 preset-format matrix locks the implemented contracts:
+shadcn exposes 81 color names in both modes plus root-level `--radius`, Radix
+Themes exposes 83 names in both modes, and CSS Variables remains the generic
+50-name contract. Radix alpha scales and surfaces preserve alpha in all six
+formats. See [docs/reference/palette.md](docs/reference/palette.md) for exact
+names, mappings, serialization, and deliberately deferred P3 output.
 
 ## Optional Larsen Skills
 

@@ -17,8 +17,8 @@
 
 import Color from "colorjs.io";
 import { generatePalette } from "./engine/generatePalette.js";
-import { generateExportCode } from "./engine/export-formats.js";
-import { hexToHSL, hexToRGB, isValidHex } from "./engine/color-utils.js";
+import { formatColor, generateExportCode } from "./engine/export-formats.js";
+import { hexToHSL, isValidHex } from "./engine/color-utils.js";
 
 /** CLI-facing names -> engine enums */
 export const PRESETS = /** @type {const} */ ({
@@ -87,35 +87,6 @@ export function seedsForModes(hex, explicitDark) {
     : { lightSeed: counterpart, darkSeed: hex };
 }
 
-/**
- * Formats a hex color the same way the engine formats palette values, so
- * token overrides match the rest of the file.
- * @param {string} hex
- * @param {keyof typeof FORMATS} format
- */
-function formatValue(hex, format) {
-  switch (format) {
-    case "hsl-values": {
-      const { h, s, l } = hexToHSL(hex);
-      return `${h} ${s}% ${l}%`;
-    }
-    case "hsl": {
-      const { h, s, l } = hexToHSL(hex);
-      return `hsl(${h}, ${s}%, ${l}%)`;
-    }
-    case "rgb": {
-      const { r, g, b } = hexToRGB(hex);
-      return `rgb(${r}, ${g}, ${b})`;
-    }
-    case "oklab":
-      return new Color(hex).to("oklab").toString({ precision: 4 });
-    case "oklch":
-      return new Color(hex).to("oklch").toString({ precision: 4 });
-    default:
-      return hex;
-  }
-}
-
 export { isValidHex };
 
 /** @param {string} hex */
@@ -144,7 +115,8 @@ export function usageIdioms(format) {
 
 /**
  * Semantic roles -> the real token name each preset provides for that role.
- * shadcn emits semantic tokens; radix/css-variables emit only the scales.
+ * shadcn emits semantic component tokens. Radix Themes and CSS Variables
+ * retain the Larsen base roles, while only Radix adds its framework contract.
  */
 const ROLE_TOKENS = {
   shadcn: {
@@ -155,8 +127,8 @@ const ROLE_TOKENS = {
     accentSoft: "accent-3",
     line: "border",
   },
-  // The scale presets emit --background and --foreground too, but no --muted
-  // or --border, so those two roles fall back to the gray scale.
+  // Both non-shadcn presets emit --background and --foreground, but neither
+  // promises --muted or --border, so those roles use the shared gray scale.
   radix: {
     background: "background",
     foreground: "foreground",
@@ -310,7 +282,7 @@ function applyOverrides(block, overrides, format) {
   if (!overrides) return block;
   let out = block;
   for (const [token, hex] of Object.entries(overrides)) {
-    const value = formatValue(normalizeHex(hex), format);
+    const value = formatColor(normalizeHex(hex), FORMATS[format]);
     const pattern = new RegExp(`(--${token}:)[^;]*;`);
     out = pattern.test(out)
       ? out.replace(pattern, `$1 ${value};`)

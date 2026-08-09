@@ -18,6 +18,22 @@ The available color variables are defined by the preset - open
 exists in light and dark: dark follows the OS via `prefers-color-scheme`,
 and `[data-theme="light" | "dark"]` on `<html>` overrides it manually.
 
+Preset contracts:
+
+- `shadcn` includes the semantic component contract for backgrounds, Card,
+  Popover, primary and secondary actions, muted and accent states,
+  destructive actions, inputs, five charts, Sidebar, radius, scales, harmony,
+  and Larsen status colors. `--radius` aliases `var(--radius-md)`.
+- `radix` includes the 57-name Radix Themes contract: background, solid and
+  alpha accent and gray scales, contrast, surface, indicator, and track. It
+  retains Larsen background, foreground, harmony, and status tokens for 83
+  names in each mode.
+- `css-variables` is the generic 50-name Larsen contract: background,
+  foreground, solid accent and gray scales, harmony, and status colors.
+
+Radix alpha tokens such as `--accent-a1` already contain alpha. The selected
+format is preserved, including slash alpha for HSL Values, OKLAB, and OKLCH.
+
 **Usage idiom for this project:**
 
 ```css
