@@ -128,7 +128,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     requireInteractive("the palette choice", "--hex <color> or --default-palette");
     const wantsCustom = await p.confirm({
       message: "Generate a custom 12-step palette from a single HEX?",
-      initialValue: optionDefault("default-palette"),
+      initialValue: optionPromptDefault("default-palette"),
     });
     handleCancel(/** @type {never} */ (wantsCustom));
 

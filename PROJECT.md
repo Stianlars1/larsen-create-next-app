@@ -78,6 +78,7 @@ _TEMPLATES/
 │   ├── template/       the files overlaid onto every generated project
 │   │   └── src/lib/design-system/   SYNCED copy of ../../CSS (gitignored)
 │   ├── scripts/
+│   │   ├── generate-cli-reference.mjs  generates/checks README CLI table
 │   │   ├── sync.mjs    copies both masters into the package
 │   │   └── smoke.mjs   scaffolds real apps and asserts on the output
 │   └── package.json
@@ -97,21 +98,13 @@ edit the copies** - they are gitignored so the mistake is hard to make.
 
 ### 3.1 The interactive flow
 
-Seven top-level questions. Three follow-ups appear only if you ask for a
-custom palette. Every one has a flag.
+The CLI asks for the app name, palette, linter, optional Larsen Skills,
+package manager, git initialization and dependency installation. Palette seed,
+preset and format follow-ups appear only when a custom palette is selected.
 
-| # | Question | Choices (default first) | Flag |
-| --- | --- | --- | --- |
-| 1 | What is your app named? | any name matching `^[a-z0-9][a-z0-9._-]*$`, ≤214 chars | positional argument |
-| 2 | Generate a custom 12-step palette from a single HEX? | No · Yes | `--default-palette` · `--hex <color>` |
-| 2a | Enter your HEX color | with or without `#`, 3 or 6 digits | `--hex 4DA0FF` |
-| 2b | Choose framework/style | shadcn/ui · Radix Colors · CSS Variables | `--preset shadcn \| radix \| css-variables` |
-| 2c | Choose color format | HSL Values · HEX · RGB · HSL · OKLAB · OKLCH | `--format hsl-values \| hex \| rgb \| hsl \| oklab \| oklch` |
-| 3 | Which linter? | ESLint · Biome · None | `--linter eslint \| biome \| none` |
-| 4 | Install Larsen Skills for AI agents? | Recommended · All · Let me pick · No | `--skills recommended \| all \| a,comma,list` · `--no-skills` |
-| 5 | Which package manager? | npm · pnpm · yarn · bun | `--pm npm \| pnpm \| yarn \| bun` |
-| 6 | Initialize a git repository? | Yes · No | `--git` · `--no-git` |
-| 7 | Install dependencies? | Yes · No | `--install` · `--no-install` |
+Every answer has a non-interactive form. The complete flag, choice, default
+and relationship table is generated from `OPTION_CONTRACT` in the
+[canonical CLI reference](create-next-app/README.md#cli-reference).
 
 **Accuracy notes** (these have been got wrong before):
 
@@ -123,8 +116,8 @@ custom palette. Every one has a flag.
   `--eslint` / `--biome` / `--no-linter`, so you get its official config.
 - `--defaults` installs **no skills**. Skills are opt-in and an unattended run
   never installs them unless `--skills` is passed explicitly.
-- `--scheme` exists as a flag but is **not** a prompt: `analogous` (default),
-  `monochromatic`, `complementary`, `triadic`.
+- `--scheme` exists as a flag but is **not** a prompt. Its choices and default
+  are in the canonical CLI reference.
 - `--default-palette` explicitly answers No to the custom palette question and
   conflicts with `--hex`. `--preset`, `--format` and `--scheme` require
   `--hex`; they are rejected instead of being silently ignored.
@@ -135,22 +128,10 @@ custom palette. Every one has a flag.
 
 ### 3.2 Every flag
 
-| Flag | Effect |
-| --- | --- |
-| `-d, --defaults` | Skip every prompt, take the defaults (no skills) |
-| `--default-palette` | Use the default Larsen Utvikling palette |
-| `--hex <color>` | Palette seed. Implies a custom palette |
-| `--preset <name>` | `shadcn` \| `radix` \| `css-variables` |
-| `--format <name>` | `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
-| `--scheme <name>` | `analogous` \| `monochromatic` \| `complementary` \| `triadic` |
-| `--linter <name>` | `eslint` \| `biome` \| `none` |
-| `--skills <list>` | `recommended` \| `all` \| comma-separated names |
-| `--no-skills` | Skip the skills install |
-| `--pm <name>` | `npm` \| `pnpm` \| `yarn` \| `bun` |
-| `--git` · `--no-git` | Initialize or skip git init. The two forms conflict |
-| `--install` · `--no-install` | Install or skip dependencies. The two forms conflict |
-| `--cna-version <spec>` | Pin create-next-app instead of `latest` (escape hatch for upstream breakage) |
-| `-v, --version` · `-h, --help` | |
+See the [canonical CLI reference](create-next-app/README.md#cli-reference).
+Its generated table is checked by `create-next-app/test/documentation.test.mjs`
+so parsing, help, prompts and published documentation cannot carry separate
+option lists.
 
 ### 3.3 Behaviour without a terminal
 

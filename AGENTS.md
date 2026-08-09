@@ -33,6 +33,7 @@ it in the same commit when behaviour changes.
 | Colour generation | `palette/index.js` | `create-next-app/palette/` |
 | Vendored engine | `palette/engine/` + record it in `palette/NOTICE.md` | anything under `create-next-app/palette/engine/` |
 | Wrapper CLI options | `create-next-app/src/options.js` | scattered across other files |
+| Published CLI reference | run `create-next-app/scripts/generate-cli-reference.mjs` after editing `options.js` | hand-edit the generated README region |
 | Upstream create-next-app flags | `create-next-app/src/scaffold.js` only | scattered across other files |
 | What a generated app contains | `create-next-app/template/` | |
 
@@ -62,6 +63,8 @@ npm run gen:theme -- "#4DA0FF"   # regenerate the default theme (repo root)
 npm run sync                     # copy masters into the package (repo root)
 
 cd create-next-app
+npm test                         # focused behavior + documentation checks
+node scripts/generate-cli-reference.mjs --check
 npm run smoke                    # packaging + scaffold assertions
 npm run smoke:full               # + install and production build
 node bin/cli.js my-app           # run the CLI from source

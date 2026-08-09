@@ -1,6 +1,37 @@
 // @ts-check
 
 import { parseArgs } from "node:util";
+import { FORMATS, PRESETS, SCHEMES } from "../palette/index.js";
+
+const PRESET_DISPLAY = {
+  shadcn: {
+    label: "shadcn/ui",
+    hint: "semantic tokens + scales (recommended)",
+  },
+  radix: { label: "Radix Colors", hint: "accent + gray scales" },
+  "css-variables": { label: "CSS Variables", hint: "accent + gray scales" },
+};
+
+const FORMAT_DISPLAY = {
+  "hsl-values": {
+    label: "HSL Values",
+    hint: "0 0% 100% - supports hsl(var(--x) / alpha) (recommended)",
+  },
+  hex: { label: "HEX" },
+  rgb: { label: "RGB" },
+  hsl: { label: "HSL" },
+  oklab: { label: "OKLAB" },
+  oklch: { label: "OKLCH" },
+};
+
+/** @param {string[]} values @param {Record<string, { label?: string, hint?: string }>} display */
+function choicesFrom(values, display = {}) {
+  return values.map((value) => ({
+    value,
+    label: display[value]?.label ?? value,
+    ...(display[value]?.hint ? { hint: display[value].hint } : {}),
+  }));
+}
 
 /**
  * The canonical CLI option contract. Argument parsing, help output and prompt
@@ -12,14 +43,14 @@ export const OPTION_CONTRACT = Object.freeze([
     name: "defaults",
     type: "boolean",
     short: "d",
-    defaultValue: false,
-    description: "Skip all prompts, use defaults",
+    description: "Skip all prompts, use defaults (no skills)",
   },
   {
     name: "default-palette",
     type: "boolean",
-    defaultValue: false,
-    description: "Use the default Larsen Utvikling palette",
+    promptDefault: false,
+    conflicts: "hex",
+    description: "Answer No to a custom palette and use the default palette",
   },
   {
     name: "hex",
@@ -33,16 +64,8 @@ export const OPTION_CONTRACT = Object.freeze([
     valueName: "name",
     defaultValue: "shadcn",
     requires: "hex",
-    choices: [
-      {
-        value: "shadcn",
-        label: "shadcn/ui",
-        hint: "semantic tokens + scales (recommended)",
-      },
-      { value: "radix", label: "Radix Colors", hint: "accent + gray scales" },
-      { value: "css-variables", label: "CSS Variables", hint: "accent + gray scales" },
-    ],
-    description: "Palette preset: shadcn | radix | css-variables",
+    choices: choicesFrom(Object.keys(PRESETS), PRESET_DISPLAY),
+    description: "Palette preset",
   },
   {
     name: "format",
@@ -50,19 +73,8 @@ export const OPTION_CONTRACT = Object.freeze([
     valueName: "name",
     defaultValue: "hsl-values",
     requires: "hex",
-    choices: [
-      {
-        value: "hsl-values",
-        label: "HSL Values",
-        hint: "0 0% 100% - supports hsl(var(--x) / alpha) (recommended)",
-      },
-      { value: "hex", label: "HEX" },
-      { value: "rgb", label: "RGB" },
-      { value: "hsl", label: "HSL" },
-      { value: "oklab", label: "OKLAB" },
-      { value: "oklch", label: "OKLCH" },
-    ],
-    description: "Color format: hex | rgb | hsl | hsl-values | oklab | oklch",
+    choices: choicesFrom(Object.keys(FORMATS), FORMAT_DISPLAY),
+    description: "Color format",
   },
   {
     name: "scheme",
@@ -70,13 +82,8 @@ export const OPTION_CONTRACT = Object.freeze([
     valueName: "name",
     defaultValue: "analogous",
     requires: "hex",
-    choices: [
-      { value: "analogous", label: "Analogous" },
-      { value: "monochromatic", label: "Monochromatic" },
-      { value: "complementary", label: "Complementary" },
-      { value: "triadic", label: "Triadic" },
-    ],
-    description: "Color scheme: analogous | monochromatic | complementary | triadic",
+    choices: choicesFrom(SCHEMES),
+    description: "Color scheme",
   },
   {
     name: "pm",
@@ -89,7 +96,7 @@ export const OPTION_CONTRACT = Object.freeze([
       { value: "yarn", label: "yarn" },
       { value: "bun", label: "bun" },
     ],
-    description: "Package manager: npm | pnpm | yarn | bun",
+    description: "Package manager",
   },
   {
     name: "linter",
@@ -101,15 +108,16 @@ export const OPTION_CONTRACT = Object.freeze([
       { value: "biome", label: "Biome" },
       { value: "none", label: "None" },
     ],
-    description: "Linter: eslint | biome | none",
+    description: "Linter",
   },
   {
     name: "skills",
     type: "string",
     valueName: "list",
     defaultValue: [],
+    defaultContext: "--defaults",
     promptDefault: "recommended",
-    description: "Larsen Skills: recommended | all | comma-separated names",
+    description: "Larsen Skills: recommended, all, or comma-separated names",
   },
   {
     name: "no-skills",
@@ -145,7 +153,7 @@ export const OPTION_CONTRACT = Object.freeze([
     type: "string",
     valueName: "spec",
     defaultValue: "latest",
-    description: "Pin create-next-app version (default: latest)",
+    description: "Select the create-next-app version spec",
   },
   {
     name: "version",
@@ -194,6 +202,11 @@ export function optionPromptDefault(name) {
   return CONTRACT_BY_NAME.get(name)?.promptDefault;
 }
 
+function optionWasProvided(flags, name) {
+  const option = CONTRACT_BY_NAME.get(name);
+  return option?.type === "boolean" ? flags[name] === true : flags[name] !== undefined;
+}
+
 /**
  * Returns the first invalid relationship, or undefined when the explicitly
  * supplied options can be resolved without ignoring an answer.
@@ -202,15 +215,20 @@ export function optionPromptDefault(name) {
  */
 export function validateOptionRelationships(flags) {
   for (const option of OPTION_CONTRACT) {
-    if (option.conflicts && flags[option.name] && flags[option.conflicts]) {
+    if (
+      option.conflicts &&
+      optionWasProvided(flags, option.name) &&
+      optionWasProvided(flags, option.conflicts)
+    ) {
       return `--${option.name} cannot be combined with --${option.conflicts}.`;
     }
   }
-  if (flags["default-palette"] && flags.hex !== undefined) {
-    return "--default-palette cannot be combined with --hex.";
-  }
   for (const option of OPTION_CONTRACT) {
-    if (option.requires && flags[option.name] !== undefined && flags[option.requires] === undefined) {
+    if (
+      option.requires &&
+      optionWasProvided(flags, option.name) &&
+      !optionWasProvided(flags, option.requires)
+    ) {
       return `--${option.name} requires --${option.requires}.`;
     }
   }
@@ -223,8 +241,53 @@ function optionSyntax(option) {
   return option.short ? `-${option.short}, ${long}` : long;
 }
 
+function optionConflict(option) {
+  return (
+    option.conflicts ??
+    OPTION_CONTRACT.find((candidate) => candidate.conflicts === option.name)?.name
+  );
+}
+
+function formatValue(value, markdown) {
+  let normalized;
+  if (Array.isArray(value)) {
+    normalized = value.length === 0 ? "none" : value.join(", ");
+  } else if (typeof value === "boolean") {
+    normalized = value ? "yes" : "no";
+  } else {
+    normalized = String(value);
+  }
+  return markdown ? `\`${normalized}\`` : normalized;
+}
+
+function optionDescription(option, { markdown = false } = {}) {
+  const values = option.choices?.map((choice) => formatValue(choice.value, markdown));
+  const choiceSeparator = markdown ? " \\| " : " | ";
+  const sentences = [
+    values?.length ? `${option.description}: ${values.join(choiceSeparator)}` : option.description,
+  ];
+
+  if (option.defaultValue !== undefined && option.defaultValue !== false) {
+    const context = option.defaultContext
+      ? ` with ${formatValue(option.defaultContext, markdown)}`
+      : "";
+    sentences.push(`Default${context}: ${formatValue(option.defaultValue, markdown)}`);
+  }
+  if (option.promptDefault !== undefined && option.promptDefault !== option.defaultValue) {
+    sentences.push(`Interactive default: ${formatValue(option.promptDefault, markdown)}`);
+  }
+  if (option.requires) {
+    sentences.push(`Requires ${formatValue(`--${option.requires}`, markdown)}`);
+  }
+  const conflict = optionConflict(option);
+  if (conflict) {
+    sentences.push(`Conflicts with ${formatValue(`--${conflict}`, markdown)}`);
+  }
+  return sentences.join(". ");
+}
+
 export function renderHelp() {
-  const rows = OPTION_CONTRACT.map((option) => [optionSyntax(option), option.description]);
+  const rows = OPTION_CONTRACT.map((option) => [optionSyntax(option), optionDescription(option)]);
   const width = Math.max(...rows.map(([syntax]) => syntax.length));
   const options = rows
     .map(([syntax, description]) => `  ${syntax.padEnd(width)}  ${description}`)
@@ -237,6 +300,13 @@ Scaffolds Next.js with the Larsen Utvikling design system.
 Options:
 ${options}
 `;
+}
+
+export function renderMarkdownOptionTable() {
+  const rows = OPTION_CONTRACT.map(
+    (option) => `| \`${optionSyntax(option)}\` | ${optionDescription(option, { markdown: true })} |`,
+  );
+  return ["| Flag | Description |", "| --- | --- |", ...rows].join("\n");
 }
 
 /** @param {string} spec */

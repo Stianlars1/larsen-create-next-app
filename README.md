@@ -21,6 +21,9 @@
 npx @larsen-utvikling/create-next-app my-app
 ```
 
+See the [canonical CLI reference](create-next-app/README.md#cli-reference) for
+every flag, choice, default and invalid combination.
+
 ## What you get
 
 - **The newest stable Next.js by default**, with `--cna-version <spec>` as an

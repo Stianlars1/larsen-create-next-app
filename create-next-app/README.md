@@ -39,20 +39,11 @@ the agent guidance agree on the same numbers.
 
 ## Prompts
 
-| Prompt | Choices |
-| --- | --- |
-| App name | any valid npm package name |
-| Generate custom palette from a HEX? | yes / no (no = default Larsen Utvikling theme) |
-| HEX color | e.g. `#4DA6FF` or `4DA6FF` |
-| Framework/style | shadcn/ui, Radix Colors, CSS Variables |
-| Color format | HEX, RGB, HSL, HSL Values, OKLAB, OKLCH |
-| Linter | ESLint, Biome, none |
-| Install Larsen Skills? | yes / no, then recommended, all, or pick |
-| Package manager | npm, pnpm, yarn, bun |
-| Git init | yes / no |
-| Install dependencies | yes / no |
+The interactive flow asks for the app name, palette, linter, optional Larsen
+Skills, package manager, git initialization and dependency installation. The
+generated reference below is the canonical list of choices and defaults.
 
-## Non-interactive usage
+## CLI reference
 
 Every prompt has a flag - useful for scripts and CI:
 
@@ -66,26 +57,32 @@ npx @larsen-utvikling/create-next-app my-app \
   --linter eslint --pm pnpm --no-git --no-install
 ```
 
+<!-- BEGIN GENERATED CLI REFERENCE -->
 | Flag | Description |
 | --- | --- |
-| `-d, --defaults` | Skip all prompts, use defaults |
-| `--default-palette` | Use the default Larsen Utvikling palette |
-| `--hex <color>` | Palette seed HEX (with or without `#`) |
-| `--preset <name>` | Requires `--hex`: `shadcn` \| `radix` \| `css-variables` |
-| `--format <name>` | Requires `--hex`: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch` |
-| `--scheme <name>` | Requires `--hex`: `analogous` (default) \| `monochromatic` \| `complementary` \| `triadic` |
-| `--pm <name>` | `npm` \| `pnpm` \| `yarn` \| `bun` |
-| `--linter <name>` | `eslint` \| `biome` \| `none` |
-| `--skills <list>` | `recommended` \| `all` \| comma-separated skill names |
-| `--no-skills` | Skip the skills install (the default for `--defaults`) |
-| `--git` / `--no-git` | Initialize or skip git init. The two forms conflict |
-| `--install` / `--no-install` | Install or skip dependencies. The two forms conflict |
-| `--cna-version <spec>` | Pin the create-next-app version (escape hatch, default `latest`) |
+| `-d, --defaults` | Skip all prompts, use defaults (no skills) |
+| `--default-palette` | Answer No to a custom palette and use the default palette. Interactive default: `no`. Conflicts with `--hex` |
+| `--hex <color>` | Palette seed HEX - implies a custom palette. Conflicts with `--default-palette` |
+| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Requires `--hex` |
+| `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Requires `--hex` |
+| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Requires `--hex` |
+| `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm` |
+| `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint` |
+| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended` |
+| `--no-skills` | Skip the Larsen Skills install |
+| `--git` | Initialize a git repository. Default: `yes`. Conflicts with `--no-git` |
+| `--no-git` | Skip git init. Conflicts with `--git` |
+| `--install` | Install dependencies. Default: `yes`. Conflicts with `--no-install` |
+| `--no-install` | Skip dependency install. Conflicts with `--install` |
+| `--cna-version <spec>` | Select the create-next-app version spec. Default: `latest` |
+| `-v, --version` | Print version |
+| `-h, --help` | Show this help |
+<!-- END GENERATED CLI REFERENCE -->
 
 ## Requirements
 
 - Node.js >= 20.12.0
-- Network access (fetches `create-next-app@latest`)
+- Network access (fetches the selected create-next-app spec, `latest` by default)
 
 ## License
 

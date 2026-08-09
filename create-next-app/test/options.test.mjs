@@ -154,6 +154,16 @@ for (const [left, right] of [
   });
 }
 
+test("--default-palette conflicts with an explicitly empty --hex value", () => {
+  const run = runCli(["empty-hex-conflict", "--defaults", "--default-palette", "--hex="]);
+  try {
+    assert.equal(run.status, 1, run.output);
+    assert.match(run.output, /--default-palette cannot be combined with --hex/);
+  } finally {
+    run.cleanup();
+  }
+});
+
 for (const [flag, value] of [
   ["--preset", "shadcn"],
   ["--format", "hsl-values"],
