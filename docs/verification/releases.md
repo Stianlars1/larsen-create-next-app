@@ -93,3 +93,7 @@ publish followed by exact registry verification can add a 0.3.0 row here.
 The repository must not create or claim a 0.3.0 release tag before that
 publication boundary. Existing-version tag work is a separate verification
 task and is not evidence that 0.3.0 has shipped.
+
+The dated local 0.3.0 source, artifact, smoke, build, and reconstructed-tag
+evidence is recorded separately in
+[local-0.3.0.md](local-0.3.0.md). That local record is not registry evidence.

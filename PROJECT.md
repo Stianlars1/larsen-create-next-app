@@ -36,6 +36,7 @@ is enabled, and optional skills.
 | Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
 | Current palette matrix and known gaps | [docs/reference/palette.md](docs/reference/palette.md) |
 | Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
+| Dated local 0.3.0 verification | [docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md) |
 | User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
 | Approved 0.1.0 planning snapshot | [docs/plans/2026-08-07-create-next-app-template.md](docs/plans/2026-08-07-create-next-app-template.md) |
 
@@ -276,8 +277,10 @@ npm run smoke:full -- /absolute/path/reported-by-pack-release.tgz
 
 After those local gates, Stian may publish the same reported tarball. Exact
 registry verification and tag creation are separate post-publication steps.
-The current published record and the local 0.3.0 boundary are in
-[docs/verification/releases.md](docs/verification/releases.md).
+The current published record is in
+[docs/verification/releases.md](docs/verification/releases.md). Dated local
+0.3.0 release-readiness evidence is in
+[docs/verification/local-0.3.0.md](docs/verification/local-0.3.0.md).
 
 ## Explicit non-goals
 
