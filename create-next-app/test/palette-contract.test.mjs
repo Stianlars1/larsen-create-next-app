@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
-import test from "node:test";
-import { generateThemeCss } from "../palette/index.js";
+import { after, test } from "node:test";
+import { createPaletteMasterFixture } from "../test-support/palette-master.mjs";
+
+const fixture = await createPaletteMasterFixture();
+after(fixture.cleanup);
+const { generateThemeCss } = fixture.api;
 
 const SHADCN_TOKENS = [
   "background", "foreground", "foreground-subtle", "primary",

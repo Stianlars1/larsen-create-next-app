@@ -9,21 +9,27 @@ const packageDir = fileURLToPath(new URL("..", import.meta.url));
 test("an extreme seed assigns separate mode seeds and passes every contrast check", () => {
   const script = `
     import assert from "node:assert/strict";
-    import { generateThemeCss, seedsForModes } from "./palette/index.js";
     import { checkThemeContrast } from "./scripts/theme-contrast.mjs";
+    import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
 
-    assert.deepEqual(seedsForModes("#0A0A0A"), {
-      lightSeed: "#0A0A0A",
-      darkSeed: "#F5F5F5",
-    });
-    const css = generateThemeCss({
-      hex: "#0A0A0A",
-      preset: "shadcn",
-      format: "hsl-values",
-      scheme: "monochromatic",
-    });
-    assert.ok(css.includes("Seed: #0A0A0A (light from #0A0A0A, dark from #F5F5F5)"));
-    assert.deepEqual(checkThemeContrast(css), []);
+    const fixture = await createPaletteMasterFixture();
+    try {
+      const { generateThemeCss, seedsForModes } = fixture.api;
+      assert.deepEqual(seedsForModes("#0A0A0A"), {
+        lightSeed: "#0A0A0A",
+        darkSeed: "#F5F5F5",
+      });
+      const css = generateThemeCss({
+        hex: "#0A0A0A",
+        preset: "shadcn",
+        format: "hsl-values",
+        scheme: "monochromatic",
+      });
+      assert.ok(css.includes("Seed: #0A0A0A (light from #0A0A0A, dark from #F5F5F5)"));
+      assert.deepEqual(checkThemeContrast(css), []);
+    } finally {
+      fixture.cleanup();
+    }
   `;
   const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], {
     cwd: packageDir,
@@ -37,19 +43,24 @@ test("an extreme seed assigns separate mode seeds and passes every contrast chec
 test("contrast verification reports every required token that is absent", () => {
   const script = `
     import assert from "node:assert/strict";
-    import { generateThemeCss } from "./palette/index.js";
     import { checkThemeContrast } from "./scripts/theme-contrast.mjs";
+    import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
 
-    const css = generateThemeCss({
-      hex: "#0A0A0A",
-      preset: "shadcn",
-      format: "hsl-values",
-      scheme: "monochromatic",
-    }).replaceAll(/\\n\\s*--ring:[^;]+;/g, "");
-    assert.deepEqual(checkThemeContrast(css), [
-      "light: missing --ring",
-      "dark: missing --ring",
-    ]);
+    const fixture = await createPaletteMasterFixture();
+    try {
+      const css = fixture.api.generateThemeCss({
+        hex: "#0A0A0A",
+        preset: "shadcn",
+        format: "hsl-values",
+        scheme: "monochromatic",
+      }).replaceAll(/\\n\\s*--ring:[^;]+;/g, "");
+      assert.deepEqual(checkThemeContrast(css), [
+        "light: missing --ring",
+        "dark: missing --ring",
+      ]);
+    } finally {
+      fixture.cleanup();
+    }
   `;
   const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], {
     cwd: packageDir,

@@ -66,8 +66,8 @@ cd create-next-app
 npm test                         # focused behavior + documentation checks
 node scripts/generate-cli-reference.mjs --check
 npm run smoke                    # packaging + scaffold assertions
-npm run smoke:full               # + install and production build
 npm run pack:release             # verified consumer-clean release tarball
+npm run smoke:full -- /path/to/release.tgz # install + build that exact tarball
 node bin/cli.js my-app           # run the CLI from source
 ```
 

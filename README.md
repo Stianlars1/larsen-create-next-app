@@ -89,8 +89,8 @@ node create-next-app/bin/cli.js my-app   # run the CLI from source
 npm run gen:theme -- "#4DA0FF"           # regenerate the default theme
 npm run sync                             # copy masters into the package
 cd create-next-app && npm run smoke      # packaging + scaffold assertions
-cd create-next-app && npm run smoke:full # + install and production build
 cd create-next-app && npm run pack:release # verified release tarball
+cd create-next-app && npm run smoke:full -- /path/to/release.tgz
 ```
 
 ## License

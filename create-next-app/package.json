@@ -44,7 +44,7 @@
     "gen:theme": "node ../palette/generate-default.mjs",
     "pack:release": "node scripts/pack-release.mjs --verify",
     "smoke": "node scripts/smoke.mjs",
-    "smoke:full": "node scripts/smoke.mjs --full",
+    "smoke:full": "node scripts/full-smoke.mjs",
     "prepack": "node scripts/sync.mjs",
     "prepublishOnly": "node scripts/refuse-source-publish.mjs"
   },

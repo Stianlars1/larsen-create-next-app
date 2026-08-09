@@ -78,6 +78,7 @@ _TEMPLATES/
 │   ├── template/       the files overlaid onto every generated project
 │   │   └── src/lib/design-system/   SYNCED copy of ../../CSS (gitignored)
 │   ├── scripts/
+│   │   ├── full-smoke.mjs  requires and full-verifies one supplied tarball
 │   │   ├── generate-cli-reference.mjs  generates/checks README CLI table
 │   │   ├── pack-release.mjs  builds a consumer-clean tarball in staging
 │   │   ├── theme-contrast.mjs  required-token and contrast release checks
@@ -324,8 +325,9 @@ contrast and 18-combination palette contract tests.
   `npm pack --ignore-scripts`, then executes that exact tarball with `npx`.
 - **supplied-tarball mode** (`--tarball <path>`): exercises an already packed
   release candidate rather than creating another artifact.
-- **full mode** (`--full`): also installs and runs `next build` in the
-  generated app. This remains a separate explicit gate.
+- **full mode** (`npm run smoke:full -- <tarball>`): requires a supplied
+  release tarball, then installs and runs `next build` in the generated app.
+  It never creates a second artifact and remains a separate explicit gate.
 
 Asserts: all five design-system files exist, `index.css` imports `motion.css`,
 `motion.css` has the easing set and the reduced-motion contract, all docs
@@ -356,17 +358,18 @@ and must never handle the OTP.
 ```bash
 cd create-next-app
 npm test
-npm run smoke:full
 npm run pack:release
-npm publish ./larsen-utvikling-create-next-app-0.3.0.tgz
+RELEASE_TARBALL="/absolute/path/reported-by-pack-release"
+npm run smoke:full -- "$RELEASE_TARBALL"
+npm publish "$RELEASE_TARBALL"
 ```
 
 `pack:release` syncs the masters into a temporary copy, removes all maintainer
 scripts from the consumer manifest, packs with lifecycle scripts disabled, and
-runs the standard smoke test against the reported tarball path. Publishing the
-source directory is refused so the repository-only script metadata cannot be
-published accidentally. The full install plus production build remains the
-separate `smoke:full` gate above.
+runs the standard smoke test against the reported tarball path. The owner then
+passes that same reported path to the separate full install/build gate and to
+`npm publish`. Publishing the source directory is refused so the
+repository-only script metadata cannot be published accidentally.
 
 Verify afterwards from a clean directory with the **exact** version, because
 the npx `@latest` cache can lie:

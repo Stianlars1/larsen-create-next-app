@@ -11,6 +11,7 @@ const packageDir = fileURLToPath(new URL("..", import.meta.url));
 test("release packing preserves maintainer metadata and removes dead scripts from the artifact", () => {
   const outputDir = mkdtempSync(join(tmpdir(), "lu-pack-test-"));
   const sourceBefore = readFileSync(join(packageDir, "package.json"), "utf8");
+  const sourceManifest = JSON.parse(sourceBefore);
   try {
     const result = spawnSync(
       process.execPath,
@@ -36,9 +37,11 @@ test("release packing preserves maintainer metadata and removes dead scripts fro
     assert.equal(manifest.bin["create-next-app"], "bin/cli.js");
     const entriesResult = spawnSync("tar", ["-tf", tarball], { encoding: "utf8" });
     assert.equal(entriesResult.status, 0, entriesResult.stderr);
-    assert.doesNotMatch(entriesResult.stdout, /^package\/(?:scripts|test)\//m);
+    assert.doesNotMatch(entriesResult.stdout, /^package\/(?:scripts|test|test-support)\//m);
     assert.equal(readFileSync(join(packageDir, "package.json"), "utf8"), sourceBefore);
-    assert.equal(basename(tarball), "larsen-utvikling-create-next-app-0.3.0.tgz");
+    const artifactStem = sourceManifest.name.replace(/^@/, "").replace("/", "-");
+    const expectedName = `${artifactStem}-${sourceManifest.version}.tgz`;
+    assert.equal(basename(tarball), expectedName);
   } finally {
     rmSync(outputDir, { recursive: true, force: true });
   }

@@ -9,7 +9,8 @@
  *   node scripts/smoke.mjs --tarball <path>
  *                                   run an already packed release candidate
  *   node scripts/smoke.mjs --dev    dev mode: run bin/cli.js directly
- *   node scripts/smoke.mjs --full   adds install + production build (~minutes)
+ *   node scripts/smoke.mjs --full --tarball <path>
+ *                                   adds install + production build (~minutes)
  *
  * Asserts: exact generated files and docs, no Tailwind artifacts, packaging,
  * master/copy equality, and an extreme custom palette in both modes.
@@ -88,6 +89,9 @@ try {
   }
   if (dev && suppliedTarball) {
     throw new Error("--dev cannot be combined with --tarball");
+  }
+  if (full && !suppliedTarball) {
+    throw new Error("--full requires the tarball path reported by pack:release");
   }
 
   /** @type {string[]} */
