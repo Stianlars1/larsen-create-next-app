@@ -2,19 +2,20 @@
 
 Current package-only reference for `palette/index.js` and generated
 `theme.css`. The deterministic fixture in
-`create-next-app/test/palette-contract.test.mjs` runs the public generator for
-all 18 preset-format combinations.
+`create-next-app/test/palette-contract.test.mjs` and
+`create-next-app/test/neutral-tint.test.mjs` run the public generator for both
+neutral tints across all 18 preset-format combinations.
 
 This document does not describe a product site or Rampkit preview.
 `palette/NOTICE.md` owns vendored source provenance and local deviations.
 
 ## Current matrix
 
-The matrix uses seed `#4DA0FF` and scheme `analogous`. The light root and
-explicit-light blocks match each other. The automatic and explicit dark
-blocks match each other. shadcn's structural `--radius` is declared in the
-light/root contract and inherited by dark mode; every color name exists in
-both modes.
+The matrix uses seed `#4DA0FF` with both `subtle` and `strong` neutral tints.
+The light root and explicit-light blocks match each other. The automatic and
+explicit dark blocks match each other. shadcn's structural `--radius` is
+declared in the light/root contract and inherited by dark mode; every color
+name exists in both modes.
 
 | Preset | Format | Light names | Dark names | Opaque syntax | Alpha syntax |
 | --- | --- | ---: | ---: | --- | --- |
@@ -38,7 +39,56 @@ both modes.
 | css-variables | oklch | 50 | 50 | checked | not emitted |
 
 Radix Themes and CSS Variables are distinct declaration contracts in every
-format. The generated file header also names the selected preset and format.
+format. The generated file header also names the selected preset, format, and
+neutral tint.
+
+## Neutral tint
+
+The public choices are `subtle` and `strong`:
+
+- `subtle` selects the neutral ramp previously produced by analogous,
+  complementary, and triadic, which were byte-identical to each other.
+- `strong` selects the neutral ramp previously produced by monochromatic.
+
+The mapping itself changes nothing else. The only 0.5.0 output difference
+against those former schemes is the corrected `--input`, which is a separate,
+deliberate accessibility fix and applies to `shadcn` under both tints. Radix
+Themes and CSS Variables declarations are unchanged from 0.4.0, because
+neither preset emits `--input`.
+
+The wrapper maps those names privately to the existing vendored engine. It
+does not change the engine, rotate the requested seed, or rebuild the accent
+palette around another hue. The generated `--analogous`,
+`--analogous-foreground`, `--complementary`, and
+`--complementary-foreground` support tokens and their chart mappings remain
+available under both choices.
+
+### Exactly what moves
+
+Measured across a 233-seed sweep of hue, saturation, and lightness, in
+`shadcn` x `hsl-values`, both modes:
+
+| Group | Tokens that can differ between `subtle` and `strong` |
+| --- | --- |
+| Gray ramp | `--gray-1` through `--gray-12` |
+| Derived from the gray ramp | `--foreground`, `--foreground-subtle`, `--muted`, `--muted-foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--border`, `--input`, `--secondary`, `--accent`, `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-accent`, `--primary-foreground`, `--sidebar-primary-foreground`, `--analogous-foreground`, `--complementary-foreground` |
+| Accent scale | unchanged, except for the two seeds below |
+
+`--background`, `--primary`, `--ring`, and `--accent-1` through `--accent-12`
+were identical under both tints for every chromatic seed in the sweep. The
+largest single-channel difference observed anywhere was 4 of 255, so the
+change is real but deliberately small.
+
+The one documented exception is a seed with no usable hue of its own. For
+`#000000` and `#FFFFFF` - and their immediate neighbours `#010101` and
+`#FEFEFE` - the engine derives the accent from the same tinted neutral, so
+those seeds move 15 accent-scale values as well.
+`create-next-app/test/neutral-tint.test.mjs` locks both halves of this claim.
+
+`generateThemeCss()` defaults to `subtle`. It rejects blank or unknown neutral
+tints and explicitly rejects an options object containing the removed
+`scheme` property. The public constants are `NEUTRAL_TINTS`, `PRESETS`, and
+`FORMATS`; `SCHEMES` is no longer exported.
 
 ## shadcn approved token-name contract
 
@@ -153,7 +203,7 @@ The baked theme uses:
 | Seed | `#4DA0FF` |
 | Preset | `shadcn` |
 | Format | `hsl-values` |
-| Scheme | `monochromatic` |
+| Neutral tint | `strong` |
 
 The generator then pins background, foreground, and ring to the exact
 `#FAFAFA` and `#0A0A0A` surface pair and appends the three brand-blue tokens.
@@ -176,6 +226,14 @@ scale. Primary foreground is recomputed against the corrected primary with
 the accent-scale-first, gray-scale-second chooser. Radix accent contrast keeps
 the upstream value at 4.5 or higher and otherwise uses the same chooser.
 
+`--input` is corrected the same way, but from the gray scale rather than the
+accent scale, so a control boundary stays neutral. It is the closest gray
+reaching 3:1 against every surface the control sits on: the page background
+in light mode, and background, card, and popover in dark mode. In practice
+this lands on gray-9 in light mode and gray-9 in dark mode instead of the
+gray-7 the engine emits upstream. `--border` and `--sidebar-border` keep
+gray-7.
+
 ## Test boundary
 
 The mechanical contrast parser supports only `shadcn` with `hsl-values` and
@@ -185,17 +243,26 @@ checks both generated modes:
 - card-foreground against card at 4.5.
 - popover-foreground against popover at 4.5.
 - ring against background at 3.
+- input against background, card, and popover at 3.
 - primary-foreground against primary at 4.5.
 - primary against background at the deliberately non-WCAG 1.5 visibility
   floor.
 
+`--border` is deliberately absent. WCAG 2.1 SC 1.4.11 covers visual
+information required to identify a user interface component, and `--border`
+paints card edges and separators, which are not components. `--input` paints
+the boundary of text fields, selects, and outline buttons, where the border
+is the only thing identifying the control, so it carries the 3:1 floor
+instead.
+
 It fails on missing required tokens. The generator performs the shadcn role
 correction before all six serialization formats, but this parser does not
 claim to parse the other formats. Representative Radix accent contrast pairs
-are checked separately at 4.5 in all six formats. The deterministic matrix
-separately proves names, order, mode structure, selected syntax, alpha
-preservation, exact approved mappings, and the distinction between Radix
-Themes and CSS Variables.
+are checked separately at 4.5 in all six formats. Both neutral tints run
+through the representative shadcn contrast seeds and the serialized-format
+checks. The deterministic matrix separately proves names, order, mode
+structure, selected syntax, alpha preservation, exact declaration baselines,
+approved mappings, and the distinction between Radix Themes and CSS Variables.
 
 Upstream drift checks remain a separate networked verification concern. The
 runtime suite is intentionally offline and pinned.

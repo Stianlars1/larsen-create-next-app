@@ -98,8 +98,42 @@ function closestContrastSafeColor(preferred, background, accentScale, grayScale,
   return candidates[0]?.color
     ?? getBestForeground(background, accentScale, grayScale, minimum).color;
 }
+/**
+ * The closest gray to `preferred` that clears `minimum` against every surface
+ * the token can sit on. Used for --input, whose border is the only thing that
+ * identifies a text field, select or outline button, so WCAG 2.1 SC 1.4.11
+ * applies to it. --border stays where it is: cards and separators are not
+ * user interface components and the same floor would give every card a heavy
+ * outline.
+ */
+function closestNeutralOverSurfaces(preferred, surfaces, grayScale, minimum) {
+  const worst = (color) => Math.min(...surfaces.map((surface) => getContrastRatio(color, surface)));
+  if (worst(preferred) >= minimum) return preferred;
+
+  const preferredColor = new Color(preferred);
+  const candidates = grayScale
+    .filter((color) => worst(color) >= minimum)
+    .map((color) => ({ color, distance: preferredColor.deltaEOK(new Color(color)) }))
+    .sort((a, b) => a.distance - b.distance);
+
+  return candidates[0]?.color ?? preferred;
+}
 function generateShadcnCSS(data, format) {
   const formatFn = (hex) => formatColor(hex, format);
+  // Light mode paints card and popover with the page background; dark mode
+  // lifts them to gray-2 and gray-3, which is the harder surface to clear.
+  const lightInput = closestNeutralOverSurfaces(
+    data.grayScale.light[6],
+    [data.lightBackground],
+    data.grayScale.light,
+    3
+  );
+  const darkInput = closestNeutralOverSurfaces(
+    data.grayScale.dark[6],
+    [data.darkBackground, data.grayScale.dark[1], data.grayScale.dark[2]],
+    data.grayScale.dark,
+    3
+  );
   const lightPrimary = closestContrastSafeColor(
     data.accent,
     data.lightBackground,
@@ -217,7 +251,7 @@ function generateShadcnCSS(data, format) {
   --destructive: ${formatFn(data.semantic.light.danger.base)};
   --destructive-foreground: ${formatFn(data.semantic.light.danger.foreground)};
   --border: ${formatFn(data.grayScale.light[6])};
-  --input: ${formatFn(data.grayScale.light[6])};
+  --input: ${formatFn(lightInput)};
   --ring: ${formatFn(lightRing)};
   --chart-1: ${formatFn(data.accentScale.light[8])};
   --chart-2: ${formatFn(data.analogous.accentScale.light[8])};
@@ -271,7 +305,7 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --destructive: ${formatFn(data.semantic.dark.danger.base)};
     --destructive-foreground: ${formatFn(data.semantic.dark.danger.foreground)};
     --border: ${formatFn(data.grayScale.dark[6])};
-    --input: ${formatFn(data.grayScale.dark[6])};
+    --input: ${formatFn(darkInput)};
     --ring: ${formatFn(darkRing)};
     --chart-1: ${formatFn(data.accentScale.dark[8])};
     --chart-2: ${formatFn(data.analogous.accentScale.dark[8])};

@@ -29,10 +29,16 @@ function createControlledCommands(root) {
   writeExecutable(
     join(bin, "npx"),
     `#!/usr/bin/env node
-import { mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 const args = process.argv.slice(2);
 if (args.includes("skills") && args.includes("add")) {
+  const source = args[args.indexOf("add") + 1];
+  if (process.env.LU_SKILLS_INVOCATION_LOG) {
+    appendFileSync(process.env.LU_SKILLS_INVOCATION_LOG, source + "\\n");
+  }
+  if (process.env.LU_FAIL_SKILLS_REPO === source) process.exit(9);
+  if (process.env.LU_SKIP_SKILLS_REPO === source) process.exit(0);
   for (let index = 0; index < args.length; index++) {
     if (args[index] !== "--skill" || !args[index + 1]) continue;
     const skillDir = join(process.cwd(), ".agents", "skills", args[index + 1]);
@@ -57,12 +63,19 @@ writeFileSync(join(appDir, "src", "app", "page.module.css"), "/* upstream */\\n"
   return bin;
 }
 
-function runCli(args) {
+function runCli(args, { failSkillsRepo, skipSkillsRepo } = {}) {
   const root = mkdtempSync(join(tmpdir(), "lu-options-test-"));
   const bin = createControlledCommands(root);
+  const skillsInvocationLog = join(root, "skills-invocations.log");
   const result = spawnSync(process.execPath, [cli, ...args], {
     cwd: root,
-    env: { ...process.env, PATH: `${bin}${delimiter}${process.env.PATH ?? ""}` },
+    env: {
+      ...process.env,
+      PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
+      LU_SKILLS_INVOCATION_LOG: skillsInvocationLog,
+      ...(failSkillsRepo ? { LU_FAIL_SKILLS_REPO: failSkillsRepo } : {}),
+      ...(skipSkillsRepo ? { LU_SKIP_SKILLS_REPO: skipSkillsRepo } : {}),
+    },
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -70,6 +83,7 @@ function runCli(args) {
     root,
     status: result.status,
     output: `${result.stdout ?? ""}${result.stderr ?? ""}`,
+    skillsInvocationLog,
     cleanup: () => rmSync(root, { recursive: true, force: true }),
   };
 }
@@ -162,8 +176,8 @@ test("closed stdin accepts explicit custom palette, no-git, and no-install answe
     "shadcn",
     "--format",
     "hsl-values",
-    "--scheme",
-    "analogous",
+    "--neutral-tint",
+    "strong",
     ...explicitBase,
   ]);
   try {
@@ -208,7 +222,7 @@ const stringOptions = [
   "hex",
   "preset",
   "format",
-  "scheme",
+  "neutral-tint",
   "pm",
   "linter",
   "skills",
@@ -247,7 +261,7 @@ test("--default-palette conflicts with an explicitly empty --hex value", () => {
 for (const [flag, value] of [
   ["--preset", "shadcn"],
   ["--format", "hsl-values"],
-  ["--scheme", "analogous"],
+  ["--neutral-tint", "strong"],
 ]) {
   test(`${flag} requires --hex instead of being ignored`, () => {
     const run = runCli(["modifier-app", "--defaults", flag, value]);
@@ -270,8 +284,8 @@ test("--defaults remains shorthand and accepts valid explicit overrides", () => 
     "radix",
     "--format",
     "hex",
-    "--scheme",
-    "triadic",
+    "--neutral-tint",
+    "strong",
     "--linter",
     "none",
     "--pm",
@@ -283,6 +297,68 @@ test("--defaults remains shorthand and accepts valid explicit overrides", () => 
     assert.equal(run.status, 0, run.output);
     const agents = readFileSync(join(run.root, "defaults-override", "AGENTS.md"), "utf8");
     assert.doesNotMatch(agents, /## Installed skills/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("rejects the removed --scheme flag", () => {
+  const run = runCli([
+    "legacy-scheme",
+    "--defaults",
+    "--hex",
+    "4DA0FF",
+    "--scheme",
+    "analogous",
+  ]);
+  try {
+    assert.equal(run.status, 1, run.output);
+    assert.match(run.output, /Unknown option '--scheme'/);
+    // The removed flag names its replacement rather than only failing.
+    assert.match(run.output, /--scheme was removed in 0\.5\.0/);
+    assert.match(run.output, /--neutral-tint <subtle\|strong>/);
+    // A user error is reported as one, not as an uncaught throw.
+    assert.doesNotMatch(run.output, /ERR_PARSE_ARGS_UNKNOWN_OPTION/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("reports an unknown flag without a stack trace and without a removal hint", () => {
+  const run = runCli(["unknown-flag", "--defaults", "--bogus"]);
+  try {
+    assert.equal(run.status, 1, run.output);
+    assert.match(run.output, /Unknown option '--bogus'/);
+    assert.match(run.output, /Run with --help for the full option list\./);
+    assert.doesNotMatch(run.output, /was removed in/);
+    assert.doesNotMatch(run.output, /ERR_PARSE_ARGS_UNKNOWN_OPTION/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("rejects a missing --neutral-tint value", () => {
+  const run = runCli(["missing-neutral-tint", "--defaults", "--hex", "4DA0FF", "--neutral-tint"]);
+  try {
+    assert.equal(run.status, 1, run.output);
+    assert.match(run.output, /Option '--neutral-tint <value>' argument missing/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("rejects an unknown --neutral-tint value", () => {
+  const run = runCli([
+    "invalid-neutral-tint",
+    "--defaults",
+    "--hex",
+    "4DA0FF",
+    "--neutral-tint",
+    "vivid",
+  ]);
+  try {
+    assert.equal(run.status, 1, run.output);
+    assert.match(run.output, /Unknown --neutral-tint "vivid" \(expected subtle \| strong\)/);
   } finally {
     run.cleanup();
   }
@@ -339,9 +415,113 @@ The wrapper verified these files on disk:
 - \`.agents/skills/motion-craft/SKILL.md\`
 - \`.agents/skills/interface-craft/SKILL.md\`
 
+Sources stay with their authors:
+
+- [Larsen Skills by Stian Larsen](https://github.com/Stianlars1/larsen-skills)
+
 This verifies only the listed files, not agent-specific discovery or symlinks.
-Add more with \`npx skills add Stianlars1/larsen-skills\`.`,
+Add or update them from those same repositories:
+
+- \`npx skills add Stianlars1/larsen-skills\``,
     );
+    // A Larsen-only project does not advertise a third-party source.
+    assert.doesNotMatch(
+      agents.slice(agents.indexOf("## Installed skills")),
+      /transitions\.dev|transitions-dev/i,
+    );
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("mixed skill sources use one installer invocation per repository", () => {
+  const run = runCli([
+    "mixed-skills-app",
+    "--defaults",
+    "--skills",
+    "motion-craft,transitions-dev,interface-craft",
+    "--no-git",
+    "--no-install",
+  ]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    assert.deepEqual(
+      readFileSync(run.skillsInvocationLog, "utf8").trim().split("\n"),
+      ["Stianlars1/larsen-skills", "Jakubantalik/transitions.dev"],
+    );
+    const agents = readFileSync(join(run.root, "mixed-skills-app", "AGENTS.md"), "utf8");
+    assert.match(agents, /\.agents\/skills\/motion-craft\/SKILL\.md/);
+    assert.match(agents, /\.agents\/skills\/interface-craft\/SKILL\.md/);
+    assert.match(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
+    assert.match(agents, /Transitions\.dev by Jakub Antalik/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a failed third-party source does not break successful Larsen skills", () => {
+  const run = runCli(
+    [
+      "partial-skills-app",
+      "--defaults",
+      "--skills",
+      "motion-craft,transitions-dev",
+      "--no-git",
+      "--no-install",
+    ],
+    { failSkillsRepo: "Jakubantalik/transitions.dev" },
+  );
+  try {
+    assert.equal(run.status, 0, run.output);
+    assert.match(run.output, /Transitions\.dev install from Jakubantalik\/transitions\.dev failed/);
+    const agents = readFileSync(join(run.root, "partial-skills-app", "AGENTS.md"), "utf8");
+    assert.match(agents, /\.agents\/skills\/motion-craft\/SKILL\.md/);
+    assert.doesNotMatch(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a successful exit that installs nothing is not documented", () => {
+  const run = runCli(
+    [
+      "empty-source-app",
+      "--defaults",
+      "--skills",
+      "motion-craft,transitions-dev",
+      "--no-git",
+      "--no-install",
+    ],
+    { skipSkillsRepo: "Jakubantalik/transitions.dev" },
+  );
+  try {
+    assert.equal(run.status, 0, run.output);
+    assert.match(run.output, /installer exited without creating: transitions-dev/);
+    const agents = readFileSync(join(run.root, "empty-source-app", "AGENTS.md"), "utf8");
+    assert.match(agents, /\.agents\/skills\/motion-craft\/SKILL\.md/);
+    assert.doesNotMatch(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("--skills all remains the nine Larsen skills", () => {
+  const run = runCli([
+    "all-skills-app",
+    "--defaults",
+    "--skills",
+    "all",
+    "--no-git",
+    "--no-install",
+  ]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    assert.deepEqual(
+      readFileSync(run.skillsInvocationLog, "utf8").trim().split("\n"),
+      ["Stianlars1/larsen-skills"],
+    );
+    const agents = readFileSync(join(run.root, "all-skills-app", "AGENTS.md"), "utf8");
+    assert.doesNotMatch(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
   } finally {
     run.cleanup();
   }

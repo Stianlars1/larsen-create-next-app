@@ -9,24 +9,26 @@
  * the brand uses.
  *
  * Usage (from the repo root):
- *   npm run gen:theme              -> brand default (blue accents, mono surfaces)
+ *   npm run gen:theme              -> brand default (blue accents, strong neutral tint)
  *   npm run gen:theme -- "#22C55E" -> custom seed, plain generated surfaces
- *   npm run gen:theme -- "#22C55E" analogous -> custom seed and scheme
+ *   npm run gen:theme -- "#22C55E" subtle -> custom seed and neutral tint
  *
  * Hand-tweaks to CSS/theme.css are fine - this script overwrites them.
  */
 
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_THEME, SCHEMES, generateThemeCss } from "./index.js";
+import { DEFAULT_THEME, NEUTRAL_TINTS, generateThemeCss } from "./index.js";
 
 const seed = process.argv[2] ?? DEFAULT_THEME.hex;
-const scheme = process.argv[3] ?? DEFAULT_THEME.scheme;
+const neutralTint = process.argv[3] ?? DEFAULT_THEME.neutralTint;
 // A custom seed gets the plain generated palette; only the brand default
 // pins the black/white surface and ring.
 const custom = Boolean(process.argv[2]);
-if (!SCHEMES.includes(scheme)) {
-  console.error(`Unknown scheme "${scheme}" (expected ${SCHEMES.join(" | ")})`);
+if (!NEUTRAL_TINTS.includes(neutralTint)) {
+  console.error(
+    `Unknown neutral tint "${neutralTint}" (expected ${NEUTRAL_TINTS.join(" | ")})`,
+  );
   process.exit(1);
 }
 const target = fileURLToPath(new URL("../CSS/theme.css", import.meta.url));
@@ -92,7 +94,7 @@ const css = generateThemeCss({
   hex: seed,
   preset: DEFAULT_THEME.preset,
   format: DEFAULT_THEME.format,
-  scheme,
+  neutralTint,
   overrides: custom ? undefined : brandLight,
   darkOverrides: custom ? undefined : brandDark,
   append: BRAND_ACCENTS,
@@ -101,6 +103,6 @@ const css = generateThemeCss({
 writeFileSync(target, css);
 console.log(`Wrote ${target}`);
 console.log(
-  `Seed: ${seed} | preset: ${DEFAULT_THEME.preset} | format: ${DEFAULT_THEME.format} | scheme: ${scheme}` +
+  `Seed: ${seed} | preset: ${DEFAULT_THEME.preset} | format: ${DEFAULT_THEME.format} | neutral tint: ${neutralTint}` +
     (custom ? "" : " | brand surfaces and ring pinned, brand accents appended"),
 );

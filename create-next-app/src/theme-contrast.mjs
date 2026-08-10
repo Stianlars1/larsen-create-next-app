@@ -22,6 +22,13 @@ export const CONTRAST_CHECKS = Object.freeze([
     standard: "WCAG",
   }),
   Object.freeze({ token: "ring", against: "background", minimum: 3, standard: "WCAG" }),
+  // SC 1.4.11: the input border is the only thing identifying a text field,
+  // select or outline button, and it has to hold on every surface those sit
+  // on. --border is deliberately absent - cards and separators are not user
+  // interface components.
+  Object.freeze({ token: "input", against: "background", minimum: 3, standard: "WCAG" }),
+  Object.freeze({ token: "input", against: "card", minimum: 3, standard: "WCAG" }),
+  Object.freeze({ token: "input", against: "popover", minimum: 3, standard: "WCAG" }),
   Object.freeze({
     token: "primary-foreground",
     against: "primary",

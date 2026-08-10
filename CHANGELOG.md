@@ -10,7 +10,62 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-10
+
+### Added
+- `transitions-dev` can be selected explicitly or through the interactive
+  picker. It installs directly from Jakub Antalik's repository under the
+  Transitions.dev terms and is never vendored into Larsen Skills.
+- `--neutral-tint <subtle|strong>` controls how much of the seed hue reaches
+  the gray ramp. Custom palettes default to `subtle`; the baked Larsen theme
+  remains `#4DA0FF` with `strong` neutral tint.
+
+- Neutral tint is now the fourth interactive palette question, asked last with
+  `subtle` preselected, so the choice is discoverable without a flag.
+
+### Changed
+- `--input` is now the closest gray that reaches 3:1 against every surface a
+  control sits on, instead of gray-7 at roughly 1.7:1. It paints the boundary
+  of text fields, selects and outline buttons, where nothing else identifies
+  the control, so WCAG 2.1 SC 1.4.11 applies. `--border` and
+  `--sidebar-border` keep gray-7: card edges and separators are not user
+  interface components. This is the only generated-output change in 0.5.0
+  beyond the neutral-ramp mapping, and it affects `shadcn` only.
+- Agent skill requests are grouped by source repository, with one installer
+  invocation and independent on-disk verification per source.
+- A generated project credits only the skill sources it actually installed. A
+  project that declines skills, or that installs Larsen Skills alone, no
+  longer carries a pointer to a third-party collection it never asked for.
+- `--skills recommended` remains the four recommended Larsen skills,
+  `--skills all` remains all nine Larsen skills, and `--defaults` still
+  installs none.
+- The public palette API now uses `neutralTint` and exports `NEUTRAL_TINTS`.
+  `subtle` selects the former analogous, complementary, and triadic neutral
+  ramp, while `strong` selects the former monochromatic one. The neutral-ramp
+  mapping itself changes no declaration.
+
+- An unknown or removed flag now exits 1 with the parser's own message instead
+  of a stack trace, and a command still using `--scheme` is told to use
+  `--neutral-tint <subtle|strong>`.
+
+### Removed
+- The public `--scheme` flag, `scheme` palette property, and `SCHEMES` export.
+  Passing the removed palette property now fails explicitly.
+
 ### Fixed
+- A seed at the top of the red wedge no longer falls back to the engine's
+  default blue. Its hue rounded to 360, which the engine's own range guard
+  rejected, so deep reds such as `#940203` silently produced a blue palette
+  with only a console warning. Hue is now wrapped modulo 360 in both
+  converters.
+- `isValidHex` answers false for a non-string instead of throwing, so a direct
+  API call with a bad value gets the package's `Invalid HEX color` message
+  rather than a `TypeError`.
+- A failed optional skill source now warns and continues without preventing
+  successful sources from being installed and documented.
+- The CLI no longer presents four color schemes when three produced identical
+  theme declarations. The two remaining choices now describe their actual
+  effect on the neutral gray ramp.
 - The isolated artifact publication dry-run now uses a synthetic unpublished
   version, so `npm test` remains repeatable after the real version is already
   published.

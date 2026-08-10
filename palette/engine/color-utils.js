@@ -26,7 +26,10 @@ function hexToHSL(hex) {
     h /= 6;
   }
   return {
-    h: Math.round(h * 360),
+    // Rounding can land on 360 for the top of the red wedge. Hue is modular,
+    // and callers that validate the range reject 360, so wrap it to 0 here
+    // rather than letting a valid seed fail validation downstream.
+    h: Math.round(h * 360) % 360,
     s: Math.round(s * 100),
     l: Math.round(l * 100)
   };
@@ -41,6 +44,9 @@ function hexToRGB(hex) {
   };
 }
 function isValidHex(hex) {
+  // A non-string reaches this from direct API use, not from the CLI. Answering
+  // false lets the caller report its own message instead of a TypeError.
+  if (typeof hex !== "string") return false;
   const clean = hex.trim().replace(/^#/, "");
   return /^[0-9A-F]{3}$|^[0-9A-F]{6}$/i.test(clean);
 }

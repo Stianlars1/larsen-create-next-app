@@ -60,12 +60,17 @@ create-next-app.
 ## Agent skills
 
 The [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection
-covers UI craft, motion, accessibility and prototyping. The wrapper verifies
-only each requested `.agents/skills/<name>/SKILL.md` file. It does not verify
+covers UI craft, motion, accessibility and prototyping. The optional
+[`transitions-dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev)
+skill is owned by Jakub Antalik and follows the
+[Transitions.dev terms](https://transitions.dev/terms.html). Both install
+directly from their authors' repositories. The wrapper verifies only each
+requested `.agents/skills/<name>/SKILL.md` file. It does not verify
 agent-specific discovery or symlinks.
 
 ```bash
-npx skills add Stianlars1/larsen-skills   # add or change skills
+npx skills add Stianlars1/larsen-skills
+npx skills add Jakubantalik/transitions.dev --skill transitions-dev
 ```
 
 ## Tech

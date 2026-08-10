@@ -38,7 +38,7 @@ test("the baked default keeps approved aliases aligned after brand overrides", (
 test("an extreme seed assigns separate mode seeds and passes every contrast check", () => {
   const script = `
     import assert from "node:assert/strict";
-    import { checkThemeContrast } from "./scripts/theme-contrast.mjs";
+    import { checkThemeContrast } from "./src/theme-contrast.mjs";
     import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
 
     const fixture = await createPaletteMasterFixture();
@@ -52,7 +52,7 @@ test("an extreme seed assigns separate mode seeds and passes every contrast chec
         hex: "#0A0A0A",
         preset: "shadcn",
         format: "hsl-values",
-        scheme: "monochromatic",
+        neutralTint: "strong",
       });
       assert.ok(css.includes("Seed: #0A0A0A (light from #0A0A0A, dark from #F5F5F5)"));
       assert.deepEqual(checkThemeContrast(css), []);
@@ -72,7 +72,7 @@ test("an extreme seed assigns separate mode seeds and passes every contrast chec
 test("representative custom seeds pass every generated shadcn contrast check", () => {
   const script = `
     import assert from "node:assert/strict";
-    import { checkThemeContrast } from "./scripts/theme-contrast.mjs";
+    import { checkThemeContrast } from "./src/theme-contrast.mjs";
     import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
 
     const seeds = [
@@ -81,22 +81,26 @@ test("representative custom seeds pass every generated shadcn contrast check", (
       "#FF0000", "#22C55E", "#F59E0B",
       "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF",
       "#EC4899", "#F97316", "#14B8A6",
+      // Named HEX shortcuts offered by the companion landing page.
+      "#A1A1A1", "#973C00", "#193CB8", "#005F78", "#006045", "#8A0194",
+      "#016630", "#372AAC", "#7CCF00", "#9F2D00", "#A3004C", "#6E11B0",
+      "#9F0712", "#A50036", "#00598A", "#005F5A", "#5D0EC0", "#EFB100",
     ];
-    const schemes = ["analogous", "monochromatic", "complementary", "triadic"];
+    const neutralTints = ["subtle", "strong"];
     const fixture = await createPaletteMasterFixture();
     try {
       for (const hex of seeds) {
-        for (const scheme of schemes) {
+        for (const neutralTint of neutralTints) {
           const css = fixture.api.generateThemeCss({
             hex,
             preset: "shadcn",
             format: "hsl-values",
-            scheme,
+            neutralTint,
           });
           assert.deepEqual(
             checkThemeContrast(css),
             [],
-            \`\${hex} \${scheme}\`,
+            \`\${hex} \${neutralTint}\`,
           );
         }
       }
@@ -116,7 +120,7 @@ test("representative custom seeds pass every generated shadcn contrast check", (
 test("contrast verification reports every required token that is absent", () => {
   const script = `
     import assert from "node:assert/strict";
-    import { checkThemeContrast } from "./scripts/theme-contrast.mjs";
+    import { checkThemeContrast } from "./src/theme-contrast.mjs";
     import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
 
     const fixture = await createPaletteMasterFixture();
@@ -125,7 +129,7 @@ test("contrast verification reports every required token that is absent", () => 
         hex: "#0A0A0A",
         preset: "shadcn",
         format: "hsl-values",
-        scheme: "monochromatic",
+        neutralTint: "strong",
       }).replaceAll(/\\n\\s*--ring:[^;]+;/g, "");
       assert.deepEqual(checkThemeContrast(css), [
         "light: missing --ring",
@@ -146,7 +150,7 @@ test("contrast verification reports every required token that is absent", () => 
 
 test("contrast verification exposes its exact shadcn hsl-values checks", async () => {
   const { CONTRAST_CHECKS, CONTRAST_FORMAT, CONTRAST_PRESET } = await import(
-    "../scripts/theme-contrast.mjs"
+    "../src/theme-contrast.mjs"
   );
   assert.equal(CONTRAST_PRESET, "shadcn");
   assert.equal(CONTRAST_FORMAT, "hsl-values");
@@ -155,7 +159,16 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
     { token: "card-foreground", against: "card", minimum: 4.5, standard: "WCAG" },
     { token: "popover-foreground", against: "popover", minimum: 4.5, standard: "WCAG" },
     { token: "ring", against: "background", minimum: 3, standard: "WCAG" },
+    { token: "input", against: "background", minimum: 3, standard: "WCAG" },
+    { token: "input", against: "card", minimum: 3, standard: "WCAG" },
+    { token: "input", against: "popover", minimum: 3, standard: "WCAG" },
     { token: "primary-foreground", against: "primary", minimum: 4.5, standard: "WCAG" },
     { token: "primary", against: "background", minimum: 1.5, standard: "visibility-floor" },
   ]);
+  // --border is deliberately not here: cards and separators are not user
+  // interface components, so SC 1.4.11 does not apply to their outline.
+  assert.equal(
+    CONTRAST_CHECKS.some((check) => check.token === "border"),
+    false,
+  );
 });

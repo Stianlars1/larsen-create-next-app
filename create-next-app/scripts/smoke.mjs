@@ -29,7 +29,7 @@ import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { packRelease } from "./pack-release.mjs";
 import { generatedDocsChecks } from "./smoke-contract.mjs";
-import { checkThemeContrast } from "./theme-contrast.mjs";
+import { checkThemeContrast } from "../src/theme-contrast.mjs";
 
 const pkgDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = join(pkgDir, "..");
@@ -44,18 +44,31 @@ const EXPECTED_GLOBALS = `/* All styling comes from the design system - keep thi
 
 const NO_SKILLS_SECTION = `## Skills
 
-No agent skills are installed. The Larsen Skills collection covers UI
-craft, motion and accessibility - add it with
-\`npx skills add Stianlars1/larsen-skills\`.`;
+No agent skills are installed. The optional collection this project was
+scaffolded from is [Larsen Skills by Stian Larsen](https://github.com/Stianlars1/larsen-skills):
 
-const MOTION_SKILL_SECTION = `## Installed skills
+- \`npx skills add Stianlars1/larsen-skills\`
+
+Run the scaffolder with \`--help\` to see every skill it can install,
+including third-party skills that are opt-in by name.`;
+
+const MIXED_SKILLS_SECTION = `## Installed skills
 
 The wrapper verified these files on disk:
 
 - \`.agents/skills/motion-craft/SKILL.md\`
+- \`.agents/skills/transitions-dev/SKILL.md\`
+
+Sources stay with their authors:
+
+- [Larsen Skills by Stian Larsen](https://github.com/Stianlars1/larsen-skills)
+- [Transitions.dev by Jakub Antalik](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev) - [license terms](https://transitions.dev/terms.html)
 
 This verifies only the listed files, not agent-specific discovery or symlinks.
-Add more with \`npx skills add Stianlars1/larsen-skills\`.`;
+Add or update them from those same repositories:
+
+- \`npx skills add Stianlars1/larsen-skills\`
+- \`npx skills add Jakubantalik/transitions.dev --skill transitions-dev\``;
 
 /** @type {string[]} */
 const failures = [];
@@ -178,7 +191,7 @@ try {
   check(theme.includes('[data-theme="dark"]'), "default theme has [data-theme] override");
   check(theme.includes("body {"), "default theme has document defaults");
   check(theme.includes("--brand-blue:"), "default theme has brand accents");
-  check(theme.includes("monochromatic"), "default theme is monochromatic");
+  check(theme.includes("neutral tint: strong"), "default theme uses the strong neutral tint");
 
   // Regression guard: an extreme seed used to leave --primary and --ring at
   // the seed color in both modes, so dark mode rendered near-black on
@@ -243,21 +256,27 @@ try {
       "--hex", "0A0A0A",
       "--preset", "shadcn",
       "--format", "hsl-values",
-      "--scheme", "monochromatic",
+      "--neutral-tint", "strong",
       "--linter", "none",
       "--pm", "npm",
       "--no-git",
       "--no-install",
-      "--skills", "motion-craft",
+      "--skills", "motion-craft,transitions-dev",
     ],
     work,
   );
   check(run2.ok, "scaffold with custom palette exits 0");
   const skillDir = join(work, "app-custom", ".agents", "skills", "motion-craft");
   check(existsSync(join(skillDir, "SKILL.md")), "requested skill installed into .agents/skills/");
+  const thirdPartySkillDir = join(work, "app-custom", ".agents", "skills", "transitions-dev");
+  check(
+    existsSync(join(thirdPartySkillDir, "SKILL.md")),
+    "requested third-party skill installed from its source repository",
+  );
   const customAgents = readFileSync(join(work, "app-custom", "AGENTS.md"), "utf8");
   check(
-    customAgents.slice(customAgents.indexOf("## Installed skills")).trimEnd() === MOTION_SKILL_SECTION,
+    customAgents.slice(customAgents.indexOf("## Installed skills")).trimEnd()
+      === MIXED_SKILLS_SECTION,
     "AGENTS.md lists exactly the installed skills",
   );
   const customTheme = readFileSync(
@@ -268,6 +287,7 @@ try {
     customTheme.includes("Seed: #0A0A0A (light from #0A0A0A, dark from #F5F5F5)"),
     "extreme seed assigns separate light and dark mode seeds",
   );
+  check(customTheme.includes("neutral tint: strong"), "custom theme records the strong neutral tint");
   check(customTheme.includes("--accent-9:") && customTheme.includes('[data-theme="dark"]'), "custom theme structure");
   const customContrastFailures = checkThemeContrast(customTheme);
   check(
@@ -301,7 +321,7 @@ try {
       "--hex", "F59E0B",
       "--preset", "radix",
       "--format", "oklch",
-      "--scheme", "complementary",
+      "--neutral-tint", "subtle",
       "--linter", "biome",
       "--pm", "npm",
       "--no-git",
@@ -335,7 +355,7 @@ try {
       "--hex", "F5F5F5",
       "--preset", "css-variables",
       "--format", "oklab",
-      "--scheme", "triadic",
+      "--neutral-tint", "subtle",
       "--linter", "none",
       "--pm", "npm",
       "--no-git",

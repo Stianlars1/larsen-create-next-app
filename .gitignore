@@ -3,6 +3,9 @@ node_modules/
 *.tgz
 *.log
 
+# Browser-tool scratch output - never part of a release artifact
+.playwright-mcp/
+
 # Synced copies - masters live at repo root (CSS/ and palette/), never edit these
 create-next-app/palette/
 create-next-app/template/src/lib/design-system/

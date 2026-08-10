@@ -31,9 +31,9 @@ prompt, choice, default, interaction, and invalid combination.
   which version npm resolves or that it is stable
 - **TypeScript, App Router, `src/` directory** - and never Tailwind
 - **A vanilla CSS design system** in `src/lib/design-system/`: spacing, widths, type, color and motion tokens, light and dark, with zero JS
-- **A color palette generated from one HEX** - a 12-step accent scale, gray scale and semantic colors in both modes, produced locally by the vendored engine
+- **A color palette generated from one HEX** - a 12-step accent scale, gray scale and semantic colors in both modes, produced locally by the vendored engine. `--neutral-tint subtle|strong` controls how much seed hue reaches the gray ramp and the tokens built on it, and leaves the accent scale alone
 - **Agent docs** - `AGENTS.md` with the project rules, `CLAUDE.md` pointing at it, and `DESIGN.md` with the token reference. Upstream agent guidance is preserved as `NEXTJS.md` only when create-next-app supplies it
-- **Optional [Larsen Skills](https://github.com/Stianlars1/larsen-skills)** with installation verified only by `.agents/skills/<name>/SKILL.md`
+- **Optional agent skills from their source repositories** - nine [Larsen Skills](https://github.com/Stianlars1/larsen-skills), plus Jakub Antalik's explicitly selected [`transitions-dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev), with installation verified only by `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
 
@@ -46,6 +46,8 @@ validation. Every prompt has a flag, so the whole flow can run unattended:
 npx --yes @larsen-utvikling/create-next-app my-app --defaults
 npx --yes @larsen-utvikling/create-next-app my-app --defaults \
   --hex 22C55E --pm pnpm --skills recommended
+npx --yes @larsen-utvikling/create-next-app my-app --defaults \
+  --skills motion-craft,transitions-dev
 ```
 
 See the [canonical CLI reference](docs/reference/cli.md) for the exact prompt

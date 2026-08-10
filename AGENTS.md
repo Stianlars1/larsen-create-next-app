@@ -32,11 +32,14 @@ about npm publication.
 - The mechanical CSS contrast parser supports only `shadcn` with `hsl-values`:
   `--foreground` vs `--background` at 4.5, `--ring` vs `--background` at 3,
   `--card-foreground` vs `--card` at 4.5, `--popover-foreground` vs
-  `--popover` at 4.5, `--primary-foreground` vs `--primary` at 4.5, and
+  `--popover` at 4.5, `--input` vs each of `--background`, `--card` and
+  `--popover` at 3, `--primary-foreground` vs `--primary` at 4.5, and
   `--primary` vs `--background` at the deliberately non-WCAG 1.5 visibility
-  floor. The generator applies primary and ring corrections before all format
-  serialization. Representative Radix accent contrast pairs are checked
-  separately at 4.5 in all six formats.
+  floor. `--border` is deliberately not checked: cards and separators are not
+  user interface components, so WCAG 2.1 SC 1.4.11 does not apply to their
+  outline. The generator applies primary, ring, and input corrections before
+  all format serialization. Representative Radix accent contrast pairs are
+  checked separately at 4.5 in all six formats.
 
 ## Edit map
 

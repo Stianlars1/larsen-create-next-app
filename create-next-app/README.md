@@ -31,13 +31,13 @@ stability. Use `--cna-version <spec>` to request an explicit upstream spec.
   - `index.css` - single entry importing all of the above
 - Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), and `DESIGN.md` (token documentation). `NEXTJS.md` preserves upstream guidance only when create-next-app supplies `AGENTS.md`
 - A welcome page demonstrating the tokens
-- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine
-- Optional **agent skills**: request entries from the [Larsen Skills](https://github.com/Stianlars1/larsen-skills) collection. The wrapper verifies only `.agents/skills/<name>/SKILL.md`
+- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine. `--neutral-tint subtle|strong` controls how much seed hue reaches the gray ramp and the tokens built on it, and leaves the accent scale alone
+- Optional **agent skills**: request entries from [Larsen Skills](https://github.com/Stianlars1/larsen-skills) or Jakub Antalik's [`transitions-dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev). Each source installs directly from its own repository, and the wrapper verifies only `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
 
 The interactive flow asks for the app name, palette, linter, package manager,
-optional Larsen Skills, git initialization and dependency installation. The
+optional agent skills, git initialization and dependency installation. The
 generated reference below is the complete published list of choices and
 defaults. Maintainers use the repository's
 [canonical CLI reference](https://github.com/Stianlars1/larsen-create-next-app/blob/main/docs/reference/cli.md)
@@ -48,16 +48,16 @@ for prompt conditions, interactions, invalid pairs, and CI behavior.
 Every prompt has a flag - useful for scripts and CI:
 
 ```bash
-PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+PACKAGE_VERSION=0.5.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" \
   my-app --defaults --pm npm
 ```
 
 ```bash
-PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+PACKAGE_VERSION=0.5.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
   --hex 4DA6FF --preset shadcn --format hsl-values \
-  --scheme analogous --linter eslint --pm pnpm --no-skills \
+  --neutral-tint strong --linter eslint --pm pnpm --no-skills \
   --no-git --no-install
 ```
 
@@ -69,11 +69,11 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
 | `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
 | `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
 | `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
-| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Value must not be empty. Requires `--hex` |
+| `--neutral-tint <name>` | Neutral gray-ramp tint: `subtle` \| `strong`. Default: `subtle`. Value must not be empty. Requires `--hex` |
 | `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
 | `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
-| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
-| `--no-skills` | Skip the Larsen Skills install. Conflicts with `--skills` |
+| `--skills <list>` | Agent skills: recommended, all Larsen, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
+| `--no-skills` | Skip agent skill installs. Conflicts with `--skills` |
 | `--git` | Initialize a git repository. Default: `yes`. Conflicts with `--no-git` |
 | `--no-git` | Skip git init. Conflicts with `--git` |
 | `--install` | Install dependencies. Default: `yes`. Conflicts with `--no-install` |

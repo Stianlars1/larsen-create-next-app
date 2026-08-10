@@ -4,16 +4,63 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { FORMATS, PRESETS, SCHEMES } from "../palette/index.js";
-import { renderMarkdownOptionTable } from "../src/options.js";
-import { ALL_SKILLS, RECOMMENDED_SKILLS } from "../src/skills.js";
+import { FORMATS, NEUTRAL_TINTS, PRESETS } from "../palette/index.js";
+import { OPTION_CONTRACT, renderMarkdownOptionTable } from "../src/options.js";
+import { PALETTE_PROMPT_CONTRACT } from "../src/prompts.js";
+import {
+  ALL_SKILLS,
+  RECOMMENDED_SKILLS,
+  SELECTABLE_SKILLS,
+  SKILL_SOURCES,
+  renderSkillsNote,
+} from "../src/skills.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
+
+test("skill aliases remain Larsen-only while explicit selection includes transitions-dev", () => {
+  assert.deepEqual(RECOMMENDED_SKILLS, [
+    "motion-craft",
+    "interface-craft",
+    "interface-review",
+    "ui-primitive-picker",
+  ]);
+  assert.equal(ALL_SKILLS.length, 9);
+  assert.equal(ALL_SKILLS.includes("transitions-dev"), false);
+  assert.equal(SELECTABLE_SKILLS.includes("transitions-dev"), true);
+});
+
+test("a generated project only credits the sources it actually installed", () => {
+  const thirdParty = SKILL_SOURCES.find((source) => source.id === "transitions-dev");
+  assert.ok(thirdParty);
+
+  const none = renderSkillsNote([]);
+  assert.match(none, /## Skills/);
+  assert.match(none, /Larsen Skills by Stian Larsen/);
+  // Declining skills must not plant a pointer to somebody else's work.
+  assert.doesNotMatch(none, /Transitions\.dev|transitions\.dev|transitions-dev/);
+
+  const larsenOnly = renderSkillsNote(["motion-craft", "interface-craft"]);
+  assert.match(larsenOnly, /## Installed skills/);
+  assert.match(larsenOnly, /Larsen Skills by Stian Larsen/);
+  assert.doesNotMatch(larsenOnly, /Transitions\.dev|transitions\.dev|transitions-dev/);
+
+  const thirdPartyOnly = renderSkillsNote(["transitions-dev"]);
+  assert.match(thirdPartyOnly, /Transitions\.dev by Jakub Antalik/);
+  assert.match(thirdPartyOnly, new RegExp(thirdParty.termsUrl.replace(/[.]/g, "\\.")));
+  assert.doesNotMatch(thirdPartyOnly, /Larsen Skills by Stian Larsen/);
+
+  const mixed = renderSkillsNote(["motion-craft", "transitions-dev"]);
+  assert.match(mixed, /Larsen Skills by Stian Larsen/);
+  assert.match(mixed, /Transitions\.dev by Jakub Antalik/);
+  for (const source of SKILL_SOURCES) {
+    assert.match(mixed, new RegExp(source.installCommand.replace(/[.]/g, "\\.")));
+  }
+});
 
 test("palette option choices follow the public palette API", async () => {
   PRESETS["test-preset"] = "test-preset";
   FORMATS["test-format"] = "TEST_FORMAT";
-  SCHEMES.push("test-scheme");
+  NEUTRAL_TINTS.push("test-tint");
 
   try {
     const { optionChoices } = await import(`../src/options.js?palette-test=${Date.now()}`);
@@ -26,13 +73,13 @@ test("palette option choices follow the public palette API", async () => {
       Object.keys(FORMATS),
     );
     assert.deepEqual(
-      optionChoices("scheme").map((choice) => choice.value),
-      SCHEMES,
+      optionChoices("neutral-tint").map((choice) => choice.value),
+      NEUTRAL_TINTS,
     );
   } finally {
     delete PRESETS["test-preset"];
     delete FORMATS["test-format"];
-    SCHEMES.pop();
+    NEUTRAL_TINTS.pop();
   }
 });
 
@@ -59,14 +106,30 @@ test("the internal CLI reference includes the complete runtime skills prompt con
   assert.ok(end > start);
   const generated = reference.slice(start, end);
 
-  for (const skill of ALL_SKILLS) assert.match(generated, new RegExp(`\\b${skill}\\b`));
+  for (const skill of SELECTABLE_SKILLS) assert.match(generated, new RegExp(`\\b${skill}\\b`));
   for (const skill of RECOMMENDED_SKILLS) {
     assert.match(generated, new RegExp(`Recommended initial selection:[^\n]*${skill}`));
   }
   assert.match(generated, /Recommended/);
-  assert.match(generated, /All/);
+  assert.match(generated, /All Larsen Skills/);
   assert.match(generated, /Let me pick/);
   assert.match(generated, /empty selection is allowed/i);
+  assert.match(generated, new RegExp(`All Larsen Skills[^\n]*${ALL_SKILLS.length} skills`));
+});
+
+test("the palette prompt contract covers the seed and every option requiring it", () => {
+  const seedDependent = OPTION_CONTRACT.filter((option) => option.requires === "hex").map(
+    (option) => option.name,
+  );
+  assert.deepEqual(
+    PALETTE_PROMPT_CONTRACT.followUps.map((entry) => entry.option),
+    ["hex", ...seedDependent],
+  );
+  assert.equal(PALETTE_PROMPT_CONTRACT.followUps.at(-1)?.option, "neutral-tint");
+
+  const reference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
+  assert.match(reference, /HEX seed, preset, format, and neutral tint/);
+  assert.match(reference, /Neutral tint is asked last with `subtle` preselected/);
 });
 
 test("the current authorities explain the Clack and scaffold ownership boundary", () => {

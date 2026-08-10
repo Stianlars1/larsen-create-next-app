@@ -3,14 +3,14 @@
 Current package contract. This document describes the behavior implemented in
 this repository, not the original plan, release history, or any separate site.
 
-Last checked against source and tests: 2026-08-09.
+Last checked against source and tests: 2026-08-10.
 
 ## Product boundary
 
 `@larsen-utvikling/create-next-app` is a wrapper around the selected official
 `create-next-app` package plus a Larsen Utvikling overlay. It creates a
 TypeScript Next.js App Router project with a vanilla CSS design system, agent
-documentation, an optional generated palette, optional Larsen Skills,
+documentation, an optional generated palette, optional agent skills,
 optional dependency installation, and optional git initialization.
 
 ```bash
@@ -57,7 +57,7 @@ create-next-app/               publishable npm package
   src/prompts.js               prompt flow and validation
   src/scaffold.js              only create-next-app integration point
   src/overlay.js               preserve, copy, substitute, remove
-  src/skills.js                optional Larsen Skills installation
+  src/skills.js                optional multi-source agent skill installation
   src/run.js                   child-process boundary
   palette/                     synced package copy, never edit directly
   template/                    generated-project overlay
@@ -86,10 +86,11 @@ prompt tree is, in order:
 
 1. App name.
 2. Default or custom palette, followed by HEX, preset, and format only for a
-   custom interactive palette. Scheme is flag-only.
+   custom interactive palette, then neutral tint last with the default
+   preselected.
 3. Linter.
 4. Package manager.
-5. Optional Larsen Skills.
+5. Optional agent skills.
 6. Git initialization.
 7. Dependency installation.
 
@@ -157,7 +158,7 @@ does not invent `NEXTJS.md`. `CLAUDE.md` contains only `@AGENTS.md`.
 `../lib/design-system/index.css`. The overlay removes the upstream
 `page.module.css`, replaces the starter page, and removes upstream branding
 SVG files. Installed-skills documentation lists only skills found on disk
-after the installer returns.
+after each source installer returns and credits the source repository.
 
 Generated projects are copies. This package does not update them later.
 
@@ -193,8 +194,8 @@ Explicit selectors follow the media query and therefore override it without
 JavaScript. A generated document-defaults block supplies body, selection, and
 horizontal-rule colors using real tokens for the selected preset and format.
 
-The baked default is `#4DA0FF`, `shadcn`, `hsl-values`, and
-`monochromatic`. Its background, foreground, and ring are pinned to the
+The baked default is `#4DA0FF`, `shadcn`, `hsl-values`, and the `strong`
+neutral tint. Its background, foreground, and ring are pinned to the
 `#FAFAFA` and `#0A0A0A` surface pair. It also adds `--brand-blue`,
 `--brand-blue-soft`, and `--brand-blue-subtle`. Card, Popover, and Sidebar
 aliases stay aligned with the final pinned background, foreground, and ring
@@ -232,7 +233,24 @@ Current custom choices are:
 
 - Presets: `shadcn`, `radix`, `css-variables`.
 - Formats: `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, `oklch`.
-- Schemes: `analogous`, `monochromatic`, `complementary`, `triadic`.
+- Neutral tints: `subtle`, `strong`.
+
+Neutral tint changes the gray ramp and the semantic tokens derived from it,
+without rotating the requested seed or rebuilding the accent palette. The
+public wrapper maps `subtle` to the vendored engine's former analogous path
+and `strong` to its monochromatic path. The mapping is private, the vendored
+engine is unchanged, and a direct palette API call containing the removed
+`scheme` property fails explicitly. The generated analogous and complementary
+support tokens, their foregrounds, and the existing chart mappings remain
+part of every preset contract.
+
+`--background`, `--primary`, `--ring`, and the twelve accent steps are
+unaffected for every chromatic seed. A seed with no usable hue of its own -
+`#000000`, `#FFFFFF`, and their immediate neighbours - has its accent scale
+derived from the same tinted neutral, so those seeds do move accent values.
+[docs/reference/palette.md](docs/reference/palette.md) lists the exact token
+groups, and `create-next-app/test/neutral-tint.test.mjs` locks both halves of
+the claim.
 
 For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
 before export. For every seed, shadcn keeps the selected seed as primary and
@@ -249,34 +267,59 @@ both generated modes:
 - `--card-foreground` vs `--card` must reach 4.5.
 - `--popover-foreground` vs `--popover` must reach 4.5.
 - `--ring` vs `--background` must reach 3.
+- `--input` vs `--background`, `--card`, and `--popover` must each reach 3.
 - `--primary-foreground` vs `--primary` must reach 4.5.
 - `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
   visibility floor.
+
+`--input` carries the 3 floor because it paints the boundary of text fields,
+selects, and outline buttons, where nothing else identifies the control -
+WCAG 2.1 SC 1.4.11. It is corrected from the gray scale so the boundary stays
+neutral. `--border` and `--sidebar-border` are deliberately not checked and
+keep gray-7: card edges and separators are not user interface components, and
+the same floor would give every card a heavy outline.
 
 The generator applies these role corrections before serialization, so format
 selection cannot bypass them. The CSS parser itself makes no broader
 preset-format claim. Representative Radix accent pairs are checked separately
 at 4.5 in all six generated formats.
 
-The deterministic 3 x 6 preset-format matrix locks the implemented contracts:
-shadcn exposes 81 color names in both modes plus root-level `--radius`, Radix
-Themes exposes 83 names in both modes, and CSS Variables remains the generic
-50-name contract. Radix alpha scales and surfaces preserve alpha in all six
-formats. HSL and HSL Values retain enough component precision to preserve
-contrast through serialization. See
+The deterministic 2 x 3 x 6 neutral-tint, preset, and format matrix locks the
+implemented contracts: shadcn exposes 81 color names in both modes plus
+root-level `--radius`, Radix Themes exposes 83 names in both modes, and CSS
+Variables remains the generic 50-name contract. Radix alpha scales and
+surfaces preserve alpha in all six formats. HSL and HSL Values retain enough
+component precision to preserve contrast through serialization. See
 [docs/reference/palette.md](docs/reference/palette.md) for exact names,
 mappings, serialization, and deliberately deferred P3 output.
 
-## Optional Larsen Skills
+## Optional agent skills
 
-`--skills` runs `npx skills add Stianlars1/larsen-skills` with one `--skill`
-argument per requested skill. Exit status is insufficient because the
-installer can exit successfully without installing the requested set. The CLI
-therefore verifies `.agents/skills/<name>/SKILL.md` and documents only entries
-with that file. It does not verify any agent-specific discovery or symlink.
+The built-in catalog has nine skills from
+[`Stianlars1/larsen-skills`](https://github.com/Stianlars1/larsen-skills) and
+the explicitly approved third-party `transitions-dev` skill from
+[`Jakubantalik/transitions.dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev).
+The third-party files are never vendored into Larsen Skills or this package.
+They are fetched from Jakub Antalik's repository and remain subject to the
+[Transitions.dev terms](https://transitions.dev/terms.html).
 
-Skills are installed before the overlay. A failed optional install produces a
-warning and the scaffold continues without claiming those skills exist.
+`--skills recommended` remains the four recommended Larsen skills.
+`--skills all` remains all nine Larsen skills. `transitions-dev` is available
+only through the interactive picker or an explicit name such as
+`--skills transitions-dev`. A comma-separated explicit list may mix sources.
+`--defaults` installs no skills.
+
+The CLI groups requested names by source repository and runs one
+`npx skills add <repo>` command per source, with one `--skill` argument per
+requested skill. Exit status is insufficient because the installer can exit
+successfully without installing the requested set. The CLI therefore verifies
+`.agents/skills/<name>/SKILL.md` after each source command and documents only
+entries with that file. It does not verify any agent-specific discovery or
+symlink.
+
+Skills are installed before the overlay. A failed optional source produces a
+warning and the scaffold continues. Other requested sources still run, and
+the generated project never claims a missing skill exists.
 
 ## Verification boundaries
 

@@ -15,7 +15,7 @@ import {
   optionPromptDefault,
   validateOptionRelationships,
 } from "./options.js";
-import { ALL_SKILLS, RECOMMENDED_SKILLS, SKILLS } from "./skills.js";
+import { ALL_SKILLS, RECOMMENDED_SKILLS, SELECTABLE_SKILLS, SKILLS } from "./skills.js";
 
 /**
  * Canonical interactive skills branch. Runtime prompts and generated
@@ -24,7 +24,7 @@ import { ALL_SKILLS, RECOMMENDED_SKILLS, SKILLS } from "./skills.js";
  */
 export const SKILLS_PROMPT_CONTRACT = Object.freeze({
   confirmation: Object.freeze({
-    message: "Install Larsen Skills for AI agents (UI, motion, accessibility)?",
+    message: "Install agent skills for AI agents (UI, motion, accessibility, transitions)?",
     initialValue: optionPromptDefault("skills") !== undefined,
   }),
   selection: Object.freeze({
@@ -35,7 +35,11 @@ export const SKILLS_PROMPT_CONTRACT = Object.freeze({
         label: "Recommended",
         hint: RECOMMENDED_SKILLS.join(", "),
       }),
-      Object.freeze({ value: "all", label: "All", hint: `${ALL_SKILLS.length} skills` }),
+      Object.freeze({
+        value: "all",
+        label: "All Larsen Skills",
+        hint: `${ALL_SKILLS.length} skills`,
+      }),
       Object.freeze({ value: "pick", label: "Let me pick" }),
     ]),
     initialValue: optionPromptDefault("skills"),
@@ -51,6 +55,36 @@ export const SKILLS_PROMPT_CONTRACT = Object.freeze({
     required: false,
   }),
 });
+
+/**
+ * Canonical interactive palette branch. The confirmation is asked first; a Yes
+ * answer asks every follow-up in this order. Each follow-up is answered
+ * directly by its flag, so the runtime prompts, the generated CLI reference,
+ * and the landing page all read the same list instead of three copies.
+ */
+export const PALETTE_PROMPT_CONTRACT = Object.freeze({
+  confirmation: Object.freeze({
+    message: "Generate a custom 12-step palette from a single HEX?",
+    initialValue: optionPromptDefault("default-palette"),
+  }),
+  followUps: Object.freeze([
+    Object.freeze({
+      option: "hex",
+      message: "Enter your HEX color",
+      placeholder: "#4DA0FF",
+    }),
+    Object.freeze({ option: "preset", message: "Choose framework/style" }),
+    Object.freeze({ option: "format", message: "Choose color format" }),
+    Object.freeze({ option: "neutral-tint", message: "Choose neutral tint" }),
+  ]),
+});
+
+/** @param {string} option */
+function paletteMessage(option) {
+  const entry = PALETTE_PROMPT_CONTRACT.followUps.find((item) => item.option === option);
+  if (!entry) throw new Error(`no palette prompt declared for --${option}`);
+  return entry.message;
+}
 
 const NAME_RE = /^[a-z0-9][a-z0-9._-]*$/;
 
@@ -139,12 +173,14 @@ export async function promptConfig(flags, positionalName, cwd) {
   }
 
   // Palette
-  /** @type {null | { hex: string, preset: string, format: string, scheme: string }} */
+  /** @type {null | { hex: string, preset: string, format: string, neutralTint: string }} */
   let palette = null;
-  const scheme = flags.scheme ?? optionDefault("scheme");
-  const schemes = optionChoices("scheme").map((choice) => choice.value);
-  if (!schemes.includes(scheme)) {
-    p.cancel(`Unknown --scheme "${scheme}" (expected ${schemes.join(" | ")})`);
+  const neutralTint = flags["neutral-tint"] ?? optionDefault("neutral-tint");
+  const neutralTints = optionChoices("neutral-tint").map((choice) => choice.value);
+  if (!neutralTints.includes(neutralTint)) {
+    p.cancel(
+      `Unknown --neutral-tint "${neutralTint}" (expected ${neutralTints.join(" | ")})`,
+    );
     process.exit(1);
   }
 
@@ -157,41 +193,55 @@ export async function promptConfig(flags, positionalName, cwd) {
       hex: flags.hex,
       preset: flags.preset ?? optionDefault("preset"),
       format: flags.format ?? optionDefault("format"),
-      scheme,
+      neutralTint,
     };
   } else if (!flags["default-palette"] && !useDefaults) {
     requireInteractive("the palette choice", "--hex <color> or --default-palette");
     const wantsCustom = await p.confirm({
-      message: "Generate a custom 12-step palette from a single HEX?",
-      initialValue: optionPromptDefault("default-palette"),
+      message: PALETTE_PROMPT_CONTRACT.confirmation.message,
+      initialValue: PALETTE_PROMPT_CONTRACT.confirmation.initialValue,
     });
     handleCancel(/** @type {never} */ (wantsCustom));
 
     if (wantsCustom) {
       requireInteractive("a palette seed", "--hex <color>");
       const hex = await p.text({
-        message: "Enter your HEX color",
-        placeholder: "#4DA0FF",
+        message: paletteMessage("hex"),
+        placeholder: PALETTE_PROMPT_CONTRACT.followUps[0].placeholder,
         validate: (value) =>
           isValidHex(value ?? "") ? undefined : "Enter a valid HEX color, e.g. 4DA0FF or #4DA0FF",
       });
       handleCancel(/** @type {never} */ (hex));
 
       const preset = await p.select({
-        message: "Choose framework/style",
+        message: paletteMessage("preset"),
         options: optionChoices("preset"),
         initialValue: optionDefault("preset"),
       });
       handleCancel(/** @type {never} */ (preset));
 
       const format = await p.select({
-        message: "Choose color format",
+        message: paletteMessage("format"),
         options: optionChoices("format"),
         initialValue: optionDefault("format"),
       });
       handleCancel(/** @type {never} */ (format));
 
-      palette = { hex: String(hex), preset: String(preset), format: String(format), scheme };
+      // Asked last, and pre-selected on the default: the effect is confined to
+      // the gray ramp, so nobody has to answer it to get a good palette.
+      const tint = await p.select({
+        message: paletteMessage("neutral-tint"),
+        options: optionChoices("neutral-tint"),
+        initialValue: neutralTint,
+      });
+      handleCancel(/** @type {never} */ (tint));
+
+      palette = {
+        hex: String(hex),
+        preset: String(preset),
+        format: String(format),
+        neutralTint: String(tint),
+      };
     }
   }
 
@@ -252,7 +302,7 @@ export async function promptConfig(flags, positionalName, cwd) {
     }
   }
 
-  // Larsen Skills - agent skills for UI, motion and accessibility work
+  // Optional agent skills from their owning source repositories
   let skills = await resolveSkills(flags, useDefaults);
 
   // Git + install
@@ -299,10 +349,11 @@ export async function promptConfig(flags, positionalName, cwd) {
 }
 
 /**
- * Resolves which Larsen Skills to install.
+ * Resolves which agent skills to install.
  *
- * --skills accepts "recommended", "all", or a comma-separated list of names;
- * --no-skills and --defaults skip the install entirely.
+ * `recommended` and `all` retain their Larsen-only meanings. An explicit
+ * comma-separated list and the interactive picker can also select approved
+ * third-party skills. --no-skills and --defaults skip the install entirely.
  *
  * @param {Record<string, any>} flags
  * @param {boolean} useDefaults
@@ -316,9 +367,11 @@ async function resolveSkills(flags, useDefaults) {
     if (raw === "recommended") return RECOMMENDED_SKILLS;
     if (raw === "all") return ALL_SKILLS;
     const requested = raw.split(",").map((s) => s.trim()).filter(Boolean);
-    const unknown = requested.filter((s) => !ALL_SKILLS.includes(s));
+    const unknown = requested.filter((s) => !SELECTABLE_SKILLS.includes(s));
     if (unknown.length > 0) {
-      p.cancel(`Unknown skill(s): ${unknown.join(", ")}\nAvailable: ${ALL_SKILLS.join(", ")}`);
+      p.cancel(
+        `Unknown skill(s): ${unknown.join(", ")}\nAvailable: ${SELECTABLE_SKILLS.join(", ")}`,
+      );
       process.exit(1);
     }
     return requested;

@@ -27,13 +27,16 @@ function hexToHSL(hex, precise = false) {
   }
   if (precise) {
     return {
-      h: h * 360,
+      h: (h * 360) % 360,
       s: s * 100,
       l: l * 100
     };
   }
   return {
-    h: Math.round(h * 360),
+    // Rounding can land on 360 for the top of the red wedge. Hue is modular,
+    // and generateHarmoniousPalette rejects 360 as out of range, so wrap it
+    // to 0 rather than letting a valid seed fall back to the default color.
+    h: Math.round(h * 360) % 360,
     s: Math.round(s * 100),
     l: Math.round(l * 100)
   };

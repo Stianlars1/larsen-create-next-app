@@ -162,7 +162,7 @@ for (const [preset, lightNames, darkNames = lightNames] of [
         hex: "#4DA0FF",
         preset,
         format,
-        scheme: "analogous",
+        neutralTint: "subtle",
       });
       const blocks = declarationBlocks(css);
 
@@ -201,7 +201,7 @@ test("shadcn derives its approved token-name contract from palette roles", () =>
     hex: "#4DA0FF",
     preset: "shadcn",
     format: "hex",
-    scheme: "analogous",
+    neutralTint: "subtle",
   });
   const [lightBlock, darkBlock] = declarationBlocks(css);
   const selected = (block, names) => Object.fromEntries(
@@ -260,7 +260,7 @@ test("shadcn derives its approved token-name contract from palette roles", () =>
 
 for (const format of Object.keys(FORMAT_EXAMPLES)) {
   test(`Radix Themes and CSS Variables declarations are distinct in ${format}`, () => {
-    const options = { hex: "#4DA0FF", format, scheme: "analogous" };
+    const options = { hex: "#4DA0FF", format, neutralTint: "subtle" };
     const radix = declarationBlocks(generateThemeCss({ ...options, preset: "radix" }))
       .map(declarations);
     const cssVariables = declarationBlocks(
@@ -276,7 +276,7 @@ test("Radix Themes maps its representative contract roles to engine data", () =>
     hex: "#4DA0FF",
     preset: "radix",
     format: "hex",
-    scheme: "analogous",
+    neutralTint: "subtle",
   });
   const [lightBlock, darkBlock] = declarationBlocks(css);
   const names = [
@@ -334,7 +334,7 @@ test("Radix accent contrast reaches WCAG AA while preserving scale-first foregro
       hex,
       preset: "radix",
       format: "hex",
-      scheme: "analogous",
+      neutralTint: "subtle",
     }));
     for (const [index, block] of blocks.entries()) {
       const values = Object.fromEntries(
@@ -351,7 +351,7 @@ test("Radix accent contrast reaches WCAG AA while preserving scale-first foregro
     hex: "#4DA0FF",
     preset: "radix",
     format: "hex",
-    scheme: "analogous",
+    neutralTint: "subtle",
   }));
   for (const block of brandBlocks) {
     const values = Object.fromEntries(
@@ -390,28 +390,30 @@ test("every serialized format preserves required foreground contrast", () => {
     }
   }
 
-  for (const format of Object.keys(FORMAT_EXAMPLES)) {
-    for (const preset of Object.keys(requiredPairs)) {
-      const blocks = declarationBlocks(generateThemeCss({
-        hex: "#D8D8D8",
-        preset,
-        format,
-        scheme: "analogous",
-      }));
-      for (const [index, block] of blocks.entries()) {
-        const values = Object.fromEntries(
-          declarations(block).map(({ name, value }) => [name, value]),
-        );
-        for (const [foreground, background, minimum = 4.5] of requiredPairs[preset]) {
-          const actual = serializedContrastRatio(
-            values[foreground],
-            values[background],
-            format,
+  for (const neutralTint of ["subtle", "strong"]) {
+    for (const format of Object.keys(FORMAT_EXAMPLES)) {
+      for (const preset of Object.keys(requiredPairs)) {
+        const blocks = declarationBlocks(generateThemeCss({
+          hex: "#D8D8D8",
+          preset,
+          format,
+          neutralTint,
+        }));
+        for (const [index, block] of blocks.entries()) {
+          const values = Object.fromEntries(
+            declarations(block).map(({ name, value }) => [name, value]),
           );
-          assert.ok(
-            actual >= minimum,
-            `${preset} x ${format} block ${index} emitted ${foreground}/${background} at ${actual.toFixed(4)}`,
-          );
+          for (const [foreground, background, minimum = 4.5] of requiredPairs[preset]) {
+            const actual = serializedContrastRatio(
+              values[foreground],
+              values[background],
+              format,
+            );
+            assert.ok(
+              actual >= minimum,
+              `${neutralTint} ${preset} x ${format} block ${index} emitted ${foreground}/${background} at ${actual.toFixed(4)}`,
+            );
+          }
         }
       }
     }
@@ -424,7 +426,7 @@ for (const [format, expected] of Object.entries(ALPHA_OVERRIDE_EXAMPLES)) {
       hex: "#4DA0FF",
       preset: "shadcn",
       format,
-      scheme: "analogous",
+      neutralTint: "subtle",
       overrides: { background: "#1E73C806" },
     });
 

@@ -33,8 +33,22 @@ authored by Stian Larsen.
 9. `formatColor`: HSL and HSL Values retain up to four decimal places instead
    of rounding every component to an integer. This prevents serialization
    from moving a passing foreground pair below its WCAG threshold.
+10. `generateShadcnCSS`: `--input` is the closest gray that reaches 3:1
+    against every surface a control sits on - the page background in light
+    mode, and background, card, and popover in dark mode. Upstream emits
+    gray-7 for it, which measures about 1.7:1 and cannot identify a text
+    field, select, or outline button under WCAG 2.1 SC 1.4.11. `--border`
+    still emits gray-7: cards and separators are not user interface
+    components, and the same floor would give every card a heavy outline.
 
-When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 9 (or
+11. `color-utils.js`: `hexToHSL` wraps its rounded hue with `% 360`, and
+    `isValidHex` returns false for a non-string instead of throwing.
+    Upstream, a seed near the top of the red wedge rounds to hue 360, which
+    `generateHarmoniousPalette` rejects as out of range - it then warns and
+    silently builds the palette from the engine's default blue instead of the
+    requested color. Deep reds such as `#940203` were affected.
+
+When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 11 (or
 port them upstream first).
 
 ## License

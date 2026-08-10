@@ -1,7 +1,7 @@
 // @ts-check
 
 import { parseArgs } from "node:util";
-import { FORMATS, PRESETS, SCHEMES } from "../palette/index.js";
+import { FORMATS, NEUTRAL_TINTS, PRESETS } from "../palette/index.js";
 
 const PRESET_DISPLAY = {
   shadcn: {
@@ -13,6 +13,11 @@ const PRESET_DISPLAY = {
     hint: "57 override names + 26 Larsen tokens",
   },
   "css-variables": { label: "CSS Variables", hint: "accent + gray scales" },
+};
+
+const NEUTRAL_TINT_DISPLAY = {
+  subtle: { label: "Subtle", hint: "the standard gray ramp (recommended)" },
+  strong: { label: "Strong", hint: "more seed hue in the grays; accent scale unchanged" },
 };
 
 const FORMAT_DISPLAY = {
@@ -80,13 +85,13 @@ export const OPTION_CONTRACT = Object.freeze([
     description: "Color format",
   },
   {
-    name: "scheme",
+    name: "neutral-tint",
     type: "string",
     valueName: "name",
-    defaultValue: "analogous",
+    defaultValue: "subtle",
     requires: "hex",
-    choices: choicesFrom(SCHEMES),
-    description: "Color scheme",
+    choices: choicesFrom(NEUTRAL_TINTS, NEUTRAL_TINT_DISPLAY),
+    description: "Neutral gray-ramp tint",
   },
   {
     name: "pm",
@@ -121,12 +126,12 @@ export const OPTION_CONTRACT = Object.freeze([
     defaultContext: "--defaults",
     promptDefault: "recommended",
     conflicts: "no-skills",
-    description: "Larsen Skills: recommended, all, or comma-separated names",
+    description: "Agent skills: recommended, all Larsen, or comma-separated names",
   },
   {
     name: "no-skills",
     type: "boolean",
-    description: "Skip the Larsen Skills install",
+    description: "Skip agent skill installs",
   },
   {
     name: "git",
@@ -186,9 +191,33 @@ export const PARSE_OPTIONS = Object.freeze(
   ),
 );
 
+/**
+ * Flags removed from the public contract, mapped to what replaces them. Node's
+ * parser only reports that the flag is unknown, so the CLI adds the
+ * replacement rather than leaving a previously valid command unexplained.
+ */
+export const REMOVED_OPTIONS = Object.freeze({
+  scheme: "--neutral-tint <subtle|strong>",
+});
+
 /** @param {string[]} [args] */
 export function parseCliArgs(args = process.argv.slice(2)) {
   return parseArgs({ args, allowPositionals: true, options: PARSE_OPTIONS });
+}
+
+/**
+ * The replacement hint for a failed parse, or undefined when the arguments
+ * name no removed flag.
+ *
+ * @param {string[]} args
+ */
+export function removedOptionHint(args) {
+  for (const [name, replacement] of Object.entries(REMOVED_OPTIONS)) {
+    if (args.some((arg) => arg === `--${name}` || arg.startsWith(`--${name}=`))) {
+      return `--${name} was removed in 0.5.0. Use ${replacement} instead.`;
+    }
+  }
+  return undefined;
 }
 
 /** @param {string} name */

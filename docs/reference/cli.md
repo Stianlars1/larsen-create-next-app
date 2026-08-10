@@ -41,14 +41,18 @@ The prompt order and its flag bypasses are:
    `--default-palette` or `--defaults` selects the baked default. Otherwise the
    CLI asks whether to generate a custom palette. The interactive default is
    No.
-   - A Yes answer asks for the HEX seed, preset, and format in that order.
-   - Scheme is not prompted. It defaults to `analogous` for custom palettes
-     and can be changed only with `--scheme` together with `--hex`.
+   - A Yes answer asks for the HEX seed, preset, format, and neutral tint in
+     that order.
+   - Neutral tint is asked last with `subtle` preselected, so pressing Enter
+     keeps the standard gray ramp. `--neutral-tint` answers it directly and
+     requires `--hex`.
 3. Linter - answered by `--linter`, or by its default under `--defaults`.
 4. Package manager - answered by `--pm`, or by its default under `--defaults`.
-5. Larsen Skills - `--skills` answers the branch directly and `--no-skills`
+5. Agent skills - `--skills` answers the branch directly and `--no-skills`
    skips installation. Without either, the interactive branch follows the
-   generated skills prompt reference below. `--defaults` installs no skills.
+   generated skills prompt reference below. `recommended` and `all` retain
+   their Larsen-only meanings. Explicit names and the picker can also select
+   approved third-party skills. `--defaults` installs no skills.
 6. Git initialization - `--git` or `--no-git`; the interactive and
    `--defaults` answer is Yes.
 7. Dependency installation - `--install` or `--no-install`; the interactive
@@ -68,11 +72,11 @@ prompt or scaffold operation.
 | `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
 | `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
 | `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
-| `--scheme <name>` | Color scheme: `analogous` \| `monochromatic` \| `complementary` \| `triadic`. Default: `analogous`. Value must not be empty. Requires `--hex` |
+| `--neutral-tint <name>` | Neutral gray-ramp tint: `subtle` \| `strong`. Default: `subtle`. Value must not be empty. Requires `--hex` |
 | `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
 | `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
-| `--skills <list>` | Larsen Skills: recommended, all, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
-| `--no-skills` | Skip the Larsen Skills install. Conflicts with `--skills` |
+| `--skills <list>` | Agent skills: recommended, all Larsen, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
+| `--no-skills` | Skip agent skill installs. Conflicts with `--skills` |
 | `--git` | Initialize a git repository. Default: `yes`. Conflicts with `--no-git` |
 | `--no-git` | Skip git init. Conflicts with `--git` |
 | `--install` | Install dependencies. Default: `yes`. Conflicts with `--no-install` |
@@ -88,13 +92,13 @@ This block is generated from the same contract used by `src/prompts.js` and
 the same skill records used by `src/skills.js`.
 
 <!-- BEGIN GENERATED SKILLS PROMPT REFERENCE -->
-Confirmation: `Install Larsen Skills for AI agents (UI, motion, accessibility)?`
+Confirmation: `Install agent skills for AI agents (UI, motion, accessibility, transitions)?`
 Interactive default: Yes. A No answer installs nothing.
 
 A Yes answer opens `Which skills?` with these choices:
 
 - `Recommended` (`recommended`) - motion-craft, interface-craft, interface-review, ui-primitive-picker
-- `All` (`all`) - 9 skills
+- `All Larsen Skills` (`all`) - 9 skills
 - `Let me pick` (`pick`)
 
 The initial choice is `recommended`. `Let me pick` conditionally opens the multiselect:
@@ -103,11 +107,24 @@ The initial choice is `recommended`. `Let me pick` conditionally opens the multi
 - Recommended initial selection: `motion-craft`, `interface-craft`, `interface-review`, `ui-primitive-picker`
 - The multiselect is optional; an empty selection is allowed.
 
-Valid comma-separated names for `--skills`: `motion-craft`, `interface-craft`, `interface-review`, `ui-primitive-picker`, `motion-vocabulary`, `liquid-interface`, `prototype-lab`, `reverse-engineer-motion`, `animated-logo-cycle`.
+Valid comma-separated names for `--skills`: `motion-craft`, `interface-craft`, `interface-review`, `ui-primitive-picker`, `motion-vocabulary`, `liquid-interface`, `prototype-lab`, `reverse-engineer-motion`, `animated-logo-cycle`, `transitions-dev`.
 <!-- END GENERATED SKILLS PROMPT REFERENCE -->
 
 Additional behavior that is intentionally explicit:
 
+- `--skills recommended` means the existing four recommended Larsen Skills.
+  `--skills all` means the existing nine Larsen Skills. Neither value installs
+  third-party code. `transitions-dev` is opt-in by explicit name or through
+  `Let me pick`.
+- Requested skills are grouped by source repository. The wrapper runs one
+  installer command per source, verifies each requested
+  `.agents/skills/<name>/SKILL.md`, and documents only files found on disk.
+  One source failure warns and does not stop the other sources or the scaffold.
+- `transitions-dev` installs directly from
+  [`Jakubantalik/transitions.dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev),
+  is credited to Jakub Antalik, and remains subject to the
+  [Transitions.dev terms](https://transitions.dev/terms.html). No third-party
+  skill file is vendored into Larsen Skills or this package.
 - `--hex` accepts three- or six-digit HEX with or without `#`, then normalizes
   the value before generation.
 - `--cna-version` is appended to `create-next-app@<spec>` without resolving or
@@ -137,12 +154,15 @@ The CLI rejects these pairs before prompting or scaffolding:
 - `--git` with `--no-git`
 - `--install` with `--no-install`
 
-`--preset`, `--format`, and `--scheme` each require `--hex`. They cannot be
-silently applied to the baked default palette. Unknown presets, formats,
-schemes, package managers, linters, and skill names are rejected. Invalid HEX
-and invalid app names are rejected. Every string flag rejects an explicitly
-empty or whitespace-only value. More than one positional app name is rejected.
-Node's argument parser rejects unknown flags and missing flag values.
+`--preset`, `--format`, and `--neutral-tint` each require `--hex`. They cannot
+be silently applied to the baked default palette. Unknown presets, formats,
+neutral tints, package managers, linters, and skill names are rejected.
+Invalid HEX and invalid app names are rejected. Every string flag rejects an
+explicitly empty or whitespace-only value. More than one positional app name
+is rejected. Node's argument parser rejects unknown flags and missing flag
+values; the CLI reports the parser's message on its own and exits 1 instead
+of printing a stack trace. A command that still uses the removed `--scheme`
+flag is additionally told to use `--neutral-tint <subtle|strong>`.
 
 ## Non-interactive and CI use
 
@@ -155,7 +175,7 @@ choices.
 Default unattended scaffold:
 
 ```bash
-PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+PACKAGE_VERSION=0.5.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --defaults --no-git --no-install
 ```
@@ -163,19 +183,17 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
 Fully explicit custom scaffold:
 
 ```bash
-PACKAGE_VERSION=0.2.2 # replace with the exact published version you reviewed
+PACKAGE_VERSION=0.5.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
-  --hex 4DA0FF --preset shadcn --format hsl-values --scheme analogous \
+  --hex 4DA0FF --preset shadcn --format hsl-values --neutral-tint strong \
   --linter eslint --pm npm --no-skills --no-git --no-install
 ```
 
-Both examples pin the published wrapper version instead of relying on its
-mutable latest tag. Version 0.2.2 is used because it is registry-verified in
-`docs/verification/releases.md`; replace it with another exact published
-version only after reviewing that version. Both examples require network
-access for the package and selected create-next-app spec. The test suite
-exercises the same argument sets with controlled local command doubles and
-closed stdin.
+Both examples pin the wrapper version instead of relying on its mutable latest
+tag. Use them only after the exact package version is published and recorded
+in `docs/verification/releases.md`. Both examples require network access for
+the package and selected create-next-app spec. The test suite exercises the
+same argument sets with controlled local command doubles and closed stdin.
 
 ## Upstream scaffold boundary
 
