@@ -206,6 +206,12 @@ export function generateThemeCss(opts) {
   if (!isValidHex(hex)) {
     throw new Error(`Invalid HEX color: "${hex}" (expected e.g. 0A0A0A or #0A0A0A)`);
   }
+  const hasDarkHex = darkHex !== null && darkHex !== undefined;
+  if (hasDarkHex && !isValidHex(darkHex)) {
+    throw new Error(
+      `Invalid dark HEX color: "${String(darkHex)}" (expected e.g. 0A0A0A or #0A0A0A)`,
+    );
+  }
   if (!(preset in PRESETS)) {
     throw new Error(`Unknown preset: "${preset}" (expected ${Object.keys(PRESETS).join(" | ")})`);
   }
@@ -219,7 +225,8 @@ export function generateThemeCss(opts) {
   }
 
   const seed = normalizeHex(hex);
-  const { lightSeed, darkSeed } = seedsForModes(seed, darkHex ? normalizeHex(darkHex) : undefined);
+  const normalizedDarkHex = hasDarkHex ? normalizeHex(darkHex) : undefined;
+  const { lightSeed, darkSeed } = seedsForModes(seed, normalizedDarkHex);
   const roles = tokenRoles(preset, format);
   const engineScheme = ENGINE_SCHEME_BY_NEUTRAL_TINT[neutralTint];
 

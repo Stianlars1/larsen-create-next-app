@@ -362,14 +362,91 @@ test("Radix accent contrast reaches WCAG AA while preserving scale-first foregro
   }
 });
 
+test("darkHex accepts a valid separate seed and rejects invalid supplied values", () => {
+  assert.doesNotThrow(() => generateThemeCss({
+    hex: "#4DA0FF",
+    darkHex: "#7C3AED",
+    preset: "shadcn",
+    format: "hex",
+  }));
+
+  for (const darkHex of ["", "  ", "#12GG34", "#12345", 123, {}]) {
+    assert.throws(
+      () => generateThemeCss({ hex: "#4DA0FF", darkHex, preset: "shadcn", format: "hex" }),
+      /Invalid dark HEX color: .*expected e\.g\. 0A0A0A or #0A0A0A/,
+      `darkHex ${JSON.stringify(darkHex) ?? String(darkHex)} should use the explicit validation error`,
+    );
+  }
+
+  for (const darkHex of [null, undefined]) {
+    assert.doesNotThrow(() => generateThemeCss({
+      hex: "#4DA0FF",
+      darkHex,
+      preset: "shadcn",
+      format: "hex",
+    }));
+  }
+});
+
+test("foreground-subtle minimally corrects failing gray-10 values without changing the gray scale", () => {
+  for (const hex of ["#4DA0FF", "#7C3AED", "#EFB100"]) {
+    for (const neutralTint of ["subtle", "strong"]) {
+      const blocks = declarationBlocks(generateThemeCss({
+        hex,
+        preset: "shadcn",
+        format: "hex",
+        neutralTint,
+      }));
+      for (const [index, block] of blocks.entries()) {
+        const values = Object.fromEntries(
+          declarations(block).map(({ name, value }) => [name, value]),
+        );
+        const gray10Contrast = contrastRatio(values["gray-10"], values.background);
+        const subtleContrast = contrastRatio(values["foreground-subtle"], values.background);
+
+        assert.ok(
+          subtleContrast >= 4.5,
+          `${hex} ${neutralTint} block ${index} foreground-subtle/background = ${subtleContrast.toFixed(4)}`,
+        );
+        if (gray10Contrast >= 4.5) {
+          assert.equal(
+            values["foreground-subtle"],
+            values["gray-10"],
+            `${hex} ${neutralTint} block ${index} should retain its passing gray-10`,
+          );
+          continue;
+        }
+
+        assert.notEqual(
+          values["foreground-subtle"],
+          values["gray-10"],
+          `${hex} ${neutralTint} block ${index} left failing gray-10 unchanged`,
+        );
+        assert.notEqual(
+          values["foreground-subtle"],
+          values["gray-11"],
+          `${hex} ${neutralTint} block ${index} jumped wholesale to gray-11`,
+        );
+        assert.notEqual(
+          values["foreground-subtle"],
+          values["gray-12"],
+          `${hex} ${neutralTint} block ${index} jumped wholesale to gray-12`,
+        );
+      }
+    }
+  }
+});
+
 test("every serialized format preserves required foreground contrast", () => {
   const requiredPairs = {
     shadcn: [
-      ["foreground", "background"], ["card-foreground", "card"],
+      ["foreground", "background"], ["foreground-subtle", "background"],
+      ["card-foreground", "card"],
       ["popover-foreground", "popover"], ["primary-foreground", "primary"],
       ["secondary-foreground", "secondary"], ["muted-foreground", "muted"],
       ["accent-foreground", "accent"], ["destructive-foreground", "destructive"],
       ["ring", "background", 3], ["primary", "background", 1.5],
+      ["input", "background", 3], ["input", "card", 3], ["input", "popover", 3],
     ],
     radix: [
       ["foreground", "background"], ["accent-contrast", "accent-9"],
@@ -393,26 +470,28 @@ test("every serialized format preserves required foreground contrast", () => {
   for (const neutralTint of ["subtle", "strong"]) {
     for (const format of Object.keys(FORMAT_EXAMPLES)) {
       for (const preset of Object.keys(requiredPairs)) {
-        const blocks = declarationBlocks(generateThemeCss({
-          hex: "#D8D8D8",
-          preset,
-          format,
-          neutralTint,
-        }));
-        for (const [index, block] of blocks.entries()) {
-          const values = Object.fromEntries(
-            declarations(block).map(({ name, value }) => [name, value]),
-          );
-          for (const [foreground, background, minimum = 4.5] of requiredPairs[preset]) {
-            const actual = serializedContrastRatio(
-              values[foreground],
-              values[background],
-              format,
+        for (const hex of ["#D8D8D8", "#4DA0FF", "#7C3AED", "#EFB100"]) {
+          const blocks = declarationBlocks(generateThemeCss({
+            hex,
+            preset,
+            format,
+            neutralTint,
+          }));
+          for (const [index, block] of blocks.entries()) {
+            const values = Object.fromEntries(
+              declarations(block).map(({ name, value }) => [name, value]),
             );
-            assert.ok(
-              actual >= minimum,
-              `${neutralTint} ${preset} x ${format} block ${index} emitted ${foreground}/${background} at ${actual.toFixed(4)}`,
-            );
+            for (const [foreground, background, minimum = 4.5] of requiredPairs[preset]) {
+              const actual = serializedContrastRatio(
+                values[foreground],
+                values[background],
+                format,
+              );
+              assert.ok(
+                actual >= minimum,
+                `${hex} ${neutralTint} ${preset} x ${format} block ${index} emitted ${foreground}/${background} at ${actual.toFixed(4)}`,
+              );
+            }
           }
         }
       }

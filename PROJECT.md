@@ -36,7 +36,7 @@ is enabled, and optional skills.
 | Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
 | Current palette contracts and boundaries | [docs/reference/palette.md](docs/reference/palette.md) |
 | Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
-| Dated local verification | [0.3.0](docs/verification/local-0.3.0.md), [0.4.0](docs/verification/local-0.4.0.md) |
+| Dated local verification | [0.3.0](docs/verification/local-0.3.0.md), [0.4.0](docs/verification/local-0.4.0.md), [0.5.0](docs/verification/local-0.5.0.md), [0.5.1](docs/verification/local-0.5.1.md) |
 | User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
 | Approved 0.1.0 planning snapshot | [docs/plans/2026-08-07-create-next-app-template.md](docs/plans/2026-08-07-create-next-app-template.md) |
 
@@ -238,16 +238,18 @@ Current custom choices are:
 Neutral tint changes the gray ramp and the semantic tokens derived from it,
 without rotating the requested seed or rebuilding the accent palette. The
 public wrapper maps `subtle` to the vendored engine's former analogous path
-and `strong` to its monochromatic path. The mapping is private, the vendored
-engine is unchanged, and a direct palette API call containing the removed
-`scheme` property fails explicitly. The generated analogous and complementary
-support tokens, their foregrounds, and the existing chart mappings remain
-part of every preset contract.
+and `strong` to its monochromatic path. The mapping itself preserves the
+former output. The vendored engine also has recorded local deviations for
+output corrections, including hue normalization and foreground-subtle, in
+`palette/NOTICE.md`. A direct palette API call containing the removed `scheme`
+property fails explicitly. The generated analogous and complementary support
+tokens, their foregrounds, and the existing chart mappings remain part of
+every preset contract.
 
 `--background`, `--primary`, `--ring`, and the twelve accent steps are
-unaffected for every chromatic seed. A seed with no usable hue of its own -
-`#000000`, `#FFFFFF`, and their immediate neighbours - has its accent scale
-derived from the same tinted neutral, so those seeds do move accent values.
+unaffected for every chromatic seed. The hueless exceptions `#000000`,
+`#010101`, `#FEFEFE`, and `#FFFFFF` have their accent scale derived from the
+same tinted neutral, so those seeds do move accent values.
 [docs/reference/palette.md](docs/reference/palette.md) lists the exact token
 groups, and `create-next-app/test/neutral-tint.test.mjs` locks both halves of
 the claim.
@@ -264,6 +266,7 @@ The mechanical CSS verifier parses only `shadcn` with `hsl-values` and checks
 both generated modes:
 
 - `--foreground` vs `--background` must reach 4.5.
+- `--foreground-subtle` vs `--background` must reach 4.5.
 - `--card-foreground` vs `--card` must reach 4.5.
 - `--popover-foreground` vs `--popover` must reach 4.5.
 - `--ring` vs `--background` must reach 3.
@@ -279,8 +282,11 @@ neutral. `--border` and `--sidebar-border` are deliberately not checked and
 keep gray-7: card edges and separators are not user interface components, and
 the same floor would give every card a heavy outline.
 
-The generator applies these role corrections before serialization, so format
-selection cannot bypass them. The CSS parser itself makes no broader
+`--foreground-subtle` starts at gray-10. If it is below 4.5 against the mode
+background, the generator selects the closest displayable sRGB point along the
+OKLAB path toward gray-11 that clears 4.5. The generator applies primary,
+ring, input, and foreground-subtle corrections before serialization, so
+format selection cannot bypass them. The CSS parser itself makes no broader
 preset-format claim. Representative Radix accent pairs are checked separately
 at 4.5 in all six generated formats.
 
@@ -319,7 +325,9 @@ symlink.
 
 Skills are installed before the overlay. A failed optional source produces a
 warning and the scaffold continues. Other requested sources still run, and
-the generated project never claims a missing skill exists.
+the generated project never claims a missing skill exists. Its `AGENTS.md` and
+README share the same source-aware skills section, so no-skills and
+Larsen-only projects do not point to an unselected third-party source.
 
 ## Verification boundaries
 
@@ -329,6 +337,7 @@ Different commands prove different things:
 | --- | --- | --- |
 | `node scripts/generate-cli-reference.mjs --check` | Both generated CLI tables match `OPTION_CONTRACT` | CLI behavior or package publication |
 | `npm test` | Focused source behavior, palette contracts, docs, overlay, contrast, and artifact-shape checks | A real upstream scaffold or production build |
+| `npm run verify:palette-sweep` | Deterministic 762-seed x 2 neutral-tint shadcn contrast sweep | Release artifact, npm publication, or other preset-format behavior |
 | `npm run smoke` | Real generated projects from one release-style tarball with scaffold assertions | Dependency installation and `next build` |
 | `npm run pack:release` | One consumer-clean tarball from clean release-relevant source, with exact `gitHead`, plus standard tarball smoke | Full install/build or npm publication |
 | `npm run smoke:full -- <same-tarball>` | Installation and `next build` from the supplied artifact | npm publication |
@@ -358,6 +367,7 @@ version.
 cd create-next-app
 node scripts/generate-cli-reference.mjs --check
 npm test
+npm run verify:palette-sweep
 npm run pack:release
 npm run smoke:full -- /absolute/path/reported-by-pack-release.tgz
 ```

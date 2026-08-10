@@ -118,6 +118,41 @@ function closestNeutralOverSurfaces(preferred, surfaces, grayScale, minimum) {
 
   return candidates[0]?.color ?? preferred;
 }
+/**
+ * Keeps the preferred gray when it already passes, otherwise finds the first
+ * displayable sRGB color on the OKLAB path toward the fallback that reaches
+ * the text contrast floor. This preserves gray-10's deliberately subtle role
+ * instead of replacing it wholesale with gray-11.
+ */
+function minimallyCorrectedNeutral(preferred, fallback, background, minimum) {
+  if (getContrastRatio(preferred, background) >= minimum) return preferred;
+  if (getContrastRatio(fallback, background) < minimum) return fallback;
+
+  const preferredColor = new Color(preferred);
+  const fallbackColor = new Color(fallback);
+  let failingAmount = 0;
+  let passingAmount = 1;
+  let passingColor = fallback;
+
+  // Twenty-four rounds are more than enough to settle on the closest 8-bit
+  // sRGB value emitted by the engine while keeping the result deterministic.
+  for (let iteration = 0; iteration < 24; iteration += 1) {
+    const amount = (failingAmount + passingAmount) / 2;
+    const candidate = preferredColor
+      .mix(fallbackColor, amount, { space: "oklab" })
+      .to("srgb")
+      .toString({ format: "hex", collapse: false });
+
+    if (getContrastRatio(candidate, background) >= minimum) {
+      passingAmount = amount;
+      passingColor = candidate;
+    } else {
+      failingAmount = amount;
+    }
+  }
+
+  return passingColor;
+}
 function generateShadcnCSS(data, format) {
   const formatFn = (hex) => formatColor(hex, format);
   // Light mode paints card and popover with the page background; dark mode
@@ -133,6 +168,18 @@ function generateShadcnCSS(data, format) {
     [data.darkBackground, data.grayScale.dark[1], data.grayScale.dark[2]],
     data.grayScale.dark,
     3
+  );
+  const lightForegroundSubtle = minimallyCorrectedNeutral(
+    data.grayScale.light[9],
+    data.grayScale.light[10],
+    data.lightBackground,
+    4.5
+  );
+  const darkForegroundSubtle = minimallyCorrectedNeutral(
+    data.grayScale.dark[9],
+    data.grayScale.dark[10],
+    data.darkBackground,
+    4.5
   );
   const lightPrimary = closestContrastSafeColor(
     data.accent,
@@ -235,7 +282,7 @@ function generateShadcnCSS(data, format) {
   return `:root {
   --background: ${formatFn(data.lightBackground)};
   --foreground: ${formatFn(lightForeground.color)};
-  --foreground-subtle: ${formatFn(data.grayScale.light[9])};
+  --foreground-subtle: ${formatFn(lightForegroundSubtle)};
   --card: ${formatFn(data.lightBackground)};
   --card-foreground: ${formatFn(lightForeground.color)};
   --popover: ${formatFn(data.lightBackground)};
@@ -289,7 +336,7 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
   :root {
     --background: ${formatFn(data.darkBackground)};
     --foreground: ${formatFn(darkForeground.color)};
-    --foreground-subtle: ${formatFn(data.grayScale.dark[9])};
+    --foreground-subtle: ${formatFn(darkForegroundSubtle)};
     --card: ${formatFn(data.grayScale.dark[1])};
     --card-foreground: ${formatFn(darkForeground.color)};
     --popover: ${formatFn(data.grayScale.dark[2])};

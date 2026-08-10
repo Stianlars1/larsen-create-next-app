@@ -31,7 +31,7 @@ stability. Use `--cna-version <spec>` to request an explicit upstream spec.
   - `index.css` - single entry importing all of the above
 - Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), and `DESIGN.md` (token documentation). `NEXTJS.md` preserves upstream guidance only when create-next-app supplies `AGENTS.md`
 - A welcome page demonstrating the tokens
-- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine. `--neutral-tint subtle|strong` controls how much seed hue reaches the gray ramp and the tokens built on it, and leaves the accent scale alone
+- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine. `--neutral-tint subtle|strong` controls how much seed hue reaches the gray ramp and the tokens built on it, and leaves the accent scale unchanged for chromatic seeds. The hueless exceptions are `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`
 - Optional **agent skills**: request entries from [Larsen Skills](https://github.com/Stianlars1/larsen-skills) or Jakub Antalik's [`transitions-dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev). Each source installs directly from its own repository, and the wrapper verifies only `.agents/skills/<name>/SKILL.md`
 
 ## Prompts

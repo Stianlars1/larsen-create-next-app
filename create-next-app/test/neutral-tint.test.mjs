@@ -6,13 +6,15 @@ import { createPaletteMasterFixture } from "../test-support/palette-master.mjs";
 const fixture = await createPaletteMasterFixture();
 after(fixture.cleanup);
 
-const BASELINE_HASHES = new Map([
-  ["subtle|shadcn|hex", "e28c18551573adf503096c997855d46551302fab2e15f6747542326eb26c7109"],
-  ["subtle|shadcn|rgb", "e2b390b0087dd91565ab1f0fd31d8b409317b45cccced97b0169d1572cae6149"],
-  ["subtle|shadcn|hsl", "7f516b5a8f182cdfea588c47803c19fc9d040825ef6c6c99210df4ac5e46c7c8"],
-  ["subtle|shadcn|hsl-values", "7e9a06db2a8285d278d0fa5effb433a4b7f6ca5210fb760fde94d4410db6bbab"],
-  ["subtle|shadcn|oklab", "265ecd51305b635d5eefa1c17ffe5a1c90921f4c97c89403731b3a34655c0376"],
-  ["subtle|shadcn|oklch", "1f1b5a734d338635a3769f4f66b31f86e284ff57ec889697506bc5c95e3c856d"],
+// The 0.5.1 foreground-subtle correction is the only permitted declaration
+// change. These hashes lock every other declaration to the 0.5.0 output.
+const UNCHANGED_DECLARATION_HASHES = new Map([
+  ["subtle|shadcn|hex", "556b1e3cdd2bfb36ec798722e12c436fbdadfead654eb8c5e7c298945ac4fc1d"],
+  ["subtle|shadcn|rgb", "1cb77116e560bbca146ec5f787620fd96c57fb11683673502c3982b88638639c"],
+  ["subtle|shadcn|hsl", "be751f3704db7a661947686265c4bda481b6f231a4040c149129366a6496055e"],
+  ["subtle|shadcn|hsl-values", "106afc1e56d7689e29abcc706cfad602a132a29dba7a65963365283fcc39149d"],
+  ["subtle|shadcn|oklab", "f70deefed152908f86f3c0a64c026848a99c8aea2aaba56c900414661863e63a"],
+  ["subtle|shadcn|oklch", "f4988cf9a77ab0bcbda3850caf4e55991c8a297670599ba19bf1255d97c2993f"],
   ["subtle|radix|hex", "d6fdafadc39517dd670708cc72a5535e87c95e42017b9dd6e68444ba782ba878"],
   ["subtle|radix|rgb", "1b4be2530e3601f0bcebb7f462e06cbe72c67651ade3e260cd8404e6c356ca33"],
   ["subtle|radix|hsl", "08ac776728e3821c4c493bb6e02d3072d7e040d16f66ed4e4770ecbf193b629e"],
@@ -25,12 +27,12 @@ const BASELINE_HASHES = new Map([
   ["subtle|css-variables|hsl-values", "0225e07bda0f4584db7ad6106f59ed27b8d875dadc75e99b12243a8697b70e40"],
   ["subtle|css-variables|oklab", "3609541742299f0c9a91d9fb90442d0df0bfc5a214f05efdf181385eaa2ffd0b"],
   ["subtle|css-variables|oklch", "9e1deeeb1d1d1896d8c5e5d1f4e640ae6e033f9993309ed6fbbf57ccb38a5192"],
-  ["strong|shadcn|hex", "261b46dae436ecaaa8dfef42d8fdaf0d5d4e443546805c8a996557938ac3ed8f"],
-  ["strong|shadcn|rgb", "b9b58028f53aa74be4495542ec93175b034ffbfb611092072e7b02af3e0be939"],
-  ["strong|shadcn|hsl", "4573bc0c8e21f4272bb5d8530c25cab1fe3f2fc7f4c74294ddc4f8a3b9e381cb"],
-  ["strong|shadcn|hsl-values", "ebb5de5314dbb3100c62571a332d11a683cbbc89ea973e0177a6751a64f22887"],
-  ["strong|shadcn|oklab", "6267c0d3cf3f34158e3540a877a3cdf43043b458dfddc91085d828850a58ec48"],
-  ["strong|shadcn|oklch", "686ea74ebaacb1985a21409fcd0c13b8a06a18005d96f24c0ea35c0d89c14f02"],
+  ["strong|shadcn|hex", "ab373573f175f4ed25ae052ab09280f12be581f35bfc4aa47e75119411f90d10"],
+  ["strong|shadcn|rgb", "46179e8e1de15942a5e2d90eff93fd0e69ab3fd1ce90ca2386fb0b4e87b5895a"],
+  ["strong|shadcn|hsl", "cff18e161c9728bb6a246e1219c5f4ee17ad73b5fa2aa5f66bcdb5692cd2e4b7"],
+  ["strong|shadcn|hsl-values", "bca3c4448c41db50fb4104ba21ba67d4951885a841b3f63aea063a10b619f381"],
+  ["strong|shadcn|oklab", "bb8ec322b7dcf6ef4ab36d21a2566d98cf29f66ce4cb2128e08c5ed31d8af8d4"],
+  ["strong|shadcn|oklch", "0cd6430101bf589312a362257f2bfa518700de5607ce6c91922303490462af91"],
   ["strong|radix|hex", "2a23a91ef4eae421beec70db5d2633a1398557bc74417826cc9416bb884d283d"],
   ["strong|radix|rgb", "120d4986aa1c6a072908fcb6f9a1c849b76d92cf056a99e7ab0e3e85eb88b7cb"],
   ["strong|radix|hsl", "e29c171c521c4a2017d8ec00e52d675fe9d05e3360754c87e6a6219557017c01"],
@@ -45,9 +47,30 @@ const BASELINE_HASHES = new Map([
   ["strong|css-variables|oklch", "03bcf0bd5ea4a4df2a0f1054770cec7f62b3a46ae77e1f2431a359ef2b5cec6d"],
 ]);
 
-function declarationHash(css) {
+// Full 0.5.1 shadcn baselines separately lock the corrected token in all six
+// formats instead of hiding it behind the compatibility invariant above.
+const SHADCN_051_FULL_HASHES = new Map([
+  ["subtle|hex", "b961a55475726aa1a2feb4ad51aad2a5f241804a356ec7f07d62bc6bb62a4f5d"],
+  ["subtle|rgb", "7290cfff403e8032c869fbdc676dd3f9645bf03e76d748a575ce5e1d8707fac7"],
+  ["subtle|hsl", "ef26b45747d6ce472b6ab6df3748aa06467f3e0f9d40b36188b2acbde40e28fb"],
+  ["subtle|hsl-values", "900846fd4fb91ab244bbce4365aaa7754efda12aeac529dd963bce53c16a004f"],
+  ["subtle|oklab", "c9069778ea7c0274323da0cf948208466002556e393b45a47fa24f5a69b78bdf"],
+  ["subtle|oklch", "b54b38d3c9363df4b25d27a0e8d9cfcf7b2afa21934b8480530e2f0ebf76c738"],
+  ["strong|hex", "44ca7cf94870698fa33e8bab058d0f318ae5ac98027d2d2dbe80a3e6a3b388ca"],
+  ["strong|rgb", "2ec3d6b8553cd3c7daf9c8bd77911e731c8c4f31f7785d6d6772c3bc597936c6"],
+  ["strong|hsl", "4b8198b2c4a7e8568e58b8688b217ba63af111378dc04329f71e46701fca1a86"],
+  ["strong|hsl-values", "24c10bab42fc792e521a2c610e6eb95469fce43d09ca585ff6a9eb0cd65c3f34"],
+  ["strong|oklab", "7e8f8573b27639c1286c27a7c790d925f0151de4db37317800d3ac447cff8859"],
+  ["strong|oklch", "23f653255ae5682cc6c70f1619de32466c4307109b7fbf4246046f834d144344"],
+]);
+
+function declarationHash(css, { omitForegroundSubtle = false } = {}) {
   const declarationText = [...css.matchAll(/--[a-z0-9-]+:\s*[^;]+;/g)]
     .map((match) => match[0])
+    .filter(
+      (declaration) =>
+        !omitForegroundSubtle || !declaration.startsWith("--foreground-subtle:"),
+    )
     .join("\n");
   return createHash("sha256").update(declarationText).digest("hex");
 }
@@ -57,22 +80,47 @@ test("the public palette contract exposes neutral tints instead of schemes", () 
   assert.equal("SCHEMES" in fixture.api, false);
 });
 
-test("omitting neutralTint uses subtle without changing declarations", () => {
-  const css = fixture.api.generateThemeCss({
+test("omitting neutralTint is byte-identical to explicit subtle", () => {
+  const omitted = fixture.api.generateThemeCss({
     hex: "#4DA0FF",
     preset: "shadcn",
     format: "hsl-values",
   });
-  assert.equal(declarationHash(css), BASELINE_HASHES.get("subtle|shadcn|hsl-values"));
-  assert.match(css, /neutral tint: subtle/);
+  const explicit = fixture.api.generateThemeCss({
+    hex: "#4DA0FF",
+    preset: "shadcn",
+    format: "hsl-values",
+    neutralTint: "subtle",
+  });
+  assert.equal(omitted, explicit);
+  assert.match(omitted, /neutral tint: subtle/);
 });
 
-for (const [key, expectedHash] of BASELINE_HASHES) {
+for (const [key, expectedHash] of UNCHANGED_DECLARATION_HASHES) {
   const [neutralTint, preset, format] = key.split("|");
-  test(`${neutralTint} preserves the ${preset} x ${format} declaration baseline`, () => {
+  const scope = preset === "shadcn"
+    ? "all declarations except corrected foreground-subtle"
+    : "the complete declaration baseline";
+  test(`${neutralTint} preserves ${scope} for ${preset} x ${format}`, () => {
     const css = fixture.api.generateThemeCss({
       hex: "#4DA0FF",
       preset,
+      format,
+      neutralTint,
+    });
+    assert.equal(
+      declarationHash(css, { omitForegroundSubtle: preset === "shadcn" }),
+      expectedHash,
+    );
+  });
+}
+
+for (const [key, expectedHash] of SHADCN_051_FULL_HASHES) {
+  const [neutralTint, format] = key.split("|");
+  test(`${neutralTint} locks the complete 0.5.1 shadcn x ${format} output`, () => {
+    const css = fixture.api.generateThemeCss({
+      hex: "#4DA0FF",
+      preset: "shadcn",
       format,
       neutralTint,
     });
@@ -148,7 +196,7 @@ for (const hex of ["#4DA0FF", "#E11D48", "#22C55E", "#7C3AED", "#EFB100", "#A1A1
 
 // The documented exception: a seed with no hue of its own takes its accent
 // scale from the same tinted neutral, so the accent scale moves too.
-for (const hex of ["#000000", "#FFFFFF"]) {
+for (const hex of ["#000000", "#010101", "#FEFEFE", "#FFFFFF"]) {
   test(`the accent scale follows the neutral tint for the hueless seed ${hex}`, () => {
     const subtle = tintedModes(hex, "subtle");
     const strong = tintedModes(hex, "strong");

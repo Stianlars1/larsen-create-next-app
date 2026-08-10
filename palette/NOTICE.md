@@ -48,7 +48,12 @@ authored by Stian Larsen.
     silently builds the palette from the engine's default blue instead of the
     requested color. Deep reds such as `#940203` were affected.
 
-When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 11 (or
+12. `generateShadcnCSS`: `--foreground-subtle` keeps gray-10 when it reaches
+    4.5:1 against the mode background. When it does not, the exporter derives
+    the closest displayable sRGB value on the OKLAB path toward gray-11 that
+    clears 4.5:1. The twelve-step gray ramp remains unchanged.
+
+When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 12 (or
 port them upstream first).
 
 ## License

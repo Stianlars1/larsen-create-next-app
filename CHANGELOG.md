@@ -10,6 +10,35 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-10
+
+Local implementation evidence is recorded in
+`docs/verification/local-0.5.1.md`. This section describes local source
+behavior and is not npm publication, tag, release, or deployment evidence.
+
+### Changed
+- `--foreground-subtle` still starts at gray-10. When that color is below 4.5
+  against its mode background, it now takes the closest displayable sRGB point
+  along the OKLAB path toward gray-11 that clears 4.5. The gray ramp itself is
+  unchanged. The mechanical shadcn checker now includes this 4.5 pair.
+- `darkHex` now rejects supplied blank, malformed, and non-string values with
+  an explicit package error. `null` and `undefined` remain absent values, and
+  valid three- and six-digit HEX values continue to work.
+- Generated README and `AGENTS.md` now use the same source-aware skills
+  section. Projects with no skills or only Larsen Skills do not link to an
+  unselected third-party source.
+- Neutral-tint accent invariance is explicitly limited to chromatic seeds. The
+  hueless exceptions are `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`.
+
+### Verified locally
+- The deterministic `npm run verify:palette-sweep` gate covers 762 unique
+  seeds under both neutral tints, has SHA-256
+  `25104d5316f9bdc8804e726842b8f1950b6bc07531aa026013aff4c1669947a9`, and
+  reports 1,524 generated themes with zero failures.
+- Full six-format tests, declaration parity outside the foreground-subtle
+  correction, the CLI reference check, and the current documentation contract
+  are recorded as local pre-publication evidence only.
+
 ## [0.5.0] - 2026-08-10
 
 ### Added
@@ -29,8 +58,9 @@ a generated project contains counts as user-facing.
   of text fields, selects and outline buttons, where nothing else identifies
   the control, so WCAG 2.1 SC 1.4.11 applies. `--border` and
   `--sidebar-border` keep gray-7: card edges and separators are not user
-  interface components. This is the only generated-output change in 0.5.0
-  beyond the neutral-ramp mapping, and it affects `shadcn` only.
+  interface components. This role correction affects `shadcn` only. The
+  separate hue-360 correction changes complete palettes in every preset and
+  format for affected seeds.
 - Agent skill requests are grouped by source repository, with one installer
   invocation and independent on-disk verification per source.
 - A generated project credits only the skill sources it actually installed. A

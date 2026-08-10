@@ -190,6 +190,7 @@ byte against the local artifact that passed `npm run pack:release` and
 `c8665013185a37b801b885c5a7baea590f568e2d9df9d7ea734aac7576c0d102`, so the
 artifact on npm is the one that was verified, not a re-pack.
 
-The implementation, contrast-sweep, generated-app, artifact, and landing-page
-evidence remains in [local-0.5.0.md](local-0.5.0.md). That local record and
-the registry trace above are separate evidence layers.
+The final registry and published-artifact evidence for 0.5.0 is recorded in
+this document. [local-0.5.0.md](local-0.5.0.md) remains local implementation,
+contrast-sweep, generated-app, and landing-page evidence; it is not the final
+artifact or registry record. The two documents are separate evidence layers.

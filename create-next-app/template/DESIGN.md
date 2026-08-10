@@ -18,9 +18,10 @@ it the semantic tokens built on that ramp - foreground, muted, card, popover,
 border, input and the sidebar surfaces. It does not rotate the seed or
 rebuild the accent palette: `--background`, `--primary`, `--ring` and the
 twelve accent steps are the same under `subtle` and `strong`, unless the seed
-is pure black or pure white, which has no hue of its own and takes its accent
-scale from the same tinted neutral. The analogous and complementary support
-tokens and their chart mappings remain available under both values.
+is one of the hueless exception seeds `#000000`, `#010101`, `#FEFEFE`, or
+`#FFFFFF`. Those seeds take their accent scales from the same tinted neutral.
+The analogous and complementary support tokens and their chart mappings remain
+available under both values.
 
 The available color variables are defined by the preset - open
 `src/lib/design-system/theme.css` for the authoritative list. Every value
@@ -51,7 +52,10 @@ Themes runtime compatibility.
 The generator preserves the requested seed for shadcn primary and ring when
 their role-specific contrast floors pass, otherwise it uses the closest safe
 accent-scale color. Foregrounds remain scale-first rather than defaulting to
-pure black or white. Radix accent contrast reaches 4.5 against accent step 9.
+pure black or white. `--foreground-subtle` starts at gray-10; if it is below
+4.5 against the mode background, it moves along the displayable sRGB OKLAB
+path toward gray-11 to the closest point that clears 4.5. Radix accent
+contrast reaches 4.5 against accent step 9.
 
 **Usage idiom for this project:**
 

@@ -17,7 +17,10 @@ const PRESET_DISPLAY = {
 
 const NEUTRAL_TINT_DISPLAY = {
   subtle: { label: "Subtle", hint: "the standard gray ramp (recommended)" },
-  strong: { label: "Strong", hint: "more seed hue in the grays; accent scale unchanged" },
+  strong: {
+    label: "Strong",
+    hint: "more seed hue in the grays; chromatic accent scale unchanged",
+  },
 };
 
 const FORMAT_DISPLAY = {

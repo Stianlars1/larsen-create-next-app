@@ -88,6 +88,40 @@ function runCli(args, { failSkillsRepo, skipSkillsRepo } = {}) {
   };
 }
 
+function skillsSection(document) {
+  const heading = document.includes("## Installed skills") ? "## Installed skills" : "## Skills";
+  const start = document.indexOf(heading);
+  assert.notEqual(start, -1, `missing ${heading} section`);
+  const next = document.indexOf("\n## ", start + heading.length);
+  return document.slice(start, next === -1 ? undefined : next).trimEnd();
+}
+
+function assertGeneratedSkillDocumentation(run, appName, { skills, sources }) {
+  const docs = ["README.md", "AGENTS.md"].map((file) =>
+    readFileSync(join(run.root, appName, file), "utf8"),
+  );
+  const sections = docs.map(skillsSection);
+  assert.equal(sections[0], sections[1], "README.md and AGENTS.md use the same skills section");
+
+  for (const skill of skills) {
+    for (const section of sections) {
+      assert.match(section, new RegExp(`\\.agents/skills/${skill}/SKILL\\.md`));
+    }
+  }
+
+  const sourceAssertions = [
+    ["larsen", /Larsen Skills by Stian Larsen/],
+    ["transitions", /Transitions\.dev by Jakub Antalik/],
+    ["transitions", /license terms/],
+  ];
+  for (const [source, pattern] of sourceAssertions) {
+    for (const section of sections) {
+      if (sources.includes(source)) assert.match(section, pattern);
+      else assert.doesNotMatch(section, pattern);
+    }
+  }
+}
+
 const explicitBase = [
   "--linter",
   "eslint",
@@ -162,6 +196,19 @@ test("latest wording states only that the mutable dist-tag was requested", () =>
       assert.match(generated, /create-next-app@latest/);
       assert.doesNotMatch(generated, /newest|stable/i);
     }
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("no-skills scaffolds credit only the optional Larsen collection", () => {
+  const run = runCli(["no-skills-app", "--defaults", "--no-git", "--no-install"]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    assertGeneratedSkillDocumentation(run, "no-skills-app", {
+      skills: [],
+      sources: ["larsen"],
+    });
   } finally {
     run.cleanup();
   }
@@ -405,30 +452,30 @@ test("AGENTS.md documents exactly the skills that landed", () => {
   ]);
   try {
     assert.equal(run.status, 0, run.output);
-    const agents = readFileSync(join(run.root, "skills-app", "AGENTS.md"), "utf8");
-    assert.equal(
-      agents.slice(agents.indexOf("## Installed skills")).trimEnd(),
-      `## Installed skills
+    assertGeneratedSkillDocumentation(run, "skills-app", {
+      skills: ["motion-craft", "interface-craft"],
+      sources: ["larsen"],
+    });
+  } finally {
+    run.cleanup();
+  }
+});
 
-The wrapper verified these files on disk:
-
-- \`.agents/skills/motion-craft/SKILL.md\`
-- \`.agents/skills/interface-craft/SKILL.md\`
-
-Sources stay with their authors:
-
-- [Larsen Skills by Stian Larsen](https://github.com/Stianlars1/larsen-skills)
-
-This verifies only the listed files, not agent-specific discovery or symlinks.
-Add or update them from those same repositories:
-
-- \`npx skills add Stianlars1/larsen-skills\``,
-    );
-    // A Larsen-only project does not advertise a third-party source.
-    assert.doesNotMatch(
-      agents.slice(agents.indexOf("## Installed skills")),
-      /transitions\.dev|transitions-dev/i,
-    );
+test("a third-party-only scaffold credits Transitions.dev and its terms", () => {
+  const run = runCli([
+    "third-party-skills-app",
+    "--defaults",
+    "--skills",
+    "transitions-dev",
+    "--no-git",
+    "--no-install",
+  ]);
+  try {
+    assert.equal(run.status, 0, run.output);
+    assertGeneratedSkillDocumentation(run, "third-party-skills-app", {
+      skills: ["transitions-dev"],
+      sources: ["transitions"],
+    });
   } finally {
     run.cleanup();
   }
@@ -449,11 +496,10 @@ test("mixed skill sources use one installer invocation per repository", () => {
       readFileSync(run.skillsInvocationLog, "utf8").trim().split("\n"),
       ["Stianlars1/larsen-skills", "Jakubantalik/transitions.dev"],
     );
-    const agents = readFileSync(join(run.root, "mixed-skills-app", "AGENTS.md"), "utf8");
-    assert.match(agents, /\.agents\/skills\/motion-craft\/SKILL\.md/);
-    assert.match(agents, /\.agents\/skills\/interface-craft\/SKILL\.md/);
-    assert.match(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
-    assert.match(agents, /Transitions\.dev by Jakub Antalik/);
+    assertGeneratedSkillDocumentation(run, "mixed-skills-app", {
+      skills: ["motion-craft", "interface-craft", "transitions-dev"],
+      sources: ["larsen", "transitions"],
+    });
   } finally {
     run.cleanup();
   }
@@ -474,9 +520,10 @@ test("a failed third-party source does not break successful Larsen skills", () =
   try {
     assert.equal(run.status, 0, run.output);
     assert.match(run.output, /Transitions\.dev install from Jakubantalik\/transitions\.dev failed/);
-    const agents = readFileSync(join(run.root, "partial-skills-app", "AGENTS.md"), "utf8");
-    assert.match(agents, /\.agents\/skills\/motion-craft\/SKILL\.md/);
-    assert.doesNotMatch(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
+    assertGeneratedSkillDocumentation(run, "partial-skills-app", {
+      skills: ["motion-craft"],
+      sources: ["larsen"],
+    });
   } finally {
     run.cleanup();
   }
@@ -497,9 +544,10 @@ test("a successful exit that installs nothing is not documented", () => {
   try {
     assert.equal(run.status, 0, run.output);
     assert.match(run.output, /installer exited without creating: transitions-dev/);
-    const agents = readFileSync(join(run.root, "empty-source-app", "AGENTS.md"), "utf8");
-    assert.match(agents, /\.agents\/skills\/motion-craft\/SKILL\.md/);
-    assert.doesNotMatch(agents, /\.agents\/skills\/transitions-dev\/SKILL\.md/);
+    assertGeneratedSkillDocumentation(run, "empty-source-app", {
+      skills: ["motion-craft"],
+      sources: ["larsen"],
+    });
   } finally {
     run.cleanup();
   }

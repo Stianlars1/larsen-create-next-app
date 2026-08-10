@@ -192,3 +192,12 @@ The site still declares `@larsen-utvikling/create-next-app@^0.4.0`. It must be
 bumped to the published `0.5.0` and reinstalled before deployment; until then
 the drift guard fails on purpose. The local verification above ran against an
 unsaved install of a locally packed `0.5.0`.
+
+## Erratum recorded for 0.5.1
+
+This historical record preserves its original local measurements, counts, and
+status. Its statement that Radix Themes and CSS Variables declarations were
+unchanged from 0.4.0 applies only to the parity seeds used when the
+neutral-tint mapping was introduced. The separately recorded hue-360 fix
+changes complete palettes in every preset and format for affected seeds. It
+does not contradict the fact that neither preset emits shadcn `--input`.

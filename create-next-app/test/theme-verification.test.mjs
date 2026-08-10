@@ -156,6 +156,7 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
   assert.equal(CONTRAST_FORMAT, "hsl-values");
   assert.deepEqual(CONTRAST_CHECKS, [
     { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
+    { token: "foreground-subtle", against: "background", minimum: 4.5, standard: "WCAG" },
     { token: "card-foreground", against: "card", minimum: 4.5, standard: "WCAG" },
     { token: "popover-foreground", against: "popover", minimum: 4.5, standard: "WCAG" },
     { token: "ring", against: "background", minimum: 3, standard: "WCAG" },
@@ -171,4 +172,29 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
     CONTRAST_CHECKS.some((check) => check.token === "border"),
     false,
   );
+});
+
+test("contrast verification exposes finite structured measurements for release sweeps", async () => {
+  const { CONTRAST_CHECKS, measureThemeContrast } = await import(
+    "../src/theme-contrast.mjs"
+  );
+  const css = readFileSync(join(packageDir, "..", "CSS", "theme.css"), "utf8");
+  const result = measureThemeContrast(css);
+
+  assert.deepEqual(result.missing, []);
+  assert.equal(result.measurements.length, CONTRAST_CHECKS.length * 2);
+  assert.deepEqual(new Set(result.measurements.map(({ mode }) => mode)), new Set(["light", "dark"]));
+  for (const measurement of result.measurements) {
+    assert.equal(Number.isFinite(measurement.actual), true);
+    assert.equal(
+      CONTRAST_CHECKS.some(
+        ({ token, against, minimum, standard }) =>
+          token === measurement.token &&
+          against === measurement.against &&
+          minimum === measurement.minimum &&
+          standard === measurement.standard,
+      ),
+      true,
+    );
+  }
 });

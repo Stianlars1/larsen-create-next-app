@@ -235,6 +235,12 @@ try {
     defaultAgents.slice(defaultAgents.indexOf("## Skills")).trimEnd() === NO_SKILLS_SECTION,
     "AGENTS.md has the exact no-skills documentation",
   );
+  const defaultReadme = readFileSync(join(app, "README.md"), "utf8");
+  check(
+    defaultReadme.slice(defaultReadme.indexOf("## Skills"), defaultReadme.indexOf("## Tech")).trimEnd()
+      === NO_SKILLS_SECTION,
+    "README.md has the exact no-skills documentation",
+  );
 
   // Masters == synced copies (dev mode only; tarball content came from the same sync)
   if (dev) {
@@ -278,6 +284,12 @@ try {
     customAgents.slice(customAgents.indexOf("## Installed skills")).trimEnd()
       === MIXED_SKILLS_SECTION,
     "AGENTS.md lists exactly the installed skills",
+  );
+  const customReadme = readFileSync(join(work, "app-custom", "README.md"), "utf8");
+  check(
+    customReadme.slice(customReadme.indexOf("## Installed skills"), customReadme.indexOf("## Tech")).trimEnd()
+      === MIXED_SKILLS_SECTION,
+    "README.md lists exactly the installed skills",
   );
   const customTheme = readFileSync(
     join(work, "app-custom", "src", "lib", "design-system", "theme.css"),

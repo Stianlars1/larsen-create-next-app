@@ -50,15 +50,15 @@ The public choices are `subtle` and `strong`:
   complementary, and triadic, which were byte-identical to each other.
 - `strong` selects the neutral ramp previously produced by monochromatic.
 
-The mapping itself changes nothing else. The only 0.5.0 output difference
-against those former schemes is the corrected `--input`, which is a separate,
-deliberate accessibility fix and applies to `shadcn` under both tints. Radix
-Themes and CSS Variables declarations are unchanged from 0.4.0, because
-neither preset emits `--input`.
+The mapping itself preserves the former output. The 0.5.0 `--input` correction
+is a separate deliberate accessibility fix and applies to `shadcn` under both
+tints. The 0.5.0 hue-360 correction changes the complete palette in every
+preset and format for affected seeds, rather than only a shadcn declaration.
 
-The wrapper maps those names privately to the existing vendored engine. It
-does not change the engine, rotate the requested seed, or rebuild the accent
-palette around another hue. The generated `--analogous`,
+The wrapper maps those names privately to existing vendored engine paths. It
+does not rotate the requested seed or rebuild the accent palette around
+another hue. `palette/NOTICE.md` records the engine's local deviations,
+including the separate hue and foreground-subtle corrections. The generated `--analogous`,
 `--analogous-foreground`, `--complementary`, and
 `--complementary-foreground` support tokens and their chart mappings remain
 available under both choices.
@@ -72,23 +72,24 @@ Measured across a 233-seed sweep of hue, saturation, and lightness, in
 | --- | --- |
 | Gray ramp | `--gray-1` through `--gray-12` |
 | Derived from the gray ramp | `--foreground`, `--foreground-subtle`, `--muted`, `--muted-foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--border`, `--input`, `--secondary`, `--accent`, `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-accent`, `--primary-foreground`, `--sidebar-primary-foreground`, `--analogous-foreground`, `--complementary-foreground` |
-| Accent scale | unchanged, except for the two seeds below |
+| Accent scale | unchanged for chromatic seeds; changes for the four hueless exceptions below |
 
 `--background`, `--primary`, `--ring`, and `--accent-1` through `--accent-12`
 were identical under both tints for every chromatic seed in the sweep. The
 largest single-channel difference observed anywhere was 4 of 255, so the
 change is real but deliberately small.
 
-The one documented exception is a seed with no usable hue of its own. For
-`#000000` and `#FFFFFF` - and their immediate neighbours `#010101` and
-`#FEFEFE` - the engine derives the accent from the same tinted neutral, so
-those seeds move 15 accent-scale values as well.
+The documented exceptions have no usable hue of their own: `#000000`,
+`#010101`, `#FEFEFE`, and `#FFFFFF`. The engine derives each accent scale from
+the same tinted neutral, so those seeds move 15 accent-scale values as well.
 `create-next-app/test/neutral-tint.test.mjs` locks both halves of this claim.
 
 `generateThemeCss()` defaults to `subtle`. It rejects blank or unknown neutral
 tints and explicitly rejects an options object containing the removed
 `scheme` property. The public constants are `NEUTRAL_TINTS`, `PRESETS`, and
-`FORMATS`; `SCHEMES` is no longer exported.
+`FORMATS`; `SCHEMES` is no longer exported. `darkHex` is absent only when it
+is `null` or `undefined`; supplied blank, malformed, or non-string values are
+rejected explicitly. Valid three- and six-digit HEX values work.
 
 ## shadcn approved token-name contract
 
@@ -111,6 +112,7 @@ The approved derived roles are:
 | card-foreground | foreground | foreground |
 | popover | background | gray step 3 |
 | popover-foreground | foreground | foreground |
+| foreground-subtle | gray step 10, corrected only if needed to reach 4.5 against background | gray step 10, corrected only if needed to reach 4.5 against background |
 | primary | requested seed when it reaches 1.5, otherwise closest passing accent step | same rule |
 | primary-foreground | scale-first chooser against corrected primary | same rule |
 | ring | requested seed when it reaches 3, otherwise closest passing accent step | same rule |
@@ -234,12 +236,17 @@ this lands on gray-9 in light mode and gray-9 in dark mode instead of the
 gray-7 the engine emits upstream. `--border` and `--sidebar-border` keep
 gray-7.
 
+`--foreground-subtle` begins at gray-10. If gray-10 is below 4.5 against the
+mode background, it takes the closest displayable sRGB point along the OKLAB
+path toward gray-11 that clears 4.5. The correction changes no gray-ramp token.
+
 ## Test boundary
 
 The mechanical contrast parser supports only `shadcn` with `hsl-values` and
 checks both generated modes:
 
 - foreground against background at 4.5.
+- foreground-subtle against background at 4.5.
 - card-foreground against card at 4.5.
 - popover-foreground against popover at 4.5.
 - ring against background at 3.
@@ -255,8 +262,9 @@ the boundary of text fields, selects, and outline buttons, where the border
 is the only thing identifying the control, so it carries the 3:1 floor
 instead.
 
-It fails on missing required tokens. The generator performs the shadcn role
-correction before all six serialization formats, but this parser does not
+It fails on missing required tokens. The generator performs primary, ring,
+input, and foreground-subtle shadcn role corrections before all six
+serialization formats, but this parser does not
 claim to parse the other formats. Representative Radix accent contrast pairs
 are checked separately at 4.5 in all six formats. Both neutral tints run
 through the representative shadcn contrast seeds and the serialized-format
@@ -264,5 +272,8 @@ checks. The deterministic matrix separately proves names, order, mode
 structure, selected syntax, alpha preservation, exact declaration baselines,
 approved mappings, and the distinction between Radix Themes and CSS Variables.
 
-Upstream drift checks remain a separate networked verification concern. The
-runtime suite is intentionally offline and pinned.
+The deterministic release sweep is `npm run verify:palette-sweep` from
+`create-next-app`. It checks 762 unique seeds under both neutral tints and
+locks the seed corpus SHA-256. Upstream drift checks remain a separate
+networked verification concern. The runtime suite is intentionally offline;
+the deterministic sweep locks its seed corpus and order by SHA-256.
