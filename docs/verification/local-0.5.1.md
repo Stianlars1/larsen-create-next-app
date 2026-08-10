@@ -1,9 +1,8 @@
 # Local 0.5.1 verification
 
-Pre-publication local implementation evidence collected on 2026-08-10. It
-describes source behavior and is not evidence of npm publication, a tag, a
-GitHub Release, or deployment. Exact release-candidate identity and artifact
-results belong in the later gate section after those results exist.
+Pre-publication local implementation and release-candidate evidence collected
+on 2026-08-10. It describes source and artifact behavior and is not evidence
+of npm publication, a tag, a GitHub Release, or deployment.
 
 ## Scope and boundary
 
@@ -11,9 +10,12 @@ results belong in the later gate section after those results exist.
 | --- | --- |
 | Package version in source | `0.5.1` |
 | Implementation base before 0.5.1 | `2913f3a` |
-| Release-candidate source | recorded after the candidate commit exists |
+| Release-candidate source | `838f6ce21813866d7d4d7c5789fe46f7d6125e06` |
+| Verified tarball | `create-next-app/larsen-utvikling-create-next-app-0.5.1.tgz` |
+| Tarball SHA-256 | `596561f33c62b644e9485d316a9b46d061a3b08cce705d2b64a74a5637d4e7f1` |
+| Tarball size and file count | 60,762 bytes, 42 files |
 | 0.5.1 npm publication state | unpublished |
-| 0.5.1 artifact, tag, release, deployment | no result recorded yet |
+| 0.5.1 tag, GitHub Release, deployment | none |
 
 This record is intentionally local. `docs/verification/releases.md` remains
 the authority for final registry and published-artifact evidence after an
@@ -59,26 +61,26 @@ recorded result is zero failures.
 | primary-foreground vs primary | 4.5 | 4.504312 | `#8A53BF`, subtle, light |
 | primary vs background | 1.5 | 1.500667 | `#FDCEA5`, subtle, light |
 
-## Targeted local checks
+## Release-candidate gates
 
-- The targeted foreground-subtle, darkHex, neutral-tint, generated README,
-  and six-format palette tests were green in the current working tree.
-- The deterministic sweep result above was green with zero failures.
-- No final `npm test` count is recorded here. No release tarball, tarball
-  smoke, full install/build smoke, npm publish, tag, GitHub Release, or
-  deployment result has been recorded.
+The following results all apply to source commit
+`838f6ce21813866d7d4d7c5789fe46f7d6125e06` and the exact tarball identified
+above:
 
-## Later release-candidate evidence - fill only after the gates run
+- `node scripts/generate-cli-reference.mjs --check` passed.
+- `npm test` passed 177 tests with zero failures.
+- `npm run verify:palette-sweep` passed the 1,524-theme sweep recorded above.
+- `npm run smoke` passed against the development scaffold.
+- `npm run pack:release` passed and reported the verified tarball above. Its
+  embedded `gitHead` is the release-candidate source commit.
+- `npm run smoke:full -- '/Users/stian/Larsen Utvikling/prosjekter/_TEMPLATES/create-next-app/larsen-utvikling-create-next-app-0.5.1.tgz'`
+  passed the artifact checks, generated-project checks, install, and production
+  build.
+- `npm publish --dry-run --ignore-scripts=false` passed for that tarball and
+  reported version `0.5.1`, 42 files, and package size 60.8 kB.
+- SHA-256 was checked before and after the npm dry-run and remained
+  `596561f33c62b644e9485d316a9b46d061a3b08cce705d2b64a74a5637d4e7f1`.
 
-Leave this section incomplete until the versioned source is committed and the
-following results exist for that exact candidate:
-
-- `node scripts/generate-cli-reference.mjs --check`
-- `npm test`
-- `npm run verify:palette-sweep`
-- `npm run pack:release`, including the reported tarball path and embedded
-  `gitHead`
-- `npm run smoke:full -- /path/to/the-reported-tarball.tgz`
-
-After an owner-run publish, record registry metadata, tag, and release status
-only in `docs/verification/releases.md`.
+The dry-run did not publish. No npm publish, push, tag, GitHub Release, or
+deployment was performed. After an owner-run publish, registry metadata, tag,
+and release status belong only in `docs/verification/releases.md`.
