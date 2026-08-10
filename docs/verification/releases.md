@@ -1,9 +1,9 @@
 # Published release evidence
 
 Registry evidence for `@larsen-utvikling/create-next-app` versions 0.1.0
-through 0.4.0, queried from npm on 2026-08-09, and 0.5.0, queried on
-2026-08-10. This is a publication trace, not proof that current local source
-matches a published artifact.
+through 0.4.0, queried from npm on 2026-08-09, and 0.5.0 through 0.5.1,
+queried on 2026-08-10. This is a publication trace, not proof that current
+local source matches a published artifact.
 
 ## Evidence method
 
@@ -31,9 +31,10 @@ the registry for that tarball.
 | 0.3.0 | 2026-08-09T08:37:31.570Z | `2ee1ccb60e2f0e7a15acaa3b55f6dabe043386a3` | `5e3fc3d23d53461533eadf518f916c5360d421a5` |
 | 0.4.0 | 2026-08-09T17:08:02.674Z | `e9c64798538285910e5cf31b45ce53bdc5926de7` | `ad7c2acd1695d5062f3132f07fe10b530454b4c5` |
 | 0.5.0 | 2026-08-10T09:51:56.334Z | `33ca295831dcfaa52f4c2e96b73b0f00f95a33fc` | `eda6271799069b14482c6b6ca4f48e8448f2ec86` |
+| 0.5.1 | 2026-08-10T12:12:31.498Z | `838f6ce21813866d7d4d7c5789fe46f7d6125e06` | `56ea45adf6373282281038500ba0f53b1cd0e1d3` |
 
-At the 2026-08-10 query, npm listed exactly those eight versions and the
-`latest` dist tag pointed to 0.5.0.
+At the 2026-08-10 query, npm listed exactly those nine versions and the
+`latest` dist tag pointed to 0.5.1.
 
 ## Actual release deltas
 
@@ -150,6 +151,25 @@ Changes between the 0.4.0 and 0.5.0 registry `gitHead` objects:
   tests, non-string seed rejection, and a clean parse error for unknown or
   removed flags
 
+### 0.5.1
+
+Changes between the 0.5.0 and 0.5.1 registry `gitHead` objects:
+
+- kept `--foreground-subtle` at gray-10 when it passes 4.5 against the mode
+  background, otherwise applying the minimum passing correction toward
+  gray-11 without changing the gray ramp
+- rejected supplied blank, malformed, and non-string `darkHex` values while
+  retaining valid three- and six-digit values and absent `null` or `undefined`
+- made generated README skill attribution use the same verified, source-aware
+  content as generated `AGENTS.md`
+- limited neutral-tint accent invariance to chromatic seeds and documented the
+  exact hueless exceptions `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`
+- narrowed the release packer's clean-source exception to dated local
+  verification files, so an uncommitted published-release ledger blocks a
+  candidate
+- expanded deterministic contrast, declaration, generated-documentation, and
+  release-artifact coverage for those corrections
+
 ## 0.3.0 publication verification
 
 npm listed 0.3.0 with `latest` pointing to it. The published `gitHead` is the
@@ -194,3 +214,25 @@ The final registry and published-artifact evidence for 0.5.0 is recorded in
 this document. [local-0.5.0.md](local-0.5.0.md) remains local implementation,
 contrast-sweep, generated-app, and landing-page evidence; it is not the final
 artifact or registry record. The two documents are separate evidence layers.
+
+## 0.5.1 publication verification
+
+npm listed 0.5.1 with `latest` pointing to it. It was published at
+`2026-08-10T12:12:31.498Z`. Its published artifact has 42 files, unpacked size
+227661 bytes, registry shasum
+`56ea45adf6373282281038500ba0f53b1cd0e1d3`, and `gitHead`
+`838f6ce21813866d7d4d7c5789fe46f7d6125e06`.
+
+The published tarball was downloaded from the registry and compared byte for
+byte against the local artifact that passed `npm run pack:release` and
+`npm run smoke:full`. Both are SHA-256
+`596561f33c62b644e9485d316a9b46d061a3b08cce705d2b64a74a5637d4e7f1`, so the
+artifact on npm is the one that was verified, not a re-pack.
+
+Annotated tag `v0.5.1` peels to the same `gitHead`. GitHub reports the matching
+Release as Latest, published, not a draft, and not a prerelease:
+[v0.5.1 - Contrast-safe subtle text and tighter release contracts](https://github.com/Stianlars1/larsen-create-next-app/releases/tag/v0.5.1).
+
+[local-0.5.1.md](local-0.5.1.md) remains the local implementation,
+contrast-sweep, generated-app, and pre-publication artifact record. The two
+documents are separate evidence layers.
