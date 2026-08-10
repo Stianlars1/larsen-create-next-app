@@ -181,15 +181,14 @@ npm listed 0.5.0 with `latest` pointing to it. Its published artifact has 42
 files, unpacked size 224851 bytes, registry shasum
 `eda6271799069b14482c6b6ca4f48e8448f2ec86`, and `gitHead`
 `33ca295831dcfaa52f4c2e96b73b0f00f95a33fc`. Annotated tag `v0.5.0` peels to
-that same object.
+that same object, and the matching GitHub Release is published as
+[v0.5.0 - Neutral tint, credited skill sources, and an input contrast floor](https://github.com/Stianlars1/larsen-create-next-app/releases/tag/v0.5.0).
 
 The published tarball was downloaded from the registry and compared byte for
 byte against the local artifact that passed `npm run pack:release` and
 `npm run smoke:full`. Both are SHA-256
 `c8665013185a37b801b885c5a7baea590f568e2d9df9d7ea734aac7576c0d102`, so the
 artifact on npm is the one that was verified, not a re-pack.
-
-No GitHub Release has been published for this tag yet.
 
 The implementation, contrast-sweep, generated-app, artifact, and landing-page
 evidence remains in [local-0.5.0.md](local-0.5.0.md). That local record and
