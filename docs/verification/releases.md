@@ -1,8 +1,9 @@
 # Published release evidence
 
 Registry evidence for `@larsen-utvikling/create-next-app` versions 0.1.0
-through 0.4.0, queried from npm on 2026-08-09. This is a publication trace,
-not proof that current local source matches a published artifact.
+through 0.4.0, queried from npm on 2026-08-09, and 0.5.0, queried on
+2026-08-10. This is a publication trace, not proof that current local source
+matches a published artifact.
 
 ## Evidence method
 
@@ -29,9 +30,10 @@ the registry for that tarball.
 | 0.2.2 | 2026-08-08T20:39:55.720Z | `9029dd023024b20ce5288f46831bb91013f2b632` | `c08a4792aaa74117eb0eb2bb9b9459b44589f25b` |
 | 0.3.0 | 2026-08-09T08:37:31.570Z | `2ee1ccb60e2f0e7a15acaa3b55f6dabe043386a3` | `5e3fc3d23d53461533eadf518f916c5360d421a5` |
 | 0.4.0 | 2026-08-09T17:08:02.674Z | `e9c64798538285910e5cf31b45ce53bdc5926de7` | `ad7c2acd1695d5062f3132f07fe10b530454b4c5` |
+| 0.5.0 | 2026-08-10T09:51:56.334Z | `33ca295831dcfaa52f4c2e96b73b0f00f95a33fc` | `eda6271799069b14482c6b6ca4f48e8448f2ec86` |
 
-At query time, npm listed exactly those seven versions and the `latest` dist
-tag pointed to 0.4.0.
+At the 2026-08-10 query, npm listed exactly those eight versions and the
+`latest` dist tag pointed to 0.5.0.
 
 ## Actual release deltas
 
@@ -119,6 +121,35 @@ Changes between the 0.3.0 and 0.4.0 registry `gitHead` objects:
 - added desired-contract, alpha, syntax, mapping, serialized contrast, real
   scaffold, install, production-build, and local HTTP verification
 
+### 0.5.0
+
+Changes between the 0.4.0 and 0.5.0 registry `gitHead` objects:
+
+- removed the public `--scheme` flag, the `scheme` palette property, and the
+  `SCHEMES` export, and made the removed property throw instead of being
+  ignored; three of its four values had produced byte-identical output
+- added `--neutral-tint <subtle|strong>` and `NEUTRAL_TINTS`, mapping the two
+  values privately onto the neutral ramps the former analogous and
+  monochromatic schemes produced, with no declaration change from the mapping
+- added neutral tint as the fourth interactive palette question, asked last
+  with `subtle` preselected, driven by a new exported
+  `PALETTE_PROMPT_CONTRACT`
+- raised `--input` to the closest gray reaching 3:1 against background, card,
+  and popover, for WCAG 2.1 SC 1.4.11; `--border` and `--sidebar-border`
+  deliberately keep gray-7
+- wrapped hue modulo 360 in both color converters, so a seed whose hue rounded
+  to 360 no longer fails the engine's range guard and silently produces the
+  engine's default blue
+- grouped agent skill requests by source repository, with one installer
+  invocation and independent on-disk verification per source, and added
+  `transitions-dev` as an explicit third-party opt-in that is never vendored
+- limited a generated project's skill attribution to the sources it actually
+  installed
+- moved the contrast checker into `src/` so the published package ships it
+- added neutral-tint declaration baselines, tint-independence and hueless-seed
+  tests, non-string seed rejection, and a clean parse error for unknown or
+  removed flags
+
 ## 0.3.0 publication verification
 
 npm listed 0.3.0 with `latest` pointing to it. The published `gitHead` is the
@@ -143,3 +174,23 @@ The implementation, matrix, generated-app, install, production-build, local
 HTTP, and pre-publication artifact evidence remains in
 [local-0.4.0.md](local-0.4.0.md). That local record and the registry trace
 above are separate evidence layers.
+
+## 0.5.0 publication verification
+
+npm listed 0.5.0 with `latest` pointing to it. Its published artifact has 42
+files, unpacked size 224851 bytes, registry shasum
+`eda6271799069b14482c6b6ca4f48e8448f2ec86`, and `gitHead`
+`33ca295831dcfaa52f4c2e96b73b0f00f95a33fc`. Annotated tag `v0.5.0` peels to
+that same object.
+
+The published tarball was downloaded from the registry and compared byte for
+byte against the local artifact that passed `npm run pack:release` and
+`npm run smoke:full`. Both are SHA-256
+`c8665013185a37b801b885c5a7baea590f568e2d9df9d7ea734aac7576c0d102`, so the
+artifact on npm is the one that was verified, not a re-pack.
+
+No GitHub Release has been published for this tag yet.
+
+The implementation, contrast-sweep, generated-app, artifact, and landing-page
+evidence remains in [local-0.5.0.md](local-0.5.0.md). That local record and
+the registry trace above are separate evidence layers.

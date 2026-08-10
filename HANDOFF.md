@@ -5,8 +5,17 @@ page is deployed.
 
 ## Status
 
-0.5.0 is implemented and locally verified in both repositories. **Nothing is
-staged, committed, pushed, published, or deployed.**
+**Package 0.5.0 is published and verified on npm.** The landing page is not
+deployed yet.
+
+| Step | State |
+| --- | --- |
+| Package commit | `33ca295` on `origin/main` |
+| Tag `v0.5.0` | pushed, peels to `33ca295` |
+| npm publication | `0.5.0`, `latest`, published 2026-08-10T09:51:56.334Z |
+| Registry artifact | byte-identical to the locally smoked tarball |
+| GitHub Release | not created - needs Stian's go-ahead |
+| Landing page | implemented, gated, **not committed or deployed** |
 
 What ships together:
 
@@ -42,28 +51,8 @@ Radix Themes and CSS Variables declarations are otherwise unchanged from
 
 ## Uncommitted work
 
-Package repo, on `main` at `9805ac2`:
-
-- Skills: `create-next-app/src/skills.js` (now owns `renderSkillsNote`),
-  `src/prompts.js`, `bin/cli.js`, `scripts/smoke.mjs`, tests, plus the audit
-  under `docs/plans/`.
-- Neutral tint: `palette/index.js`, `palette/generate-default.mjs`,
-  `create-next-app/src/options.js`, `src/prompts.js`
-  (`PALETTE_PROMPT_CONTRACT`), `CSS/theme.css`,
-  `create-next-app/test/neutral-tint.test.mjs`.
-- Engine: `palette/engine/export-formats.js`, `color-utils.js`,
-  `colorConverters.js`, with `palette/NOTICE.md` deviations 10 and 11.
-- `create-next-app/scripts/theme-contrast.mjs` moved to `src/` so the
-  published package ships its own contrast checker and the landing page can
-  use the same implementation.
-- Docs: `AGENTS.md`, `PROJECT.md`, `CHANGELOG.md`, `README.md`,
-  `create-next-app/README.md`, `docs/reference/cli.md`,
-  `docs/reference/palette.md`, `create-next-app/template/DESIGN.md`,
-  `create-next-app/template/README.md`, `docs/verification/local-0.5.0.md`.
-- `.gitignore` now ignores `.playwright-mcp/`, which was blocking
-  `pack:release`.
-
-Landing page repo, one commit ahead of `origin/main` at `8195236`:
+The package repo is committed and clean at `33ca295`. Everything below is the
+landing page, one commit ahead of `origin/main` at `8195236`:
 
 - `src/lib/content.ts`, `src/lib/palette.ts`, `src/types/palette-engine.d.ts`
 - `src/components/demo/palette-demo.tsx` and its module CSS
@@ -74,34 +63,19 @@ Landing page repo, one commit ahead of `origin/main` at `8195236`:
 - `src/lib/palette.test.mjs`, `src/lib/package-contract.test.mjs`,
   `package.json` test script, `AGENTS.md`, `.claude/launch.json`
 
-`node_modules` currently holds an unsaved local `0.5.0` pack so the gates
-could run. `package.json` still declares `^0.4.0` on purpose.
-
 ## Next steps
 
-1. Commit the package repo as one release commit. A skills-first split was
-   considered and rejected: only `src/skills.js` and the audit document are
-   skills-only, while `bin/cli.js`, `src/prompts.js`, `src/options.js`,
-   `scripts/smoke.mjs`, the tests, and every document carry both changes
-   interleaved. A split would have produced a first commit whose test suite
-   fails, which is worse history than one commit that passes.
-2. `npm run pack:release` from the clean tree. It reports one tarball path
-   and its `gitHead`.
-3. `npm run smoke:full -- <that exact path>`. This installs dependencies and
-   runs `next build` inside a generated project.
-4. Stian publishes that exact tarball. No agent runs `npm publish`; 2FA is on
-   the account.
-5. Verify the registry: exact version, `gitHead`, and shasum. Record it in
-   `docs/verification/releases.md`.
-6. Only then, in the landing page repo: bump
-   `@larsen-utvikling/create-next-app` to `^0.5.0`, reinstall so the lockfile
-   points at the published artifact, and re-run `npm test`, `npm run lint`,
-   `npx tsc --noEmit`, `npm run build`.
-7. Deploy the landing page and verify the deployed URL, not the build log.
+1. Landing page: bump `@larsen-utvikling/create-next-app` to `^0.5.0`,
+   reinstall so the lockfile points at the published artifact, re-run
+   `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, then
+   commit, push and deploy. Verify the deployed URL, not the build log.
+2. Optional: publish a GitHub Release for `v0.5.0`. Not done - publishing
+   public content is Stian's call.
 
-Step 6 is a hard gate. `src/lib/package-contract.test.mjs` reads the installed
-package, so a clean install of `0.4.0` fails it. A deploy cannot silently ship
-a page that offers `--neutral-tint` against an engine that ignores it.
+The dependency bump is a hard gate. `src/lib/package-contract.test.mjs` reads
+the installed package, so a clean install of `0.4.0` fails it. A deploy cannot
+silently ship a page that offers `--neutral-tint` against an engine that
+ignores it.
 
 ## Known and accepted
 
