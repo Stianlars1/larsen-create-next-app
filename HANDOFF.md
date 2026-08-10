@@ -5,8 +5,8 @@ page is deployed.
 
 ## Status
 
-**Package 0.5.0 is published and verified on npm.** The landing page is not
-deployed yet.
+**0.5.0 is published, deployed and verified.** This file can be deleted once
+the optional GitHub Release is decided.
 
 | Step | State |
 | --- | --- |
@@ -15,7 +15,8 @@ deployed yet.
 | npm publication | `0.5.0`, `latest`, published 2026-08-10T09:51:56.334Z |
 | Registry artifact | byte-identical to the locally smoked tarball |
 | GitHub Release | not created - needs Stian's go-ahead |
-| Landing page | implemented, gated, **not committed or deployed** |
+| Landing page | `1d7b440` on `origin/main`, live on create-next-app.larsenutvikling.no |
+| End-to-end | `npx @larsen-utvikling/create-next-app@0.5.0` scaffolds and passes contrast |
 
 What ships together:
 
@@ -49,33 +50,11 @@ Three, all deliberate, all `shadcn` only except the last:
 Radix Themes and CSS Variables declarations are otherwise unchanged from
 0.4.0.
 
-## Uncommitted work
-
-The package repo is committed and clean at `33ca295`. Everything below is the
-landing page, one commit ahead of `origin/main` at `8195236`:
-
-- `src/lib/content.ts`, `src/lib/palette.ts`, `src/types/palette-engine.d.ts`
-- `src/components/demo/palette-demo.tsx` and its module CSS
-- `src/components/ui/neutral-tint-disclosure.tsx` and its module CSS
-- `src/components/features/command-builder.tsx`, `sections.tsx`
-- `src/components/theme/site-theme.tsx`, `src/app/layout.tsx`
-- `src/styles/design-system/theme.css` - mechanical sync of the package master
-- `src/lib/palette.test.mjs`, `src/lib/package-contract.test.mjs`,
-  `package.json` test script, `AGENTS.md`, `.claude/launch.json`
-
 ## Next steps
 
-1. Landing page: bump `@larsen-utvikling/create-next-app` to `^0.5.0`,
-   reinstall so the lockfile points at the published artifact, re-run
-   `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, then
-   commit, push and deploy. Verify the deployed URL, not the build log.
-2. Optional: publish a GitHub Release for `v0.5.0`. Not done - publishing
-   public content is Stian's call.
-
-The dependency bump is a hard gate. `src/lib/package-contract.test.mjs` reads
-the installed package, so a clean install of `0.4.0` fails it. A deploy cannot
-silently ship a page that offers `--neutral-tint` against an engine that
-ignores it.
+Only one, and it is optional: publish a GitHub Release for `v0.5.0`. Not done -
+publishing public content is Stian's call. The tag is pushed and
+`docs/verification/releases.md` records that no Release exists yet.
 
 ## Known and accepted
 
