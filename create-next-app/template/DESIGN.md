@@ -53,8 +53,9 @@ The generator preserves the requested seed for shadcn primary and ring when
 their role-specific contrast floors pass, otherwise it uses the closest safe
 accent-scale color. Foregrounds remain scale-first rather than defaulting to
 pure black or white. `--foreground-subtle` starts at gray-10; if it is below
-4.5 against the mode background, it moves along the displayable sRGB OKLAB
-path toward gray-11 to the closest point that clears 4.5. Radix accent
+4.5 against the mode background, a fixed 24-round binary search follows the
+OKLAB path toward gray-11 and uses the passing 8-bit sRGB candidate at the
+isolated boundary. Radix accent
 contrast reaches 4.5 against accent step 9.
 
 **Usage idiom for this project:**

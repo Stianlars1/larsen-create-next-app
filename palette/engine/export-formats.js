@@ -134,8 +134,8 @@ function minimallyCorrectedNeutral(preferred, fallback, background, minimum) {
   let passingAmount = 1;
   let passingColor = fallback;
 
-  // Twenty-four rounds are more than enough to settle on the closest 8-bit
-  // sRGB value emitted by the engine while keeping the result deterministic.
+  // Twenty-four rounds isolate the passing 8-bit sRGB boundary far beyond the
+  // emitted format's quantization resolution while keeping it deterministic.
   for (let iteration = 0; iteration < 24; iteration += 1) {
     const amount = (failingAmount + passingAmount) / 2;
     const candidate = preferredColor

@@ -18,15 +18,19 @@ behavior and is not npm publication, tag, release, or deployment evidence.
 
 ### Changed
 - `--foreground-subtle` still starts at gray-10. When that color is below 4.5
-  against its mode background, it now takes the closest displayable sRGB point
-  along the OKLAB path toward gray-11 that clears 4.5. The gray ramp itself is
-  unchanged. The mechanical shadcn checker now includes this 4.5 pair.
+  against its mode background, a fixed 24-round binary search follows the
+  OKLAB path toward gray-11 and emits the passing 8-bit sRGB candidate at the
+  isolated boundary. The gray ramp itself is unchanged. The mechanical
+  shadcn checker now includes this 4.5 pair.
 - `darkHex` now rejects supplied blank, malformed, and non-string values with
   an explicit package error. `null` and `undefined` remain absent values, and
   valid three- and six-digit HEX values continue to work.
 - Generated README and `AGENTS.md` now use the same source-aware skills
   section. Projects with no skills or only Larsen Skills do not link to an
   unselected third-party source.
+- Release packing now excludes only dated local verification records from its
+  clean-source gate. An uncommitted change to the final published-release
+  ledger blocks the candidate.
 - Neutral-tint accent invariance is explicitly limited to chromatic seeds. The
   hueless exceptions are `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`.
 

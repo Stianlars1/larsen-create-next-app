@@ -131,8 +131,15 @@ for (const [label, dirty] of [
     "untracked",
     (fixture) => writeFileSync(join(fixture.packageDir, "src", "untracked-release-source.js"), "\n"),
   ],
+  [
+    "published release evidence",
+    (fixture) => appendFileSync(
+      join(fixture.repoRoot, "docs", "verification", "releases.md"),
+      "\nUncommitted registry claim.\n",
+    ),
+  ],
 ]) {
-  test(`release packing rejects ${label} release source without touching the real checkout`, () => {
+  test(`release packing rejects ${label} without touching the real checkout`, () => {
     const realStatusBefore = run(
       "git",
       ["status", "--porcelain=v1", "--untracked-files=all"],

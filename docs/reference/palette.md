@@ -237,8 +237,9 @@ gray-7 the engine emits upstream. `--border` and `--sidebar-border` keep
 gray-7.
 
 `--foreground-subtle` begins at gray-10. If gray-10 is below 4.5 against the
-mode background, it takes the closest displayable sRGB point along the OKLAB
-path toward gray-11 that clears 4.5. The correction changes no gray-ramp token.
+mode background, a fixed 24-round binary search follows the OKLAB path toward
+gray-11 and emits the passing 8-bit sRGB candidate at the isolated boundary.
+The correction changes no gray-ramp token.
 
 ## Test boundary
 

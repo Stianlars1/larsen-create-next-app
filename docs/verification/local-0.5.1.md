@@ -12,8 +12,8 @@ results belong in the later gate section after those results exist.
 | Package version in source | `0.5.1` |
 | Implementation base before 0.5.1 | `2913f3a` |
 | Release-candidate source | recorded after the candidate commit exists |
-| Publication state | unpublished |
-| Artifact, tag, release, deployment | no result recorded yet |
+| 0.5.1 npm publication state | unpublished |
+| 0.5.1 artifact, tag, release, deployment | no result recorded yet |
 
 This record is intentionally local. `docs/verification/releases.md` remains
 the authority for final registry and published-artifact evidence after an
@@ -22,9 +22,10 @@ owner-run release.
 ## Implemented behavior
 
 - `--foreground-subtle` starts at gray-10. If it is below 4.5 against the mode
-  background, it takes the closest displayable sRGB point along the OKLAB path
-  toward gray-11 that clears 4.5. The gray ramp is unchanged, and the
-  mechanical checker adds foreground-subtle against background at 4.5.
+  background, a fixed 24-round binary search follows the OKLAB path toward
+  gray-11 and emits the passing 8-bit sRGB candidate at the isolated boundary.
+  The gray ramp is unchanged, and the mechanical checker adds
+  foreground-subtle against background at 4.5.
 - Supplied `darkHex` values that are blank, malformed, or non-strings fail
   explicitly. `null` and `undefined` remain absent values; valid three- and
   six-digit HEX values continue to work.
@@ -33,10 +34,10 @@ owner-run release.
 - Neutral-tint accent invariance applies to chromatic seeds. The exact hueless
   exceptions are `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`.
 
-An independent declaration review found no output change other than the
-foreground-subtle correction across 396 cases and across all 360 hue inputs x
-2 neutral tints x 6 formats. The six-format foreground-subtle minimum observed
-was 4.5000268.
+The permanent declaration tests lock every non-foreground-subtle declaration
+to the 0.5.0 baseline for `#4DA0FF` across both tints, all three presets, and
+all six formats. Separate complete 0.5.1 hashes lock the corrected shadcn
+output under both tints and all six formats.
 
 ## Deterministic palette sweep
 

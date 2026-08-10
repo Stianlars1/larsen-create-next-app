@@ -19,7 +19,7 @@ const repoRoot = join(packageDir, "..");
 
 const RELEASE_STATUS_PATHS = Object.freeze([
   ".",
-  ":(exclude)docs/verification/**",
+  ":(exclude,glob)docs/verification/local-*.md",
 ]);
 
 /** @param {string} command @param {string[]} args @param {string} cwd */
@@ -38,8 +38,9 @@ function run(command, args, cwd) {
 /**
  * Resolves the immutable source identity and rejects source changes that can
  * affect package contents, release tooling, tests, or the maintained current
- * contract. Dated files under docs/verification are evidence written after an
- * artifact exists, so they are deliberately outside this cleanliness gate.
+ * contract. Dated local-*.md evidence is written after an artifact exists, so
+ * only those files are deliberately outside this cleanliness gate. The final
+ * releases.md ledger remains release-relevant source.
  *
  * @param {{ repoRoot: string }} options
  * @returns {string} full HEAD object id

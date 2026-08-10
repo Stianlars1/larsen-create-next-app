@@ -283,12 +283,12 @@ keep gray-7: card edges and separators are not user interface components, and
 the same floor would give every card a heavy outline.
 
 `--foreground-subtle` starts at gray-10. If it is below 4.5 against the mode
-background, the generator selects the closest displayable sRGB point along the
-OKLAB path toward gray-11 that clears 4.5. The generator applies primary,
-ring, input, and foreground-subtle corrections before serialization, so
-format selection cannot bypass them. The CSS parser itself makes no broader
-preset-format claim. Representative Radix accent pairs are checked separately
-at 4.5 in all six generated formats.
+background, a fixed 24-round binary search follows the OKLAB path toward
+gray-11 and selects the passing 8-bit sRGB candidate at the isolated boundary.
+The generator applies primary, ring, input, and foreground-subtle corrections
+before serialization, so format selection cannot bypass them. The CSS parser
+itself makes no broader preset-format claim. Representative Radix accent pairs
+are checked separately at 4.5 in all six generated formats.
 
 The deterministic 2 x 3 x 6 neutral-tint, preset, and format matrix locks the
 implemented contracts: shadcn exposes 81 color names in both modes plus
@@ -348,7 +348,8 @@ publish must use that same file. Publishing the source directory is refused.
 Agents never run `npm publish` or handle 2FA.
 
 Release-relevant source means every tracked or non-ignored untracked
-repository path except dated evidence under `docs/verification/`. Ignored
+repository path except `docs/verification/local-*.md`. The final
+`docs/verification/releases.md` ledger remains release-relevant. Ignored
 dependencies and synced package copies are not source; the release packer
 recreates those copies from the root masters. Packing refuses when relevant
 source is dirty, resolves the full committed HEAD, and writes it as `gitHead`
