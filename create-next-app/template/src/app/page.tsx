@@ -73,6 +73,7 @@ export default function Home() {
               <li key={swatch.token} className="swatch">
                 <span
                   className="swatch-chip"
+                  aria-hidden="true"
                   style={{ background: swatch.value }}
                 />
                 <span className="swatch-label">{swatch.label}</span>

@@ -3,7 +3,7 @@
 Current package contract. This document describes the behavior implemented in
 this repository, not the original plan, release history, or any separate site.
 
-Last checked against source and tests: 2026-08-10.
+Last checked against source and tests: 2026-08-11.
 
 ## Product boundary
 
@@ -158,7 +158,11 @@ does not invent `NEXTJS.md`. `CLAUDE.md` contains only `@AGENTS.md`.
 `../lib/design-system/index.css`. The overlay removes the upstream
 `page.module.css`, replaces the starter page, and removes upstream branding
 SVG files. Installed-skills documentation lists only skills found on disk
-after each source installer returns and credits the source repository.
+after each source installer returns and credits the source repository. The
+starter does not weaken palette contrast with element opacity. Its external
+footer link has a visible token-backed focus indicator and a 44px minimum
+target height, and decorative swatch chips are hidden from assistive
+technology.
 
 Generated projects are copies. This package does not update them later.
 
@@ -262,11 +266,13 @@ then recomputed with the existing accent-scale-first chooser. Radix keeps the
 upstream accent contrast only when it reaches 4.5 against accent step 9 and
 otherwise uses that same scale-first chooser.
 
-The mechanical CSS verifier parses only `shadcn` with `hsl-values` and checks
-both generated modes:
+The mechanical CSS verifier parses `shadcn`, `radix`, and `css-variables` in
+`hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`, and checks both
+generated modes. The shadcn role checks are:
 
 - `--foreground` vs `--background` must reach 4.5.
-- `--foreground-subtle` vs `--background` must reach 4.5.
+- `--foreground-subtle` vs `--background` must reach the 4.6 project target,
+  a 0.1 margin above the WCAG AA 4.5 normal-text minimum.
 - `--card-foreground` vs `--card` must reach 4.5.
 - `--popover-foreground` vs `--popover` must reach 4.5.
 - `--ring` vs `--background` must reach 3.
@@ -274,6 +280,8 @@ both generated modes:
 - `--primary-foreground` vs `--primary` must reach 4.5.
 - `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
   visibility floor.
+- Secondary, muted, accent, destructive, harmony, and status foreground pairs
+  must reach 4.5 where those roles exist.
 
 `--input` carries the 3 floor because it paints the boundary of text fields,
 selects, and outline buttons, where nothing else identifies the control -
@@ -282,13 +290,12 @@ neutral. `--border` and `--sidebar-border` are deliberately not checked and
 keep gray-7: card edges and separators are not user interface components, and
 the same floor would give every card a heavy outline.
 
-`--foreground-subtle` starts at gray-10. If it is below 4.5 against the mode
+`--foreground-subtle` starts at gray-10. If it is below 4.6 against the mode
 background, a fixed 24-round binary search follows the OKLAB path toward
 gray-11 and selects the passing 8-bit sRGB candidate at the isolated boundary.
 The generator applies primary, ring, input, and foreground-subtle corrections
-before serialization, so format selection cannot bypass them. The CSS parser
-itself makes no broader preset-format claim. Representative Radix accent pairs
-are checked separately at 4.5 in all six generated formats.
+before serialization, so format selection cannot bypass them. Radix accent
+and gray contrast pairs are checked at 4.5 in all six generated formats.
 
 The deterministic 2 x 3 x 6 neutral-tint, preset, and format matrix locks the
 implemented contracts: shadcn exposes 81 color names in both modes plus
@@ -320,8 +327,12 @@ The CLI groups requested names by source repository and runs one
 requested skill. Exit status is insufficient because the installer can exit
 successfully without installing the requested set. The CLI therefore verifies
 `.agents/skills/<name>/SKILL.md` after each source command and documents only
-entries with that file. It does not verify any agent-specific discovery or
-symlink.
+entries with that file. Sources remain intentionally current rather than
+pinned. For every source that installs files, generated documentation records
+the upstream HEAD observed at install time when Git can resolve it, plus a
+SHA-256 digest of the verified `SKILL.md` contents. The content digest remains
+available even when source HEAD resolution is unavailable. This does not
+verify any agent-specific discovery or symlink.
 
 Skills are installed before the overlay. A failed optional source produces a
 warning and the scaffold continues. Other requested sources still run, and
@@ -340,11 +351,15 @@ Different commands prove different things:
 | `npm run verify:palette-sweep` | Deterministic 762-seed x 2 neutral-tint shadcn contrast sweep | Release artifact, npm publication, or other preset-format behavior |
 | `npm run smoke` | Real generated projects from one release-style tarball with scaffold assertions | Dependency installation and `next build` |
 | `npm run pack:release` | One consumer-clean tarball from clean release-relevant source, with exact `gitHead`, plus standard tarball smoke | Full install/build or npm publication |
-| `npm run smoke:full -- <same-tarball>` | Installation and `next build` from the supplied artifact | npm publication |
+| `npm run smoke:full -- <same-tarball>` | Sequential npm, pnpm, yarn, and bun install or missing-manager behavior from the supplied artifact, plus `next build` from npm output | npm publication |
 | `npm view <exact-version>` after owner publish | Registry metadata for that exact version | Local branch content beyond its recorded `gitHead` |
 
-`pack:release` reports an absolute tarball path. The full smoke and owner-run
-publish must use that same file. Publishing the source directory is refused.
+`pack:release` creates one dedicated `lu-release-candidate-*` directory under
+the system temporary directory and reports its absolute tarball path. The full
+smoke and owner-run publish must use that same file. Publishing the source
+directory is refused. After publication and registry verification,
+`npm run release:cleanup -- <same-tarball>` removes only a validated dedicated
+candidate directory and refuses repository or other unrecognized paths.
 Agents never run `npm publish` or handle 2FA.
 
 Release-relevant source means every tracked or non-ignored untracked
@@ -375,6 +390,12 @@ npm run smoke:full -- /absolute/path/reported-by-pack-release.tgz
 
 After those local gates, Stian may publish the same reported tarball. Exact
 registry verification and tag creation are separate post-publication steps.
+After those checks, remove the temporary candidate with:
+
+```bash
+npm run release:cleanup -- /absolute/path/reported-by-pack-release.tgz
+```
+
 The current published record is in
 [docs/verification/releases.md](docs/verification/releases.md). Dated local
 release-readiness evidence is in `docs/verification/local-<version>.md`.

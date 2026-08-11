@@ -173,13 +173,13 @@ function generateShadcnCSS(data, format) {
     data.grayScale.light[9],
     data.grayScale.light[10],
     data.lightBackground,
-    4.5
+    4.6
   );
   const darkForegroundSubtle = minimallyCorrectedNeutral(
     data.grayScale.dark[9],
     data.grayScale.dark[10],
     data.darkBackground,
-    4.5
+    4.6
   );
   const lightPrimary = closestContrastSafeColor(
     data.accent,

@@ -405,10 +405,10 @@ test("foreground-subtle minimally corrects failing gray-10 values without changi
         const subtleContrast = contrastRatio(values["foreground-subtle"], values.background);
 
         assert.ok(
-          subtleContrast >= 4.5,
+          subtleContrast >= 4.6,
           `${hex} ${neutralTint} block ${index} foreground-subtle/background = ${subtleContrast.toFixed(4)}`,
         );
-        if (gray10Contrast >= 4.5) {
+        if (gray10Contrast >= 4.6) {
           assert.equal(
             values["foreground-subtle"],
             values["gray-10"],
@@ -440,7 +440,7 @@ test("foreground-subtle minimally corrects failing gray-10 values without changi
 test("every serialized format preserves required foreground contrast", () => {
   const requiredPairs = {
     shadcn: [
-      ["foreground", "background"], ["foreground-subtle", "background"],
+      ["foreground", "background"], ["foreground-subtle", "background", 4.6],
       ["card-foreground", "card"],
       ["popover-foreground", "popover"], ["primary-foreground", "primary"],
       ["secondary-foreground", "secondary"], ["muted-foreground", "muted"],

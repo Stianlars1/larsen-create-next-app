@@ -81,8 +81,18 @@ change is real but deliberately small.
 
 The documented exceptions have no usable hue of their own: `#000000`,
 `#010101`, `#FEFEFE`, and `#FFFFFF`. The engine derives each accent scale from
-the same tinted neutral, so those seeds move 15 accent-scale values as well.
-`create-next-app/test/neutral-tint.test.mjs` locks both halves of this claim.
+the same tinted neutral. The exact changed declarations across the two
+12-step mode scales are:
+
+| Seed | Light | Dark | Total |
+| --- | ---: | ---: | ---: |
+| `#000000` | 9 light | 6 dark | 15 total |
+| `#010101` | 0 light | 6 dark | 6 total |
+| `#FEFEFE` | 9 light | 0 dark | 9 total |
+| `#FFFFFF` | 9 light | 6 dark | 15 total |
+
+`create-next-app/test/neutral-tint.test.mjs` locks these per-mode counts as
+well as the chromatic-seed invariance claim.
 
 `generateThemeCss()` defaults to `subtle`. It rejects blank or unknown neutral
 tints and explicitly rejects an options object containing the removed
@@ -112,7 +122,7 @@ The approved derived roles are:
 | card-foreground | foreground | foreground |
 | popover | background | gray step 3 |
 | popover-foreground | foreground | foreground |
-| foreground-subtle | gray step 10, corrected only if needed to reach 4.5 against background | gray step 10, corrected only if needed to reach 4.5 against background |
+| foreground-subtle | gray step 10, corrected only if needed to reach the 4.6 project target against background | gray step 10, corrected only if needed to reach the 4.6 project target against background |
 | primary | requested seed when it reaches 1.5, otherwise closest passing accent step | same rule |
 | primary-foreground | scale-first chooser against corrected primary | same rule |
 | ring | requested seed when it reaches 3, otherwise closest passing accent step | same rule |
@@ -236,18 +246,21 @@ this lands on gray-9 in light mode and gray-9 in dark mode instead of the
 gray-7 the engine emits upstream. `--border` and `--sidebar-border` keep
 gray-7.
 
-`--foreground-subtle` begins at gray-10. If gray-10 is below 4.5 against the
+`--foreground-subtle` begins at gray-10. If gray-10 is below 4.6 against the
 mode background, a fixed 24-round binary search follows the OKLAB path toward
 gray-11 and emits the passing 8-bit sRGB candidate at the isolated boundary.
-The correction changes no gray-ramp token.
+The correction changes no gray-ramp token. The 4.6 target adds a 0.1 margin
+above WCAG AA's 4.5 normal-text minimum.
 
 ## Test boundary
 
-The mechanical contrast parser supports only `shadcn` with `hsl-values` and
-checks both generated modes:
+The mechanical contrast parser supports `shadcn`, `radix`, and
+`css-variables` in `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`,
+and checks both generated modes. The shadcn role checks are:
 
 - foreground against background at 4.5.
-- foreground-subtle against background at 4.5.
+- foreground-subtle against background at the 4.6 project target, with a 0.1
+  margin above the WCAG 4.5 minimum.
 - card-foreground against card at 4.5.
 - popover-foreground against popover at 4.5.
 - ring against background at 3.
@@ -255,6 +268,8 @@ checks both generated modes:
 - primary-foreground against primary at 4.5.
 - primary against background at the deliberately non-WCAG 1.5 visibility
   floor.
+- Secondary, muted, accent, destructive, harmony, and status foreground pairs
+  at 4.5 where those roles exist.
 
 `--border` is deliberately absent. WCAG 2.1 SC 1.4.11 covers visual
 information required to identify a user interface component, and `--border`
@@ -263,11 +278,10 @@ the boundary of text fields, selects, and outline buttons, where the border
 is the only thing identifying the control, so it carries the 3:1 floor
 instead.
 
-It fails on missing required tokens. The generator performs primary, ring,
-input, and foreground-subtle shadcn role corrections before all six
-serialization formats, but this parser does not
-claim to parse the other formats. Representative Radix accent contrast pairs
-are checked separately at 4.5 in all six formats. Both neutral tints run
+It fails on missing required tokens or unparseable serialized colours. The
+generator performs primary, ring, input, and foreground-subtle shadcn role
+corrections before all six serialization formats. Radix accent and gray
+contrast pairs are checked at 4.5 in all six formats. Both neutral tints run
 through the representative shadcn contrast seeds and the serialized-format
 checks. The deterministic matrix separately proves names, order, mode
 structure, selected syntax, alpha preservation, exact declaration baselines,

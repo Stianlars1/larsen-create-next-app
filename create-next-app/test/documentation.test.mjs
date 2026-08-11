@@ -132,6 +132,17 @@ test("the palette prompt contract covers the seed and every option requiring it"
   assert.match(reference, /Neutral tint is asked last with `subtle` preselected/);
 });
 
+test("the palette reference documents the measured hueless accent changes by mode", () => {
+  const reference = readFileSync(join(packageDir, "..", "docs", "reference", "palette.md"), "utf8");
+  const normalized = reference.replaceAll(/\s+/g, " ");
+
+  assert.match(normalized, /#000000.*9 light.*6 dark.*15 total/i);
+  assert.match(normalized, /#010101.*0 light.*6 dark.*6 total/i);
+  assert.match(normalized, /#FEFEFE.*9 light.*0 dark.*9 total/i);
+  assert.match(normalized, /#FFFFFF.*9 light.*6 dark.*15 total/i);
+  assert.doesNotMatch(normalized, /those seeds move 15 accent-scale values/i);
+});
+
 test("the current authorities explain the Clack and scaffold ownership boundary", () => {
   const project = readFileSync(join(packageDir, "..", "PROJECT.md"), "utf8");
   const cliReference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
@@ -157,13 +168,16 @@ test("contrast authorities state the exact supported boundary and thresholds", (
   );
   for (const document of [agents, project, paletteReference]) {
     const normalized = document.replaceAll(/\s+/g, " ");
-    assert.match(normalized, /shadcn.*hsl-values/i);
+    assert.match(normalized, /shadcn.*radix.*css-variables/i);
+    assert.match(normalized, /hex.*rgb.*hsl.*hsl-values.*oklab.*oklch/i);
     assert.match(normalized, /foreground.*background.*4\.5/i);
+    assert.match(normalized, /foreground-subtle.*background.*4\.6.*margin/i);
     assert.match(normalized, /ring.*background.*3(?:\.0)?/i);
     assert.match(normalized, /primary-foreground.*primary.*4\.5/i);
     assert.match(normalized, /primary.*background.*1\.5/i);
     assert.match(normalized, /non-WCAG/i);
     assert.match(normalized, /generator.*before.*serializ/i);
     assert.match(normalized, /Radix.*accent.*4\.5/i);
+    assert.match(normalized, /foreground.*status.*4\.5/i);
   }
 });

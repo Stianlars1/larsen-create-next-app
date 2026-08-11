@@ -10,6 +10,33 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+### Changed
+- `--foreground-subtle` now targets 4.6:1 against its mode background. This is
+  a 0.1 safety margin above WCAG AA's 4.5:1 normal-text minimum and is applied
+  before all six output formats are serialized.
+- Contrast verification now parses shadcn, Radix, and CSS Variables output in
+  HEX, RGB, HSL, HSL Values, OKLAB, and OKLCH. It covers the documented text
+  foreground roles, shadcn control indicators, and Radix accent and gray
+  contrast roles in both modes.
+- Optional skills remain fresh from their upstream repositories. Generated
+  README and `AGENTS.md` now record the observed upstream HEAD when available
+  and a SHA-256 digest of the verified `SKILL.md` contents for each successful
+  source.
+- Full release smoke now covers npm, pnpm, yarn, and bun sequentially. It
+  verifies real installs for available managers and the promised preserved
+  scaffold plus warning for missing managers.
+- Release candidates now live in dedicated temporary directories instead of
+  the package checkout. `release:cleanup` removes only a validated candidate
+  root after owner publication and registry verification.
+- The generated starter no longer reduces text contrast with opacity. Its
+  footer link has a visible focus indicator and 44px target height, and
+  duplicate visual swatches are hidden from assistive technology.
+
+### Fixed
+- The palette reference now reports the exact hueless-seed accent changes by
+  mode: 15 total for `#000000`, 6 for `#010101`, 9 for `#FEFEFE`, and 15 for
+  `#FFFFFF`.
+
 ## [0.5.1] - 2026-08-10
 
 Local implementation evidence is recorded in
