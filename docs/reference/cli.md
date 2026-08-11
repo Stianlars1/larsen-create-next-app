@@ -119,7 +119,10 @@ Additional behavior that is intentionally explicit:
 - Requested skills are grouped by source repository. The wrapper runs one
   installer command per source, verifies each requested
   `.agents/skills/<name>/SKILL.md`, and documents only files found on disk.
-  One source failure warns and does not stop the other sources or the scaffold.
+  Sources remain current rather than pinned. For each successful source, the
+  generated docs record the upstream HEAD observed at install time when
+  available and a SHA-256 digest of the verified `SKILL.md` contents. One
+  source failure warns and does not stop the other sources or the scaffold.
 - `transitions-dev` installs directly from
   [`Jakubantalik/transitions.dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev),
   is credited to Jakub Antalik, and remains subject to the
@@ -135,6 +138,10 @@ Additional behavior that is intentionally explicit:
   `--no-linter` flags.
 - The selected package manager is used only for dependency installation and
   generated commands. The upstream scaffold always runs through `npx`.
+  Release full-smoke coverage exercises npm, pnpm, yarn, and bun sequentially.
+  An installed manager must create `node_modules` and a recognized lockfile;
+  a missing manager must preserve the scaffold and print its manual install
+  instruction.
 
 ## Prompt presentation and scaffold ownership
 

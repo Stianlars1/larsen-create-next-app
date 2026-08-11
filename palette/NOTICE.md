@@ -49,7 +49,8 @@ authored by Stian Larsen.
     requested color. Deep reds such as `#940203` were affected.
 
 12. `generateShadcnCSS`: `--foreground-subtle` keeps gray-10 when it reaches
-    4.5:1 against the mode background. When it does not, a fixed 24-round
+    the project target of 4.6:1 against the mode background. This preserves a
+    0.1 margin above WCAG AA's 4.5:1 normal-text minimum. When it does not, a fixed 24-round
     binary search follows the OKLAB path toward gray-11 and emits the passing
     8-bit sRGB candidate at the isolated boundary. The twelve-step gray ramp
     remains unchanged.

@@ -10,7 +10,8 @@
  * discovery or symlinks. Nothing is installed unless the user asks for it.
  */
 
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { run } from "./run.js";
 
@@ -148,7 +149,7 @@ function sourceAttribution(source) {
  *
  * @param {string[]} installedSkills - names verified on disk
  */
-export function renderSkillsNote(installedSkills) {
+export function renderSkillsNote(installedSkills, sourceProvenance = []) {
   const [firstParty] = SKILL_SOURCES;
 
   if (installedSkills.length === 0) {
@@ -168,13 +169,47 @@ export function renderSkillsNote(installedSkills) {
     installedSkills.map((skill) => sourceForSkill(skill)?.id).filter(Boolean),
   );
   const used = SKILL_SOURCES.filter((source) => usedSourceIds.has(source.id));
+  const provenance = sourceProvenance
+    .filter((record) => usedSourceIds.has(record.sourceId))
+    .map((record) => {
+      const source = SOURCE_BY_ID.get(record.sourceId);
+      const revision = record.revision ? `HEAD \`${record.revision}\`` : "HEAD unavailable";
+      return `- ${source?.label ?? record.sourceId}: ${revision}; verified SKILL.md SHA-256 \`${record.contentSha256}\``;
+    })
+    .join("\n");
 
   return (
     `\n## Installed skills\n\nThe wrapper verified these files on disk:\n\n${files}\n\n` +
     `Sources stay with their authors:\n\n${used.map((s) => `- ${sourceAttribution(s)}`).join("\n")}\n\n` +
+    (provenance ? `Observed source state for this install:\n\n${provenance}\n\n` : "") +
     "This verifies only the listed files, not agent-specific discovery or symlinks.\n" +
     `Add or update them from those same repositories:\n\n${used.map((s) => `- \`${s.installCommand}\``).join("\n")}`
   );
+}
+
+/** @param {(typeof SKILL_SOURCES)[number]} source */
+async function resolveSourceRevision(source) {
+  try {
+    const result = await run(
+      "git",
+      ["ls-remote", `https://github.com/${source.repo}.git`, "HEAD"],
+    );
+    const revision = result.output.trim().split(/\s+/)[0];
+    return /^[0-9a-f]{40}$/i.test(revision) ? revision.toLowerCase() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** @param {string} cwd @param {string[]} skills */
+function verifiedSkillsDigest(cwd, skills) {
+  const hash = createHash("sha256");
+  for (const skill of [...skills].sort()) {
+    hash.update(`${skill}\0`);
+    hash.update(readFileSync(join(cwd, ".agents", "skills", skill, "SKILL.md")));
+    hash.update("\0");
+  }
+  return hash.digest("hex");
 }
 
 /**
@@ -191,6 +226,25 @@ export function renderSkillsNote(installedSkills) {
  * @returns {Promise<string[]>} the skills that actually landed on disk
  */
 export async function installSkills(skills, { cwd, onWarning = () => {} }) {
+  const result = await installSkillsWithProvenance(skills, { cwd, onWarning });
+  return result.skills;
+}
+
+/**
+ * Installs current upstream skills and records the source state actually
+ * observed during the run. The source remains unpinned by design.
+ *
+ * @param {string[]} skills
+ * @param {{ cwd: string, onWarning?: (message: string) => void }} opts
+ * @returns {Promise<{
+ *   skills: string[],
+ *   sources: Array<{ sourceId: string, revision?: string, contentSha256: string }>,
+ * }>}
+ */
+export async function installSkillsWithProvenance(
+  skills,
+  { cwd, onWarning = () => {} },
+) {
   const requestedNames = [...new Set(skills)];
   const unknown = requestedNames.filter((skill) => !SKILL_BY_NAME.has(skill));
   if (unknown.length > 0) {
@@ -208,11 +262,13 @@ export async function installSkills(skills, { cwd, onWarning = () => {} }) {
   }
 
   const installed = new Set();
+  const provenance = [];
 
   for (const [sourceId, sourceSkills] of groups) {
     const source = SOURCE_BY_ID.get(sourceId);
     if (!source) throw new Error(`missing source contract for ${sourceId}`);
 
+    const revision = await resolveSourceRevision(source);
     const args = ["--yes", "skills", "add", source.repo];
     for (const skill of sourceSkills) args.push("--skill", skill);
     // --yes skips the installer's own scope prompt; without it the child would
@@ -230,6 +286,13 @@ export async function installSkills(skills, { cwd, onWarning = () => {} }) {
       existsSync(join(cwd, ".agents", "skills", skill, "SKILL.md")),
     );
     for (const skill of landed) installed.add(skill);
+    if (landed.length > 0) {
+      provenance.push({
+        sourceId,
+        revision,
+        contentSha256: verifiedSkillsDigest(cwd, landed),
+      });
+    }
 
     const missing = sourceSkills.filter((skill) => !installed.has(skill));
     if (commandFailed) {
@@ -245,5 +308,8 @@ export async function installSkills(skills, { cwd, onWarning = () => {} }) {
     }
   }
 
-  return requestedNames.filter((skill) => installed.has(skill));
+  return {
+    skills: requestedNames.filter((skill) => installed.has(skill)),
+    sources: provenance,
+  };
 }

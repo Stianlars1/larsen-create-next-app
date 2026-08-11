@@ -59,7 +59,17 @@ writeFileSync(join(appDir, "src", "app", "page.module.css"), "/* upstream */\\n"
 `,
   );
   writeExecutable(join(bin, "npm"), "#!/bin/sh\nexit 0\n");
-  writeExecutable(join(bin, "git"), "#!/bin/sh\nexit 0\n");
+  writeExecutable(
+    join(bin, "git"),
+    `#!/usr/bin/env node
+const args = process.argv.slice(2);
+if (args[0] === "ls-remote" && args.at(-1) === "HEAD") {
+  const revision = args[1].includes("transitions.dev") ? "${"b".repeat(40)}" : "${"a".repeat(40)}";
+  process.stdout.write(revision + "\\tHEAD\\n");
+}
+process.exit(0);
+`,
+  );
   return bin;
 }
 
@@ -119,6 +129,23 @@ function assertGeneratedSkillDocumentation(run, appName, { skills, sources }) {
       if (sources.includes(source)) assert.match(section, pattern);
       else assert.doesNotMatch(section, pattern);
     }
+  }
+
+  const provenanceAssertions = skills.length === 0 ? [] : [
+    ["larsen", new RegExp("HEAD `" + "a".repeat(40) + "`")],
+    ["transitions", new RegExp("HEAD `" + "b".repeat(40) + "`")],
+  ];
+  for (const [source, pattern] of provenanceAssertions) {
+    for (const section of sections) {
+      if (sources.includes(source)) assert.match(section, pattern);
+      else assert.doesNotMatch(section, pattern);
+    }
+  }
+  for (const section of sections) {
+    assert.equal(
+      [...section.matchAll(/verified SKILL\.md SHA-256 `([0-9a-f]{64})`/g)].length,
+      skills.length === 0 ? 0 : sources.length,
+    );
   }
 }
 

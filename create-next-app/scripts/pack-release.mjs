@@ -3,14 +3,16 @@
 import { spawnSync } from "node:child_process";
 import {
   cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { syncMasters } from "./sync.mjs";
 
@@ -21,6 +23,40 @@ const RELEASE_STATUS_PATHS = Object.freeze([
   ".",
   ":(exclude,glob)docs/verification/local-*.md",
 ]);
+
+export function createDefaultReleaseDestination() {
+  return mkdtempSync(join(tmpdir(), "lu-release-candidate-"));
+}
+
+/**
+ * Removes the dedicated temporary directory created for one release
+ * candidate. It refuses repository paths and any other unrecognized target.
+ *
+ * @param {string} artifactPath
+ * @param {{ requireArtifact?: boolean }} [options]
+ */
+export function cleanupReleaseCandidate(
+  artifactPath,
+  { requireArtifact = true } = {},
+) {
+  const artifact = resolve(artifactPath);
+  if (requireArtifact && (!existsSync(artifact) || !artifact.endsWith(".tgz"))) {
+    throw new Error(`Release candidate tarball does not exist: ${artifact}`);
+  }
+
+  const candidateRoot = realpathSync(dirname(artifact));
+  const temporaryRoot = realpathSync(tmpdir());
+  const fromTemp = relative(temporaryRoot, candidateRoot);
+  const recognized = fromTemp !== "" && !fromTemp.startsWith(`..${sep}`) &&
+    fromTemp !== ".." && !isAbsolute(fromTemp) &&
+    basename(candidateRoot).startsWith("lu-release-candidate-");
+  if (!recognized) {
+    throw new Error(`Refusing to clean unrecognized release candidate: ${candidateRoot}`);
+  }
+
+  rmSync(candidateRoot, { recursive: true, force: true });
+  return candidateRoot;
+}
 
 /** @param {string} command @param {string[]} args @param {string} cwd */
 function run(command, args, cwd) {
@@ -114,9 +150,26 @@ export function packRelease({ destination }) {
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
+  const cleanupFlag = process.argv.indexOf("--cleanup");
+  if (cleanupFlag !== -1) {
+    const artifact = process.argv[cleanupFlag + 1];
+    if (!artifact) {
+      console.error("pack-release: --cleanup requires the reported tarball path");
+      process.exit(1);
+    }
+    try {
+      console.log(`Removed ${cleanupReleaseCandidate(artifact)}`);
+      process.exit(0);
+    } catch (error) {
+      console.error(/** @type {Error} */ (error).message);
+      process.exit(1);
+    }
+  }
+
   const destinationFlag = process.argv.indexOf("--pack-destination");
-  const destination = destinationFlag === -1
-    ? packageDir
+  const usesDefaultDestination = destinationFlag === -1;
+  const destination = usesDefaultDestination
+    ? createDefaultReleaseDestination()
     : process.argv[destinationFlag + 1];
   if (!destination) {
     console.error("pack-release: --pack-destination requires a path");
@@ -135,6 +188,9 @@ if (isMain) {
     }
     console.log(tarball);
   } catch (error) {
+    if (usesDefaultDestination && destination && existsSync(destination)) {
+      rmSync(destination, { recursive: true, force: true });
+    }
     console.error(/** @type {Error} */ (error).message);
     process.exit(1);
   }

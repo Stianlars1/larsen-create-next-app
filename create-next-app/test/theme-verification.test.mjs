@@ -117,6 +117,44 @@ test("representative custom seeds pass every generated shadcn contrast check", (
   assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 });
 
+test("contrast verification parses every generated preset and format", () => {
+  const script = `
+    import assert from "node:assert/strict";
+    import { checkThemeContrast } from "./src/theme-contrast.mjs";
+    import { createPaletteMasterFixture } from "./test-support/palette-master.mjs";
+
+    const fixture = await createPaletteMasterFixture();
+    try {
+      for (const preset of ["shadcn", "radix", "css-variables"]) {
+        for (const format of ["hex", "rgb", "hsl", "hsl-values", "oklab", "oklch"]) {
+          for (const neutralTint of ["subtle", "strong"]) {
+            const css = fixture.api.generateThemeCss({
+              hex: "#4DA0FF",
+              preset,
+              format,
+              neutralTint,
+            });
+            assert.deepEqual(
+              checkThemeContrast(css, { preset, format }),
+              [],
+              \`\${preset} x \${format} x \${neutralTint}\`,
+            );
+          }
+        }
+      }
+    } finally {
+      fixture.cleanup();
+    }
+  `;
+  const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], {
+    cwd: packageDir,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
+});
+
 test("contrast verification reports every required token that is absent", () => {
   const script = `
     import assert from "node:assert/strict";
@@ -149,14 +187,19 @@ test("contrast verification reports every required token that is absent", () => 
 });
 
 test("contrast verification exposes its exact shadcn hsl-values checks", async () => {
-  const { CONTRAST_CHECKS, CONTRAST_FORMAT, CONTRAST_PRESET } = await import(
+  const {
+    CONTRAST_CHECKS,
+    CONTRAST_CHECKS_BY_PRESET,
+    CONTRAST_FORMATS,
+    CONTRAST_PRESETS,
+  } = await import(
     "../src/theme-contrast.mjs"
   );
-  assert.equal(CONTRAST_PRESET, "shadcn");
-  assert.equal(CONTRAST_FORMAT, "hsl-values");
-  assert.deepEqual(CONTRAST_CHECKS, [
+  assert.deepEqual(CONTRAST_PRESETS, ["shadcn", "radix", "css-variables"]);
+  assert.deepEqual(CONTRAST_FORMATS, ["hex", "rgb", "hsl", "hsl-values", "oklab", "oklch"]);
+  assert.deepEqual(CONTRAST_CHECKS.slice(0, 10), [
     { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
-    { token: "foreground-subtle", against: "background", minimum: 4.5, standard: "WCAG" },
+    { token: "foreground-subtle", against: "background", minimum: 4.6, standard: "WCAG-margin" },
     { token: "card-foreground", against: "card", minimum: 4.5, standard: "WCAG" },
     { token: "popover-foreground", against: "popover", minimum: 4.5, standard: "WCAG" },
     { token: "ring", against: "background", minimum: 3, standard: "WCAG" },
@@ -171,6 +214,22 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
   assert.equal(
     CONTRAST_CHECKS.some((check) => check.token === "border"),
     false,
+  );
+  assert.deepEqual(
+    CONTRAST_CHECKS_BY_PRESET.radix.slice(0, 3).map(({ token, against, minimum }) => ({
+      token,
+      against,
+      minimum,
+    })),
+    [
+      { token: "foreground", against: "background", minimum: 4.5 },
+      { token: "accent-contrast", against: "accent-9", minimum: 4.5 },
+      { token: "gray-contrast", against: "gray-9", minimum: 4.5 },
+    ],
+  );
+  assert.deepEqual(
+    CONTRAST_CHECKS_BY_PRESET["css-variables"][0],
+    { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
   );
 });
 

@@ -28,7 +28,8 @@ import { promptConfig } from "../src/prompts.js";
 import { scaffold } from "../src/scaffold.js";
 import { overlay } from "../src/overlay.js";
 import { run } from "../src/run.js";
-import { installSkills, renderSkillsNote } from "../src/skills.js";
+import { installSkillsWithProvenance, renderSkillsNote } from "../src/skills.js";
+import { packageManagerByName } from "../src/package-managers.js";
 import {
   DEFAULT_THEME,
   generateThemeCss,
@@ -38,8 +39,6 @@ import {
 } from "../palette/index.js";
 
 const templateDir = fileURLToPath(new URL("../template", import.meta.url));
-
-const PM_RUN = { npm: "npm run", pnpm: "pnpm", yarn: "yarn", bun: "bun run" };
 
 /**
  * An unknown flag is a user error, not a crash. Node's parser throws, so the
@@ -116,15 +115,19 @@ try {
   phase = "overlay";
   /** @type {string[]} */
   let installedSkills = [];
+  /** @type {Array<{ sourceId: string, revision?: string, contentSha256: string }>} */
+  let skillSourceProvenance = [];
   if (config.skills.length > 0) {
     const skillsSpinner = p.spinner();
     const skillWarnings = [];
     skillsSpinner.start(`Installing ${config.skills.length} agent skills`);
     try {
-      installedSkills = await installSkills(config.skills, {
+      const skillResult = await installSkillsWithProvenance(config.skills, {
         cwd: appDir,
         onWarning: (message) => skillWarnings.push(message),
       });
+      installedSkills = skillResult.skills;
+      skillSourceProvenance = skillResult.sources;
     } catch {
       skillWarnings.push(
         "Optional agent skill installation failed before verification; the scaffold will continue.",
@@ -157,7 +160,7 @@ try {
       NEXTJS_CLAIM: nextJsClaim(config.cnaVersion),
       NEXTJS_CLAIM_TSX: serializeTsxText(nextJsClaim(config.cnaVersion)),
       PM: config.pm,
-      PM_RUN: PM_RUN[/** @type {keyof typeof PM_RUN} */ (config.pm)],
+      PM_RUN: packageManagerByName(config.pm).run,
       PALETTE_SEED: normalizeHex(paletteMeta.hex),
       PALETTE_PRESET: paletteMeta.preset,
       PALETTE_FORMAT: paletteMeta.format,
@@ -181,7 +184,7 @@ try {
       BRAND_NOTE: config.palette
         ? ""
         : "\nThe default Larsen Utvikling theme additionally ships the brand\naccents `--brand-blue`, `--brand-blue-soft` and `--brand-blue-subtle`\n(used for links and highlights on larsenutvikling.no).",
-      SKILLS_NOTE: renderSkillsNote(installedSkills),
+      SKILLS_NOTE: renderSkillsNote(installedSkills, skillSourceProvenance),
     },
     themeCss,
   });
@@ -225,7 +228,7 @@ try {
     }
   }
 
-  const pmRun = PM_RUN[/** @type {keyof typeof PM_RUN} */ (config.pm)];
+  const pmRun = packageManagerByName(config.pm).run;
   p.outro(`Done. Next steps:
 
   cd ${config.name}${config.install ? "" : `\n  ${config.pm} install`}

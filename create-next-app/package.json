@@ -44,6 +44,7 @@
     "sync": "node scripts/sync.mjs",
     "gen:theme": "node ../palette/generate-default.mjs",
     "pack:release": "node scripts/pack-release.mjs --verify",
+    "release:cleanup": "node scripts/pack-release.mjs --cleanup",
     "smoke": "node scripts/smoke.mjs",
     "smoke:full": "node scripts/full-smoke.mjs",
     "prepack": "node scripts/sync.mjs",

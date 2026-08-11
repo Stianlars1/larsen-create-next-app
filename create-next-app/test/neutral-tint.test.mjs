@@ -47,21 +47,21 @@ const UNCHANGED_DECLARATION_HASHES = new Map([
   ["strong|css-variables|oklch", "03bcf0bd5ea4a4df2a0f1054770cec7f62b3a46ae77e1f2431a359ef2b5cec6d"],
 ]);
 
-// Full 0.5.1 shadcn baselines separately lock the corrected token in all six
+// Full current shadcn baselines separately lock the corrected token in all six
 // formats instead of hiding it behind the compatibility invariant above.
-const SHADCN_051_FULL_HASHES = new Map([
-  ["subtle|hex", "b961a55475726aa1a2feb4ad51aad2a5f241804a356ec7f07d62bc6bb62a4f5d"],
-  ["subtle|rgb", "7290cfff403e8032c869fbdc676dd3f9645bf03e76d748a575ce5e1d8707fac7"],
-  ["subtle|hsl", "ef26b45747d6ce472b6ab6df3748aa06467f3e0f9d40b36188b2acbde40e28fb"],
-  ["subtle|hsl-values", "900846fd4fb91ab244bbce4365aaa7754efda12aeac529dd963bce53c16a004f"],
-  ["subtle|oklab", "c9069778ea7c0274323da0cf948208466002556e393b45a47fa24f5a69b78bdf"],
-  ["subtle|oklch", "b54b38d3c9363df4b25d27a0e8d9cfcf7b2afa21934b8480530e2f0ebf76c738"],
-  ["strong|hex", "44ca7cf94870698fa33e8bab058d0f318ae5ac98027d2d2dbe80a3e6a3b388ca"],
-  ["strong|rgb", "2ec3d6b8553cd3c7daf9c8bd77911e731c8c4f31f7785d6d6772c3bc597936c6"],
-  ["strong|hsl", "4b8198b2c4a7e8568e58b8688b217ba63af111378dc04329f71e46701fca1a86"],
-  ["strong|hsl-values", "24c10bab42fc792e521a2c610e6eb95469fce43d09ca585ff6a9eb0cd65c3f34"],
-  ["strong|oklab", "7e8f8573b27639c1286c27a7c790d925f0151de4db37317800d3ac447cff8859"],
-  ["strong|oklch", "23f653255ae5682cc6c70f1619de32466c4307109b7fbf4246046f834d144344"],
+const SHADCN_CURRENT_FULL_HASHES = new Map([
+  ["subtle|hex", "9bdbe539715943f03a6f5d9d887a9fe6fb8addb3127ff4b7f78e78b10c709680"],
+  ["subtle|rgb", "cdd0d17a5fc88a723138d982aa2d997f88e6b475d13012c5ac57d0006528ffb9"],
+  ["subtle|hsl", "d14f36fca89f21208b0a1b0b5713a0050031fc8c0c01433a9d493bb1808bc881"],
+  ["subtle|hsl-values", "fffa0b5fe5ddd5d1b8a7af1a34eeb9158e648b55615863566b88ca4220fb267c"],
+  ["subtle|oklab", "b4f7b58328ec943a0cbf44c515e885fef028d176361c890c6681737efabd7436"],
+  ["subtle|oklch", "b2b43974ed830beff8a063f74975225cbe3b514af1898361a64be43b4e519ba0"],
+  ["strong|hex", "80fdeacf99bfef09de9354075caf1a03af4cf38b856af4aa0bbb8e0ef0d5164f"],
+  ["strong|rgb", "1c87197947f5d084b4ff23ea3da8cf76878d80819efec2a414dab0ec4cf7a1f6"],
+  ["strong|hsl", "dfe0c6dee07e984125f0f920fb81f15292ed033f0cf06df26e600c6226979bcc"],
+  ["strong|hsl-values", "7fef24485b70716322d9ed4c5bc341327b5e00b4c560c62ff217665e1e73e5ce"],
+  ["strong|oklab", "ef0e98ef68987f2ee7ff1605a860ed5abbe5d15c10c96d40c39a3796e600ed27"],
+  ["strong|oklch", "757fd8e9f9af0556100e5be615f989828fe198ee1e8037b2709cd90393d97b10"],
 ]);
 
 function declarationHash(css, { omitForegroundSubtle = false } = {}) {
@@ -115,9 +115,9 @@ for (const [key, expectedHash] of UNCHANGED_DECLARATION_HASHES) {
   });
 }
 
-for (const [key, expectedHash] of SHADCN_051_FULL_HASHES) {
+for (const [key, expectedHash] of SHADCN_CURRENT_FULL_HASHES) {
   const [neutralTint, format] = key.split("|");
-  test(`${neutralTint} locks the complete 0.5.1 shadcn x ${format} output`, () => {
+  test(`${neutralTint} locks the complete current shadcn x ${format} output`, () => {
     const css = fixture.api.generateThemeCss({
       hex: "#4DA0FF",
       preset: "shadcn",
@@ -196,17 +196,22 @@ for (const hex of ["#4DA0FF", "#E11D48", "#22C55E", "#7C3AED", "#EFB100", "#A1A1
 
 // The documented exception: a seed with no hue of its own takes its accent
 // scale from the same tinted neutral, so the accent scale moves too.
-for (const hex of ["#000000", "#010101", "#FEFEFE", "#FFFFFF"]) {
+for (const [hex, expected] of new Map([
+  ["#000000", { light: 9, dark: 6 }],
+  ["#010101", { light: 0, dark: 6 }],
+  ["#FEFEFE", { light: 9, dark: 0 }],
+  ["#FFFFFF", { light: 9, dark: 6 }],
+])) {
   test(`the accent scale follows the neutral tint for the hueless seed ${hex}`, () => {
     const subtle = tintedModes(hex, "subtle");
     const strong = tintedModes(hex, "strong");
-    const moved = ["light", "dark"].flatMap((mode) =>
-      ACCENT_STEPS.filter((token) => subtle[mode][token] !== strong[mode][token]),
+    const moved = Object.fromEntries(
+      ["light", "dark"].map((mode) => [
+        mode,
+        ACCENT_STEPS.filter((token) => subtle[mode][token] !== strong[mode][token]).length,
+      ]),
     );
-    assert.ok(
-      moved.length > 0,
-      "expected the documented hueless-seed exception to still apply",
-    );
+    assert.deepEqual(moved, expected);
   });
 }
 

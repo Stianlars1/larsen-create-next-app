@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 import { packRelease } from "./pack-release.mjs";
 import { generatedDocsChecks } from "./smoke-contract.mjs";
 import { checkThemeContrast } from "../src/theme-contrast.mjs";
+import { PACKAGE_MANAGER_CONTRACT } from "../src/package-managers.js";
 
 const pkgDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = join(pkgDir, "..");
@@ -52,24 +53,6 @@ scaffolded from is [Larsen Skills by Stian Larsen](https://github.com/Stianlars1
 Run the scaffolder with \`--help\` to see every skill it can install,
 including third-party skills that are opt-in by name.`;
 
-const MIXED_SKILLS_SECTION = `## Installed skills
-
-The wrapper verified these files on disk:
-
-- \`.agents/skills/motion-craft/SKILL.md\`
-- \`.agents/skills/transitions-dev/SKILL.md\`
-
-Sources stay with their authors:
-
-- [Larsen Skills by Stian Larsen](https://github.com/Stianlars1/larsen-skills)
-- [Transitions.dev by Jakub Antalik](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev) - [license terms](https://transitions.dev/terms.html)
-
-This verifies only the listed files, not agent-specific discovery or symlinks.
-Add or update them from those same repositories:
-
-- \`npx skills add Stianlars1/larsen-skills\`
-- \`npx skills add Jakubantalik/transitions.dev --skill transitions-dev\``;
-
 /** @type {string[]} */
 const failures = [];
 /** @param {boolean} ok @param {string} label */
@@ -90,6 +73,15 @@ function runSync(cmd, args, cwd) {
     ok: result.status === 0,
     output: `${result.stdout ?? ""}${result.stderr ?? ""}`,
   };
+}
+
+/** @param {string} command */
+function commandAvailable(command) {
+  const result = spawnSync(command, ["--version"], {
+    stdio: "ignore",
+    env: process.env,
+  });
+  return !result.error && result.status === 0;
 }
 
 /** @param {string} css */
@@ -280,16 +272,31 @@ try {
     "requested third-party skill installed from its source repository",
   );
   const customAgents = readFileSync(join(work, "app-custom", "AGENTS.md"), "utf8");
-  check(
-    customAgents.slice(customAgents.indexOf("## Installed skills")).trimEnd()
-      === MIXED_SKILLS_SECTION,
-    "AGENTS.md lists exactly the installed skills",
-  );
   const customReadme = readFileSync(join(work, "app-custom", "README.md"), "utf8");
+  const agentsSkills = customAgents.slice(customAgents.indexOf("## Installed skills")).trimEnd();
+  const readmeSkills = customReadme
+    .slice(customReadme.indexOf("## Installed skills"), customReadme.indexOf("## Tech"))
+    .trimEnd();
   check(
-    customReadme.slice(customReadme.indexOf("## Installed skills"), customReadme.indexOf("## Tech")).trimEnd()
-      === MIXED_SKILLS_SECTION,
-    "README.md lists exactly the installed skills",
+    agentsSkills === readmeSkills,
+    "README.md and AGENTS.md share the installed-skills evidence",
+  );
+  check(
+    ["motion-craft", "transitions-dev"].every((skill) =>
+      agentsSkills.includes(`.agents/skills/${skill}/SKILL.md`)) &&
+      !agentsSkills.includes("interface-craft/SKILL.md"),
+    "generated docs list exactly the requested verified skill files",
+  );
+  check(
+    agentsSkills.includes("Larsen Skills by Stian Larsen") &&
+      agentsSkills.includes("Transitions.dev by Jakub Antalik") &&
+      agentsSkills.includes("license terms"),
+    "generated docs credit both selected sources and third-party terms",
+  );
+  check(
+    [...agentsSkills.matchAll(/verified SKILL\.md SHA-256 `([0-9a-f]{64})`/g)].length === 2 &&
+      [...agentsSkills.matchAll(/(?:HEAD `([0-9a-f]{40})`|HEAD unavailable)/g)].length === 2,
+    "generated docs record revision availability and verified content hashes",
   );
   const customTheme = readFileSync(
     join(work, "app-custom", "src", "lib", "design-system", "theme.css"),
@@ -393,12 +400,62 @@ try {
 
   // Full mode: install + production build
   if (full) {
-    console.log("smoke: full mode - installing and building app-default (this takes a while)");
-    const install = runSync("npm", ["install", "--no-audit", "--no-fund"], app);
-    check(install.ok, "npm install in generated app");
-    const build = runSync("npx", ["next", "build"], app);
+    console.log("smoke: full mode - checking every package manager sequentially");
+    let npmInstallApp = "";
+    for (const manager of PACKAGE_MANAGER_CONTRACT) {
+      const available = commandAvailable(manager.name);
+      const appName = `app-install-${manager.name}`;
+      const installRun = runSync(
+        cliCmd[0],
+        [
+          ...cliCmd.slice(1),
+          appName,
+          "--defaults",
+          "--pm", manager.name,
+          "--no-git",
+          "--install",
+          "--no-skills",
+        ],
+        work,
+      );
+      const installApp = join(work, appName);
+      check(installRun.ok, `${manager.name} install scenario exits 0`);
+      if (!installRun.ok) console.log(installRun.output.slice(-1500));
+
+      const readme = existsSync(join(installApp, "README.md"))
+        ? readFileSync(join(installApp, "README.md"), "utf8")
+        : "";
+      check(readme.includes(`${manager.run} dev`), `${manager.name} commands reach generated docs`);
+
+      if (available) {
+        check(
+          installRun.output.includes("Dependencies installed"),
+          `${manager.name} reports a completed dependency install`,
+        );
+        check(existsSync(join(installApp, "node_modules")), `${manager.name} creates node_modules`);
+        check(
+          manager.lockfiles.some((lockfile) => existsSync(join(installApp, lockfile))),
+          `${manager.name} creates a recognized lockfile`,
+        );
+      } else {
+        check(
+          installRun.output.includes(`${manager.name} is not installed`),
+          `${manager.name} missing-manager warning is explicit`,
+        );
+        check(!existsSync(join(installApp, "node_modules")), `${manager.name} missing case stays uninstalled`);
+      }
+
+      if (manager.name === "npm" && available) npmInstallApp = installApp;
+      else rmSync(installApp, { recursive: true, force: true });
+    }
+
+    check(Boolean(npmInstallApp), "npm install output is available for the build gate");
+    const build = npmInstallApp
+      ? runSync("npm", ["run", "build"], npmInstallApp)
+      : { ok: false, output: "npm install output was unavailable" };
     check(build.ok, "next build in generated app");
     if (!build.ok) console.log(build.output.slice(-1500));
+    if (npmInstallApp) rmSync(npmInstallApp, { recursive: true, force: true });
   }
 } catch (err) {
   failures.push(`unexpected error: ${/** @type {any} */ (err)?.message ?? err}`);
