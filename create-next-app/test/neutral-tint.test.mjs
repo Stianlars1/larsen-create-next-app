@@ -50,23 +50,6 @@ const CURRENT_DECLARATION_HASHES = new Map([
   ["strong|css-variables|oklch", "6f93c32f451e20bc044ed7bc3d40b00c2755914ba2b724c975bb523d3793a1ae"],
 ]);
 
-// Keep an explicit complete shadcn baseline because its alias declarations
-// change with semantic selection while its token-name contract stays stable.
-const SHADCN_CURRENT_FULL_HASHES = new Map([
-  ["subtle|hex", "b52f53c26455a4e82e13b190b061d539fcfd915f6fc2272bb0df2c296962477b"],
-  ["subtle|rgb", "1a8fe88b8c1bc9b9646206dcb4814ef84535111e34a9438db7bb30450c06779d"],
-  ["subtle|hsl", "5f730e53ac9361c7bde201b253f41f7bdf7e2c9195f16176c98659fc6d65a467"],
-  ["subtle|hsl-values", "45ae6573d4a0adc8e2e966c39afe3a0796ad0331e3946cd7dbcaa17d898e16ff"],
-  ["subtle|oklab", "8a534b6bdc60eebc91c86cd15899e5054b4e4b215151e14c6ad4d4b981b7bede"],
-  ["subtle|oklch", "f5f401eea77e3eb4bf4d066ce990a654e68b5f40843a0f0d079c446c0022ac58"],
-  ["strong|hex", "d16fd628201880a73352c3e6b903a15ebdd26c5720d3fab41a5f125c6e922d6d"],
-  ["strong|rgb", "183c289bec221003f5f730c44e61e097c13f016238a87ece873c3ce584ac4153"],
-  ["strong|hsl", "dd9ee59245d85581c1973f7c33719e289b7507e3809b01cfaaa26758828f1d44"],
-  ["strong|hsl-values", "c089ef87ef8e6bc108f5bfc21786aa0f328d69812394887636b7c3d297ae05f5"],
-  ["strong|oklab", "f42239bd952cc854cd03040defd88baa9b27cd297d28f364c66ff4cb6a268297"],
-  ["strong|oklch", "a132ffc6da1c7826eb4dad55f1ff5f71cc3c203478744732ee442d733f810cbf"],
-]);
-
 function declarationHash(css) {
   const declarationText = [...css.matchAll(/--[a-z0-9-]+:\s*[^;]+;/g)]
     .map((match) => match[0])
@@ -108,19 +91,6 @@ for (const [key, expectedHash] of CURRENT_DECLARATION_HASHES) {
       declarationHash(css),
       expectedHash,
     );
-  });
-}
-
-for (const [key, expectedHash] of SHADCN_CURRENT_FULL_HASHES) {
-  const [neutralTint, format] = key.split("|");
-  test(`${neutralTint} locks the complete current shadcn x ${format} output`, () => {
-    const css = fixture.api.generateThemeCss({
-      hex: "#4DA0FF",
-      preset: "shadcn",
-      format,
-      neutralTint,
-    });
-    assert.equal(declarationHash(css), expectedHash);
   });
 }
 

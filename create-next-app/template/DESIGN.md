@@ -52,15 +52,22 @@ Themes runtime compatibility.
 - Semantic `*-border` tokens are subtle Radix step-7 borders. Do not rely on a border or color alone to communicate status. Pair status styling with the matching base/foreground or muted/muted-foreground tokens and meaningful text or icons.
 - Explicit palette overrides are caller-owned escape hatches. When overriding one half of a foreground/background pair, verify the final pair again.
 
-The generator preserves the requested seed for shadcn primary and ring when
-their role-specific contrast floors pass, otherwise it uses the closest safe
-accent-scale color. Foregrounds remain scale-first rather than defaulting to
-pure black or white. `--foreground-subtle` starts at gray-10; if it is below
-the 4.6 project target against the mode background, a fixed 24-round binary search follows the
-OKLAB path toward gray-11 and uses the passing 8-bit sRGB candidate at the
-isolated boundary. This keeps a 0.1 margin above WCAG AA's 4.5 normal-text
-minimum. Radix accent
-contrast reaches 4.5 against accent step 9.
+For every seed, shadcn preserves the requested seed as primary only when it
+reaches the 1.5 visibility floor against background, card, and popover and
+supports a 4.6 primary foreground. A failing primary selects only the
+perceptually closest valid accent-scale color and fails explicitly if none
+exists; it never becomes gray or neutral. Ring preserves the requested seed
+only when it reaches 3 against background, card, and popover. A failing ring
+selects from accent, then gray, then neutral candidates. Primary foreground is
+recomputed with the accent-scale-first chooser and falls back directly to pure
+black or white, skipping tint-specific grays. An achromatic primary below 6
+percent HSL saturation skips accent candidates and uses the higher-contrast
+pure neutral. `--foreground-subtle` starts at gray-10; if it is below the 4.6
+project target against the mode background, a fixed 24-round binary search
+follows the OKLAB path toward gray-11 and uses the passing 8-bit sRGB candidate
+at the isolated boundary. This keeps a 0.1 margin above WCAG AA's 4.5
+normal-text minimum. Radix accent and gray contrast pairs reach 4.6 in all six
+formats.
 
 **Usage idiom for this project:**
 

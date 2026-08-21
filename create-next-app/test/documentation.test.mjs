@@ -181,3 +181,15 @@ test("contrast authorities state the exact supported boundary and thresholds", (
     assert.match(normalized, /foreground.*status.*4\.6/i);
   }
 });
+
+test("the generated template documents the complete shadcn correction contract", () => {
+  const generatedDesign = readFileSync(join(packageDir, "template", "DESIGN.md"), "utf8");
+  const normalized = generatedDesign.replaceAll(/\s+/g, " ");
+
+  assert.match(normalized, /primary.*1\.5.*background.*card.*popover.*4\.6/i);
+  assert.match(normalized, /primary.*closest.*accent-scale.*fail.*explicit/i);
+  assert.match(normalized, /ring.*3.*background.*card.*popover.*accent.*gray.*neutral/i);
+  assert.match(normalized, /primary.foreground.*pure black or white.*tint-specific grays/i);
+  assert.match(normalized, /achromatic primary.*skip.*accent/i);
+  assert.match(normalized, /Radix.*accent.*gray.*4\.6/i);
+});

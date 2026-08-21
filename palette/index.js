@@ -59,8 +59,11 @@ export const DEFAULT_THEME = /** @type {const} */ ({
 /**
  * The raw engine starts --primary and --ring from the seed color in both
  * modes. Extreme seeds therefore need separate mode seeds before export. The
- * shadcn exporter then keeps each selected seed only where the role-specific
- * visibility floor passes, or chooses the closest passing accent-scale step.
+ * shadcn exporter keeps primary only when the selected seed passes its
+ * three-surface 1.5 visibility floor and supports a 4.6 foreground, otherwise
+ * it chooses the closest passing accent-scale step or fails explicitly. Ring
+ * keeps its seed at 3 across the same surfaces, otherwise searching accent,
+ * gray, then neutral candidates.
  */
 const EXTREME_LIGHTNESS = { min: 15, max: 85 };
 
