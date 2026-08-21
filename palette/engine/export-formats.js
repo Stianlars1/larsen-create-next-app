@@ -136,7 +136,7 @@ function supportsProjectText(background, colorScale, grayScale) {
     PROJECT_TEXT_CONTRAST,
   ).contrast >= PROJECT_TEXT_CONTRAST;
 }
-function closestTextSafeColorOverSurfaces(
+function closestPrimaryColorOverSurfaces(
   preferred,
   surfaces,
   accentScale,
@@ -146,35 +146,25 @@ function closestTextSafeColorOverSurfaces(
   const worst = (color) => Math.min(
     ...surfaces.map((surface) => getContrastRatio(color, surface)),
   );
-  const passes = (color, colorScale = accentScale) =>
-    worst(color) >= minimum && supportsProjectText(color, colorScale, grayScale);
+  const passes = (color) =>
+    worst(color) >= minimum && supportsProjectText(color, accentScale, grayScale);
   if (passes(preferred)) return preferred;
 
   const preferredColor = new Color(preferred);
-  for (const scale of [accentScale, grayScale]) {
-    const passing = scale
-      .filter((color) => passes(color, scale))
-      .map((color, index) => ({
-        color,
-        index,
-        distance: preferredColor.deltaEOK(new Color(color)),
-      }))
-      .sort((a, b) => a.distance - b.distance || a.index - b.index);
-    if (passing[0]) return passing[0].color;
-  }
-
-  const neutral = ["#000000", "#FFFFFF"]
-    .filter((color) => passes(color, ["#000000", "#FFFFFF"]))
+  const passing = accentScale
+    .filter((color) => passes(color))
     .map((color, index) => ({
       color,
       index,
       distance: preferredColor.deltaEOK(new Color(color)),
     }))
     .sort((a, b) => a.distance - b.distance || a.index - b.index)[0];
-  if (!neutral) {
-    throw new Error(`No text-safe color clears ${minimum}:1 against every role surface`);
+  if (!passing) {
+    throw new Error(
+      `No accent-scale primary clears ${minimum}:1 against every role surface while supporting ${PROJECT_TEXT_CONTRAST}:1 text`,
+    );
   }
-  return neutral.color;
+  return passing.color;
 }
 function closestTextSafeScaleIndex(preferred, colorScale, grayScale) {
   const preferredIndex = colorScale.indexOf(preferred);
@@ -279,7 +269,7 @@ function generateShadcnCSS(data, format) {
     data.darkBackground,
     PROJECT_TEXT_CONTRAST
   );
-  const lightPrimary = closestTextSafeColorOverSurfaces(
+  const lightPrimary = closestPrimaryColorOverSurfaces(
     data.accent,
     [data.lightBackground, data.lightBackground, data.lightBackground],
     data.accentScale.light,
@@ -293,7 +283,7 @@ function generateShadcnCSS(data, format) {
     data.grayScale.light,
     3
   );
-  const darkPrimary = closestTextSafeColorOverSurfaces(
+  const darkPrimary = closestPrimaryColorOverSurfaces(
     data.accent,
     [data.darkBackground, data.grayScale.dark[1], data.grayScale.dark[2]],
     data.accentScale.dark,

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import Color from "colorjs.io";
 import { after, test } from "node:test";
+import { generateExportCode } from "../../palette/engine/export-formats.js";
+import { generatePalette } from "../../palette/engine/generatePalette.js";
 import { createPaletteMasterFixture } from "../test-support/palette-master.mjs";
 
 const fixture = await createPaletteMasterFixture();
@@ -120,6 +122,11 @@ function declarationBlocks(css) {
     css.slice(explicitLightStart, explicitDarkStart),
     css.slice(explicitDarkStart, defaultsStart),
   ];
+}
+
+function engineDeclarationBlocks(css) {
+  const mediaStart = css.indexOf("@media");
+  return [css.slice(0, mediaStart), css.slice(mediaStart)];
 }
 
 function declarations(block) {
@@ -468,23 +475,58 @@ test("primary leaves the black-white crossover while preserving every surface fl
   }
 });
 
+test("primary fails explicitly when its accent scale has no valid candidate", () => {
+  const data = generatePalette({
+    hex: "#4DA0FF",
+    semanticSeed: "#4DA0FF",
+    scheme: "analogous",
+  });
+  const crossoverOnly = Array(12).fill("#C9495A");
+  assert.throws(
+    () => generateExportCode({
+      ...data,
+      accent: "#C9495A",
+      accentScale: { light: crossoverOnly, dark: crossoverOnly },
+    }, { preset: "shadcn", format: "HEX" }),
+    /No accent-scale primary clears 1\.5:1 against every role surface while supporting 4\.6:1 text/,
+  );
+});
+
 test("harmony aliases leave the black-white crossover without changing their raw scales", () => {
-  for (const [hex, role, previous] of [
-    ["#06946E", "analogous", "#147f9f"],
-    ["#361212", "complementary", "#328181"],
+  for (const [hex, role, chart] of [
+    ["#06946E", "analogous", "chart-2"],
+    ["#361212", "complementary", "chart-3"],
   ]) {
-    const css = generateThemeCss({ hex, preset: "shadcn", format: "hex", neutralTint: "subtle" });
-    for (const block of declarationBlocks(css)) {
+    const data = generatePalette({ hex, semanticSeed: hex, scheme: "analogous" });
+    const rawScales = {
+      light: [...data[role].accentScale.light],
+      dark: [...data[role].accentScale.dark],
+    };
+    const css = generateExportCode(data, { preset: "shadcn", format: "HEX" });
+    for (const [index, block] of engineDeclarationBlocks(css).entries()) {
       const values = Object.fromEntries(declarations(block).map(({ name, value }) => [name, value]));
-      assert.notEqual(values[role].toLowerCase(), previous);
+      const mode = index === 0 ? "light" : "dark";
+      assert.notEqual(values[role], rawScales[mode][8]);
+      assert.equal(values[chart], rawScales[mode][8]);
       assert.ok(contrastRatio(values[`${role}-foreground`], values[role]) >= 4.6);
     }
+    assert.deepEqual(data[role].accentScale.light, rawScales.light);
+    assert.deepEqual(data[role].accentScale.dark, rawScales.dark);
   }
 });
 
 test("Radix crossover correction keeps accent step 9 aliases coherent", () => {
-  const css = generateThemeCss({ hex: "#C9495A", preset: "radix", format: "hex", neutralTint: "subtle" });
-  for (const block of declarationBlocks(css)) {
+  const data = generatePalette({
+    hex: "#C9495A",
+    semanticSeed: "#C9495A",
+    scheme: "analogous",
+  });
+  const rawScales = [data.radixOriginalLight, data.radixOriginalDark].map((radix) => ({
+    solid: [...radix.accentScale],
+    alpha: [...radix.accentScaleAlpha],
+  }));
+  const css = generateExportCode(data, { preset: "radix", format: "HEX" });
+  for (const [blockIndex, block] of engineDeclarationBlocks(css).entries()) {
     const values = Object.fromEntries(declarations(block).map(({ name, value }) => [name, value]));
     const sourceIndex = Array.from({ length: 12 }, (_, index) => index + 1)
       .find((index) => index !== 9 && values[`accent-${index}`] === values["accent-9"]);
@@ -493,7 +535,43 @@ test("Radix crossover correction keeps accent step 9 aliases coherent", () => {
     assert.equal(values["accent-indicator"], values["accent-9"]);
     assert.equal(values["accent-track"], values["accent-9"]);
     assert.ok(contrastRatio(values["accent-contrast"], values["accent-9"]) >= 4.6);
+    const radix = blockIndex === 0 ? data.radixOriginalLight : data.radixOriginalDark;
+    assert.deepEqual(radix.accentScale, rawScales[blockIndex].solid);
+    assert.deepEqual(radix.accentScaleAlpha, rawScales[blockIndex].alpha);
   }
+});
+
+test("Radix crossover correction keeps gray step 9 aliases coherent", () => {
+  const data = generatePalette({
+    hex: "#4DA0FF",
+    semanticSeed: "#4DA0FF",
+    scheme: "analogous",
+  });
+  const grayScale = data.radixOriginalLight.grayScale.with(8, "#C9495A");
+  const grayScaleAlpha = [...data.radixOriginalLight.grayScaleAlpha];
+  const expectedGrayScale = [...grayScale];
+  const expectedGrayScaleAlpha = [...grayScaleAlpha];
+  const synthetic = {
+    ...data,
+    radixOriginalLight: {
+      ...data.radixOriginalLight,
+      grayScale,
+      grayScaleAlpha,
+    },
+  };
+  const css = generateExportCode(synthetic, { preset: "radix", format: "HEX" });
+  const values = Object.fromEntries(
+    declarations(declarationBlocks(css)[0]).map(({ name, value }) => [name, value]),
+  );
+  const sourceIndex = Array.from({ length: 12 }, (_, index) => index + 1)
+    .find((index) => index !== 9 && values[`gray-${index}`] === values["gray-9"]);
+  assert.ok(sourceIndex, "corrected gray-9 should come from the existing gray scale");
+  assert.equal(values["gray-a9"], values[`gray-a${sourceIndex}`]);
+  assert.equal(values["gray-indicator"], values["gray-9"]);
+  assert.equal(values["gray-track"], values["gray-9"]);
+  assert.ok(contrastRatio(values["gray-contrast"], values["gray-9"]) >= 4.6);
+  assert.deepEqual(synthetic.radixOriginalLight.grayScale, expectedGrayScale);
+  assert.deepEqual(synthetic.radixOriginalLight.grayScaleAlpha, expectedGrayScaleAlpha);
 });
 
 test("every serialized format preserves required foreground contrast", () => {

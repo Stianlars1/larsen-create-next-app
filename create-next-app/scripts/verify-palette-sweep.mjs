@@ -9,6 +9,44 @@ import { measureThemeContrast } from "../src/theme-contrast.mjs";
 export const EXPECTED_SEED_HASH =
   "25104d5316f9bdc8804e726842b8f1950b6bc07531aa026013aff4c1669947a9";
 
+export const EXPECTED_TINT_CORRECTION_DIFFERENCES = Object.freeze([
+  Object.freeze({
+    hex: "#611431",
+    mode: "dark",
+    token: "primary",
+    subtle: "338.7805 56.1644% 28.6275%",
+    strong: "339.5745 50.5376% 36.4706%",
+  }),
+  Object.freeze({
+    hex: "#611431",
+    mode: "dark",
+    token: "sidebar-primary",
+    subtle: "338.7805 56.1644% 28.6275%",
+    strong: "339.5745 50.5376% 36.4706%",
+  }),
+  Object.freeze({
+    hex: "#9F46B1",
+    mode: "dark",
+    token: "ring",
+    subtle: "289.9065 43.3198% 48.4314%",
+    strong: "290.1099 79.1304% 77.451%",
+  }),
+  Object.freeze({
+    hex: "#9F46B1",
+    mode: "dark",
+    token: "sidebar-ring",
+    subtle: "289.9065 43.3198% 48.4314%",
+    strong: "290.1099 79.1304% 77.451%",
+  }),
+]);
+
+const TINT_CORRECTED_ROLES = Object.freeze([
+  "primary",
+  "sidebar-primary",
+  "ring",
+  "sidebar-ring",
+]);
+
 const NAMED_SEEDS = Object.freeze([
   "#A1A1A1", "#973C00", "#193CB8", "#005F78", "#006045", "#8A0194",
   "#016630", "#372AAC", "#7CCF00", "#9F2D00", "#A3004C", "#6E11B0",
@@ -94,6 +132,41 @@ export function buildSweepSeeds() {
   return { named, random, edge, all };
 }
 
+function correctedRoleModes(css) {
+  const mediaStart = css.indexOf("@media");
+  const explicitLightStart = css.indexOf('[data-theme="light"]');
+  const blocks = [
+    ["light", css.slice(css.indexOf(":root {"), mediaStart)],
+    ["dark", css.slice(mediaStart, explicitLightStart === -1 ? undefined : explicitLightStart)],
+  ];
+  return Object.fromEntries(blocks.map(([mode, block]) => [
+    mode,
+    Object.fromEntries(
+      [...block.matchAll(/--(primary|sidebar-primary|ring|sidebar-ring):\s*([^;]+);/g)]
+        .map((match) => [match[1], match[2].trim()]),
+    ),
+  ]));
+}
+
+export function compareTintCorrectedRoles(hex, subtleCss, strongCss) {
+  const subtle = correctedRoleModes(subtleCss);
+  const strong = correctedRoleModes(strongCss);
+  const differences = [];
+  for (const mode of ["light", "dark"]) {
+    for (const token of TINT_CORRECTED_ROLES) {
+      if (subtle[mode][token] === strong[mode][token]) continue;
+      differences.push({
+        hex,
+        mode,
+        token,
+        subtle: subtle[mode][token],
+        strong: strong[mode][token],
+      });
+    }
+  }
+  return differences;
+}
+
 export function runPaletteSweep() {
   const { all } = buildSweepSeeds();
   const seedHash = createHash("sha256").update(all.join("\n")).digest("hex");
@@ -103,9 +176,12 @@ export function runPaletteSweep() {
 
   const failures = [];
   const worstByPair = new Map();
+  const tintCorrectionDifferences = [];
   let themes = 0;
 
   for (const hex of all) {
+    /** @type {Record<string, string>} */
+    const cssByTint = {};
     for (const neutralTint of ["subtle", "strong"]) {
       const css = generateThemeCss({
         hex,
@@ -113,6 +189,7 @@ export function runPaletteSweep() {
         format: "hsl-values",
         neutralTint,
       });
+      cssByTint[neutralTint] = css;
       const result = measureThemeContrast(css);
       themes += 1;
       failures.push(...result.missing.map((failure) => `${hex} ${neutralTint} ${failure}`));
@@ -129,6 +206,18 @@ export function runPaletteSweep() {
         }
       }
     }
+    tintCorrectionDifferences.push(
+      ...compareTintCorrectedRoles(hex, cssByTint.subtle, cssByTint.strong),
+    );
+  }
+
+  if (
+    JSON.stringify(tintCorrectionDifferences)
+    !== JSON.stringify(EXPECTED_TINT_CORRECTION_DIFFERENCES)
+  ) {
+    failures.push(
+      `cross-tint primary/ring scope changed: ${JSON.stringify(tintCorrectionDifferences)}`,
+    );
   }
 
   return {
@@ -136,6 +225,7 @@ export function runPaletteSweep() {
     seeds: all.length,
     themes,
     pairs: worstByPair.size,
+    tintCorrectionDifferences,
     failures,
     worst: [...worstByPair.values()],
   };
@@ -150,6 +240,9 @@ if (isMain) {
     );
     console.log(`contrast-sweep: seed SHA-256 ${result.seedHash}`);
     console.log(`contrast-sweep: ${result.pairs} role pairs measured in both modes per theme`);
+    console.log(
+      `contrast-sweep: ${result.tintCorrectionDifferences.length} locked cross-tint primary/ring alias differences`,
+    );
     for (const item of result.worst) {
       console.log(
         `contrast-sweep: --${item.token} vs --${item.against} >= ${item.minimum} (${item.standard}), worst ${item.actual.toFixed(6)} at ${item.hex} ${item.neutralTint} ${item.mode}`,

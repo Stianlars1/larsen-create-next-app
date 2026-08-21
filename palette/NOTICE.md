@@ -27,8 +27,9 @@ authored by Stian Larsen.
    Larsen tokens. P3 wide-gamut blocks remain deferred.
 8. `export-formats.js`: shadcn primary and ring roles keep the requested seed
    only when it passes against background, card, and popover. Primary also
-   requires a 4.6 foreground. A failing role uses the closest passing
-   accent-scale color, then gray, then a neutral. Primary foreground is
+   requires a 4.6 foreground. A failing primary uses only the closest valid
+   accent-scale color and fails explicitly if none exists. A failing ring
+   searches accent, gray, then neutral candidates. Primary foreground is
    recomputed after correction.
 9. `formatColor`: HSL and HSL Values retain up to four decimal places instead
    of rounding every component to an integer. This prevents serialization

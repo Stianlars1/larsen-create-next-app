@@ -77,12 +77,14 @@ Measured across a 233-seed sweep of hue, saturation, and lightness, in
 `--background` and `--accent-1` through `--accent-12` remain identical under
 both tints for every chromatic seed. Primary and ring are corrected against
 the final card and popover surfaces, which belong to the selected gray ramp.
-In the locked 762-seed corpus, two dark roles require tint-specific candidates:
-`#611431` primary moves from `#72203d` under subtle to `#8c2e4e` under strong,
-and `#9F46B1` ring moves from `#9f46b1` to `#e498f3`. No other primary or ring
-in that corpus differs by tint. The largest single-channel difference in the
-earlier gray-ramp sweep was 4 of 255, so the underlying tint remains
-deliberately small even when a contrast boundary selects another scale step.
+In the locked 762-seed corpus, two dark role decisions require tint-specific
+candidates: `#611431` primary moves from `#72203d` under subtle to `#8c2e4e`
+under strong, and `#9F46B1` ring moves from `#9f46b1` to `#e498f3`. Their
+sidebar-primary and sidebar-ring aliases move with them, producing exactly
+four changed declarations. No other primary, ring, or dependent alias in that
+corpus differs by tint. The largest single-channel difference in the earlier
+gray-ramp sweep was 4 of 255, so the underlying tint remains deliberately
+small even when a contrast boundary selects another scale step.
 
 The documented exceptions have no usable hue of their own: `#000000`,
 `#010101`, `#FEFEFE`, and `#FFFFFF`. The engine derives each accent scale from
@@ -153,9 +155,9 @@ The approved derived roles are:
 | popover | background | gray step 3 |
 | popover-foreground | foreground | foreground |
 | foreground-subtle | gray step 10, corrected only if needed to reach the 4.6 project target against background | gray step 10, corrected only if needed to reach the 4.6 project target against background |
-| primary | requested seed when it reaches 1.5 against background, card, and popover and supports a 4.6 foreground; otherwise closest passing text-safe accent step | same rule |
+| primary | requested seed when it reaches 1.5 against background, card, and popover and supports a 4.6 foreground; otherwise closest passing text-safe accent step; fail explicitly if none exists | same rule |
 | primary-foreground | scale-first chooser against corrected primary | same rule |
-| ring | requested seed when it reaches 3 against background, card, and popover; otherwise closest passing accent step | same rule |
+| ring | requested seed when it reaches 3 against background, card, and popover; otherwise closest passing accent step, then gray step, then neutral | same rule |
 | radius | `var(--radius-md)` | inherited |
 | chart-1 | accent step 9 | accent step 9 |
 | chart-2 | analogous step 9 | analogous step 9 |
@@ -264,10 +266,12 @@ Mode selection alone is not sufficient for every mid-range hue. The shadcn
 exporter therefore preserves the selected seed for primary only when it
 reaches the 1.5 visibility floor against background, card, and popover and
 supports a 4.6 foreground. Ring keeps it only when it reaches 3 against all
-three surfaces. A failing role uses the perceptually closest passing color
-from the same accent scale, then the gray scale, then a passing neutral.
-Primary foreground is recomputed against the corrected primary with the
-accent-scale-first, gray-scale-second chooser.
+three surfaces. A failing primary uses only the perceptually closest valid
+color from its accent scale and fails explicitly when that scale has no color
+that satisfies both constraints. It never falls back to gray, black, or
+white. A failing ring searches the accent scale, then the gray scale, then
+black and white. Primary foreground is recomputed against the corrected
+primary with the accent-scale-first, gray-scale-second chooser.
 
 The black-white crossover has a narrow luminance interval where neither
 neutral can reach 4.6. Analogous and complementary aliases in that interval
@@ -329,7 +333,9 @@ CSS Variables.
 The deterministic release sweep is `npm run verify:palette-sweep` from
 `create-next-app`. It checks 762 unique seeds under both neutral tints, locks
 the seed corpus SHA-256, and reports the weakest observed ratio for every
-text, ring-surface, primary-surface, input, harmony, and semantic pair.
-Upstream drift checks remain a separate networked verification concern. The
-runtime suite is intentionally offline; the deterministic sweep locks its
-seed corpus and order by SHA-256.
+text, ring-surface, primary-surface, input, harmony, and semantic pair. It
+also compares tint-corrected role output and locks exactly four changed
+declarations: dark primary and sidebar-primary for `#611431`, plus dark ring
+and sidebar-ring for `#9F46B1`. Upstream drift checks remain a separate
+networked verification concern. The runtime suite is intentionally offline;
+the deterministic sweep locks its seed corpus and order by SHA-256.
