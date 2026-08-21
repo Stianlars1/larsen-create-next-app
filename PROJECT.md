@@ -36,7 +36,7 @@ is enabled, and optional skills.
 | Mutable option rows | `create-next-app/src/options.js` `OPTION_CONTRACT` |
 | Current palette contracts and boundaries | [docs/reference/palette.md](docs/reference/palette.md) |
 | Published version evidence | [docs/verification/releases.md](docs/verification/releases.md) |
-| Dated local verification | [0.3.0](docs/verification/local-0.3.0.md), [0.4.0](docs/verification/local-0.4.0.md), [0.5.0](docs/verification/local-0.5.0.md), [0.5.1](docs/verification/local-0.5.1.md) |
+| Dated local verification | [0.3.0](docs/verification/local-0.3.0.md), [0.4.0](docs/verification/local-0.4.0.md), [0.5.0](docs/verification/local-0.5.0.md), [0.5.1](docs/verification/local-0.5.1.md), [0.6.0](docs/verification/local-0.6.0.md) |
 | User-facing version history | [CHANGELOG.md](CHANGELOG.md) |
 | Approved 0.1.0 planning snapshot | [docs/plans/2026-08-07-create-next-app-template.md](docs/plans/2026-08-07-create-next-app-template.md) |
 
