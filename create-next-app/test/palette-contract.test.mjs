@@ -638,6 +638,19 @@ test("every serialized format preserves required foreground contrast", () => {
   }
 });
 
+for (const [optionName, options] of [
+  ["overrides", { overrides: { background: "red" } }],
+  ["darkOverrides", { darkOverrides: { ring: "#12345" } }],
+  ["overrides", { overrides: { custom: 123 } }],
+]) {
+  test(`${optionName} rejects invalid override colors`, () => {
+    assert.throws(
+      () => generateThemeCss({ hex: "#4DA0FF", ...options }),
+      /Invalid .* override color/,
+    );
+  });
+}
+
 for (const [format, expected] of Object.entries(ALPHA_OVERRIDE_EXAMPLES)) {
   test(`${format} serialization preserves an eight-digit HEX alpha channel`, () => {
     const css = generateThemeCss({
@@ -653,3 +666,15 @@ for (const [format, expected] of Object.entries(ALPHA_OVERRIDE_EXAMPLES)) {
     assert.equal(background?.value, expected);
   });
 }
+
+test("three-digit overrides normalize and append custom tokens", () => {
+  const css = generateThemeCss({
+    hex: "#4DA0FF",
+    preset: "shadcn",
+    format: "hex",
+    overrides: { custom: "0af" },
+  });
+  const custom = declarations(declarationBlocks(css)[0])
+    .find(({ name }) => name === "custom");
+  assert.equal(custom?.value, "#00AAFF");
+});

@@ -49,6 +49,9 @@ change the selected color enough to weaken contrast.
 These are token contracts, not claims of full shadcn component or Radix
 Themes runtime compatibility.
 
+- Semantic `*-border` tokens are subtle Radix step-7 borders. Do not rely on a border or color alone to communicate status. Pair status styling with the matching base/foreground or muted/muted-foreground tokens and meaningful text or icons.
+- Explicit palette overrides are caller-owned escape hatches. When overriding one half of a foreground/background pair, verify the final pair again.
+
 The generator preserves the requested seed for shadcn primary and ring when
 their role-specific contrast floors pass, otherwise it uses the closest safe
 accent-scale color. Foregrounds remain scale-first rather than defaulting to

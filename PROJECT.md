@@ -247,6 +247,16 @@ call containing the removed `scheme` property fails explicitly. The generated
 analogous and complementary support tokens, their foregrounds, and the
 existing chart mappings remain part of every preset contract.
 
+`generateThemeCss()` accepts optional `overrides` and `darkOverrides` maps.
+Each override value must be three-, six-, or eight-digit HEX with an optional
+leading `#`; valid values are normalized before rendering, including
+three-digit expansion and eight-digit alpha preservation. Override keys remain
+caller-owned token names, so they replace an existing declaration or append a
+custom token. Overrides are applied after generation and contrast correction:
+they are escape hatches outside the palette matrix, contrast checks, and
+release-sweep evidence. A caller who overrides either member of a foreground
+and background pair must verify the final pair again.
+
 Semantic statuses use complete, unmodified named Radix Colors scales. The
 original normalized seed selects the smallest OKLAB Delta E from each role's
 candidate light sRGB step 9, with listed candidate order breaking ties. The

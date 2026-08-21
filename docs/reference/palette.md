@@ -206,6 +206,23 @@ The exact Radix mappings are:
 P3 wide-gamut blocks are deliberately deferred and can be added later. This
 contract does not claim full Radix Themes runtime or framework compatibility.
 
+## Caller overrides
+
+`generateThemeCss()` accepts optional `overrides` and `darkOverrides` maps.
+Each map value must be a three-, six-, or eight-digit hexadecimal color, with
+an optional leading `#`. Values are normalized before rendering, including
+three-digit expansion and preservation of an eight-digit alpha channel. Map
+keys are caller-owned token names: an existing `--<token>` declaration is
+replaced and a missing token is appended, so custom token names remain
+available.
+
+Overrides apply after generated role selection and contrast corrections. They
+are intentional escape hatches, not generator-curated values: the matrix,
+contrast checks, and release sweep do not verify post-override foreground and
+background pairs. Callers who override either side of such a pair must verify
+the resulting pair and must not rely on a semantic border or color alone to
+communicate status.
+
 ## CSS Variables contract
 
 `css-variables` remains the generic 50-name Larsen preset: background,

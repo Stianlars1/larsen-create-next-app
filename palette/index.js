@@ -226,6 +226,8 @@ export function generateThemeCss(opts) {
 
   const seed = normalizeHex(hex);
   const normalizedDarkHex = hasDarkHex ? normalizeHex(darkHex) : undefined;
+  const normalizedOverrides = normalizeOverrides(overrides, "overrides");
+  const normalizedDarkOverrides = normalizeOverrides(darkOverrides, "darkOverrides");
   const { lightSeed, darkSeed } = seedsForModes(seed, normalizedDarkHex);
   const roles = tokenRoles(preset, format);
   const engineScheme = ENGINE_SCHEME_BY_NEUTRAL_TINT[neutralTint];
@@ -243,8 +245,8 @@ export function generateThemeCss(opts) {
   let { light } = render(lightSeed);
   let dark = darkSeed ? render(darkSeed).dark : render(lightSeed).dark;
 
-  light = applyOverrides(light, overrides, format);
-  dark = applyOverrides(dark, darkOverrides ?? overrides, format);
+  light = applyOverrides(light, normalizedOverrides, format);
+  dark = applyOverrides(dark, normalizedDarkOverrides ?? normalizedOverrides, format);
 
   return `/**
  * theme.css - color tokens
@@ -290,6 +292,31 @@ hr {
   border-top-color: ${roles.line.expr};
 }
 ${append ? `\n${append.trim()}\n` : ""}`;
+}
+
+/** Normalize caller-owned override colors before passing them to the renderer. */
+function normalizeOverrides(values, optionName) {
+  if (!values) return undefined;
+  return Object.fromEntries(
+    Object.entries(values).map(([token, value]) => [
+      token,
+      normalizeOverrideHex(value, token, optionName),
+    ]),
+  );
+}
+
+/** Normalize one caller-owned override color and preserve its token name. */
+function normalizeOverrideHex(value, token, optionName) {
+  if (
+    typeof value !== "string" ||
+    !/^#?(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value.trim())
+  ) {
+    throw new Error(
+      `Invalid ${optionName} override color for "--${token}": "${String(value)}" ` +
+        "(expected 3, 6, or 8 digit HEX)",
+    );
+  }
+  return normalizeHex(value);
 }
 
 /**
