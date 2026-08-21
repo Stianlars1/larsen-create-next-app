@@ -101,6 +101,31 @@ tints and explicitly rejects an options object containing the removed
 is `null` or `undefined`; supplied blank, malformed, or non-string values are
 rejected explicitly. Valid three- and six-digit HEX values work.
 
+## Curated semantic status scales
+
+Semantic statuses use full named Radix Colors scales rather than generated
+hues. The original normalized seed selects the candidate with the smallest
+OKLAB Delta E to the candidate's light sRGB step 9. Candidate-list order
+breaks equal distances. The selected name is shared by light and dark output,
+whose values come directly from that named scale. A dependency-drift test
+locks that every allowed scale has the same light and dark sRGB step 9.
+
+| Role | Candidate scales | Achromatic default |
+| --- | --- | --- |
+| success | jade, green, grass | green |
+| danger | tomato, red, ruby, crimson | red |
+| warning | amber, orange | amber |
+| info | sky, blue, cyan | blue |
+
+Seeds below 6 percent HSL saturation use the achromatic default. The selected
+scale supplies base from step 9, muted from step 3, and border from step 7.
+Base and muted foregrounds use the existing palette-first chooser with a 4.6
+target. The named scale selection is independent of neutral tint and
+mode-specific seed selection. Existing status token names remain in all
+presets. In shadcn, `--destructive` and `--destructive-foreground` are
+resolved aliases of the selected danger values, while chart 4 and chart 5 are
+resolved aliases of warning and success.
+
 ## shadcn approved token-name contract
 
 shadcn emits 81 color names in both modes plus root-level `--radius`:

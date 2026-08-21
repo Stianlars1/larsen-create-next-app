@@ -6,71 +6,68 @@ import { createPaletteMasterFixture } from "../test-support/palette-master.mjs";
 const fixture = await createPaletteMasterFixture();
 after(fixture.cleanup);
 
-// The 0.5.1 foreground-subtle correction is the only permitted declaration
-// change. These hashes lock every other declaration to the 0.5.0 output.
-const UNCHANGED_DECLARATION_HASHES = new Map([
-  ["subtle|shadcn|hex", "556b1e3cdd2bfb36ec798722e12c436fbdadfead654eb8c5e7c298945ac4fc1d"],
-  ["subtle|shadcn|rgb", "1cb77116e560bbca146ec5f787620fd96c57fb11683673502c3982b88638639c"],
-  ["subtle|shadcn|hsl", "be751f3704db7a661947686265c4bda481b6f231a4040c149129366a6496055e"],
-  ["subtle|shadcn|hsl-values", "106afc1e56d7689e29abcc706cfad602a132a29dba7a65963365283fcc39149d"],
-  ["subtle|shadcn|oklab", "f70deefed152908f86f3c0a64c026848a99c8aea2aaba56c900414661863e63a"],
-  ["subtle|shadcn|oklch", "f4988cf9a77ab0bcbda3850caf4e55991c8a297670599ba19bf1255d97c2993f"],
-  ["subtle|radix|hex", "d6fdafadc39517dd670708cc72a5535e87c95e42017b9dd6e68444ba782ba878"],
-  ["subtle|radix|rgb", "1b4be2530e3601f0bcebb7f462e06cbe72c67651ade3e260cd8404e6c356ca33"],
-  ["subtle|radix|hsl", "08ac776728e3821c4c493bb6e02d3072d7e040d16f66ed4e4770ecbf193b629e"],
-  ["subtle|radix|hsl-values", "c2d00e94471037b5b271ce6bae5b3b98e4745b34b7d2a38d6e58353743cfad33"],
-  ["subtle|radix|oklab", "8c62cb1824c2813be3816048c6f46bb9f7df7717bfd5f25aba67444c950a010f"],
-  ["subtle|radix|oklch", "1b9768780448317697a390d30df2788bc561a3d5c007ef7f939468f414b9f98d"],
-  ["subtle|css-variables|hex", "f56604cb87a1494f2939be406bbf31ef3ba4ae133f9ef6c7503aea6720547075"],
-  ["subtle|css-variables|rgb", "f574ed5fa66e042dc4be247865a0d58030b4737431dc94bc95b0dda95b910e8a"],
-  ["subtle|css-variables|hsl", "aefbf429916647c6d7fe213d5499a33bbee3f1ff9695147dfbba51bb794361ce"],
-  ["subtle|css-variables|hsl-values", "0225e07bda0f4584db7ad6106f59ed27b8d875dadc75e99b12243a8697b70e40"],
-  ["subtle|css-variables|oklab", "3609541742299f0c9a91d9fb90442d0df0bfc5a214f05efdf181385eaa2ffd0b"],
-  ["subtle|css-variables|oklch", "9e1deeeb1d1d1896d8c5e5d1f4e640ae6e033f9993309ed6fbbf57ccb38a5192"],
-  ["strong|shadcn|hex", "ab373573f175f4ed25ae052ab09280f12be581f35bfc4aa47e75119411f90d10"],
-  ["strong|shadcn|rgb", "46179e8e1de15942a5e2d90eff93fd0e69ab3fd1ce90ca2386fb0b4e87b5895a"],
-  ["strong|shadcn|hsl", "cff18e161c9728bb6a246e1219c5f4ee17ad73b5fa2aa5f66bcdb5692cd2e4b7"],
-  ["strong|shadcn|hsl-values", "bca3c4448c41db50fb4104ba21ba67d4951885a841b3f63aea063a10b619f381"],
-  ["strong|shadcn|oklab", "bb8ec322b7dcf6ef4ab36d21a2566d98cf29f66ce4cb2128e08c5ed31d8af8d4"],
-  ["strong|shadcn|oklch", "0cd6430101bf589312a362257f2bfa518700de5607ce6c91922303490462af91"],
-  ["strong|radix|hex", "2a23a91ef4eae421beec70db5d2633a1398557bc74417826cc9416bb884d283d"],
-  ["strong|radix|rgb", "120d4986aa1c6a072908fcb6f9a1c849b76d92cf056a99e7ab0e3e85eb88b7cb"],
-  ["strong|radix|hsl", "e29c171c521c4a2017d8ec00e52d675fe9d05e3360754c87e6a6219557017c01"],
-  ["strong|radix|hsl-values", "056d2ea33610722d7e04199c41ac546195c8161bfadbaf231bf46e7f66f9ab25"],
-  ["strong|radix|oklab", "46d4b58f9172513ec128c8a042b6ac85eec098f3c727dda165f1b95c0e0c40a3"],
-  ["strong|radix|oklch", "8c098ac42ae778b7bea39c456f9c163996a94a509364347cfc390d7c5eb96981"],
-  ["strong|css-variables|hex", "c309586f2a4face97425def80e1015c1ea294ed1d118f905cb0251b62862fdfd"],
-  ["strong|css-variables|rgb", "8d9579b0d4287b6e389d812aa843f3a483d76f4961cc381246b52b5df0de16e5"],
-  ["strong|css-variables|hsl", "240f3e836a29b38c55a8aa71e29adb30db8f8a3f3ebfe4962ee5e26e0d9be3bc"],
-  ["strong|css-variables|hsl-values", "995466dbc4e2b096672249e636a551533c463d0950719bcbdc18a08a78e2ae01"],
-  ["strong|css-variables|oklab", "dc0921cd48d75c202a9878f8a0fcebb05ad5c72f4f5c057afb25c6815f9ba78c"],
-  ["strong|css-variables|oklch", "03bcf0bd5ea4a4df2a0f1054770cec7f62b3a46ae77e1f2431a359ef2b5cec6d"],
+// Task 1 deliberately changes the 20 status declarations. In shadcn it also
+// changes destructive aliases and chart 4/5. These hashes lock every resulting
+// declaration across both neutral tints, presets, and serialization formats.
+const CURRENT_DECLARATION_HASHES = new Map([
+  ["subtle|shadcn|hex", "b52f53c26455a4e82e13b190b061d539fcfd915f6fc2272bb0df2c296962477b"],
+  ["subtle|shadcn|rgb", "1a8fe88b8c1bc9b9646206dcb4814ef84535111e34a9438db7bb30450c06779d"],
+  ["subtle|shadcn|hsl", "5f730e53ac9361c7bde201b253f41f7bdf7e2c9195f16176c98659fc6d65a467"],
+  ["subtle|shadcn|hsl-values", "45ae6573d4a0adc8e2e966c39afe3a0796ad0331e3946cd7dbcaa17d898e16ff"],
+  ["subtle|shadcn|oklab", "8a534b6bdc60eebc91c86cd15899e5054b4e4b215151e14c6ad4d4b981b7bede"],
+  ["subtle|shadcn|oklch", "f5f401eea77e3eb4bf4d066ce990a654e68b5f40843a0f0d079c446c0022ac58"],
+  ["subtle|radix|hex", "932980eb9d9f1e4d9b22160a2c72180d4034a5c72e925319ff4e094e194695e4"],
+  ["subtle|radix|rgb", "0c0afc1b309c373ef208375c46a6ecf99f10744335b770ee6ce01f73a7ef2ae8"],
+  ["subtle|radix|hsl", "9ca2359301ef78b0c9c8545f7d53ab6a1425950dff82098b005d823996d557c0"],
+  ["subtle|radix|hsl-values", "851591d926f25440f984a6fda6053953f175f051f1bb7cbefff57ebaa1a8852e"],
+  ["subtle|radix|oklab", "aea3884efdacd52f1e68153bd4ba9e81f50b5e0cf79f7f2859456cbb6f5e7317"],
+  ["subtle|radix|oklch", "396a1317ec4d486276ab758dd2a70f863ae0768abac9bff0e38887d1c22e314b"],
+  ["subtle|css-variables|hex", "9b09d62aaf46ad2852f818e0d05fbadbe6b996c1fef17ca25f5c6bcbd40a0296"],
+  ["subtle|css-variables|rgb", "c8c13d952e6e013ade2bb6f71d6d30f70f9dda44787fbea86d674709e46ebc87"],
+  ["subtle|css-variables|hsl", "292a3b6f10236f11c6a95390aa984a6757c82f6efde8c6f889c81688e3968175"],
+  ["subtle|css-variables|hsl-values", "981b1b803cfe574a4a8acf817cbac18db504e1b1fe3c6b7eb210b734583635c5"],
+  ["subtle|css-variables|oklab", "59e01eb6c2294bb493aa1079c2e60f808ab41320df1b08eabd9aadcc204a53b3"],
+  ["subtle|css-variables|oklch", "592f1cdc78ee85ebc2f9813c219dd5ebca6f83d4b52661b274f743702aad19d4"],
+  ["strong|shadcn|hex", "d16fd628201880a73352c3e6b903a15ebdd26c5720d3fab41a5f125c6e922d6d"],
+  ["strong|shadcn|rgb", "183c289bec221003f5f730c44e61e097c13f016238a87ece873c3ce584ac4153"],
+  ["strong|shadcn|hsl", "dd9ee59245d85581c1973f7c33719e289b7507e3809b01cfaaa26758828f1d44"],
+  ["strong|shadcn|hsl-values", "c089ef87ef8e6bc108f5bfc21786aa0f328d69812394887636b7c3d297ae05f5"],
+  ["strong|shadcn|oklab", "f42239bd952cc854cd03040defd88baa9b27cd297d28f364c66ff4cb6a268297"],
+  ["strong|shadcn|oklch", "a132ffc6da1c7826eb4dad55f1ff5f71cc3c203478744732ee442d733f810cbf"],
+  ["strong|radix|hex", "7f031da2c4aa8b97d07b184a92e5d5a632c68670379bb2c6a335e75a5bc711f5"],
+  ["strong|radix|rgb", "ccbadd29c69897bbf59b73e45663a137f1c7c810c4c8d000959760d3ff2dc23e"],
+  ["strong|radix|hsl", "28903ec7e62fd247f16f3a528a56338fe60da07ea8967084f27ab238781f15cf"],
+  ["strong|radix|hsl-values", "7ea41bf0e3e1f877e2b9177bd309fc2dd5f645df7c98f6d857eaca42fc386850"],
+  ["strong|radix|oklab", "d2ec2c085cd6f7f918ab60b4f0f3a3588d947904b0920ad739e55b19bdb4ead3"],
+  ["strong|radix|oklch", "b2c77903a9e3340914a4f8f1a7ead3f39a42d51f7629bd181dde7c35a93102f3"],
+  ["strong|css-variables|hex", "fc6953a6f9ee2ce252e18aa5d1ad0e4c73e385f3bdc004f7562e8fe592c34c46"],
+  ["strong|css-variables|rgb", "f5d7de54a7049b41195fc98ba116acd978acfa7facd08ac7ec609eb4c7d9493d"],
+  ["strong|css-variables|hsl", "375fc795ab3acbfd5e856520833774e3422d37f56487af4c7c115a9ae23b397a"],
+  ["strong|css-variables|hsl-values", "2a4cef1e3ce640fecf893d436721bc08deee7a4722fade29732f97036fd533b9"],
+  ["strong|css-variables|oklab", "b53dbe6b87be268f3c183d4ffdf847ca0b95bfc36a2a7d5564abe8fa4474b4af"],
+  ["strong|css-variables|oklch", "6f93c32f451e20bc044ed7bc3d40b00c2755914ba2b724c975bb523d3793a1ae"],
 ]);
 
-// Full current shadcn baselines separately lock the corrected token in all six
-// formats instead of hiding it behind the compatibility invariant above.
+// Keep an explicit complete shadcn baseline because its alias declarations
+// change with semantic selection while its token-name contract stays stable.
 const SHADCN_CURRENT_FULL_HASHES = new Map([
-  ["subtle|hex", "9bdbe539715943f03a6f5d9d887a9fe6fb8addb3127ff4b7f78e78b10c709680"],
-  ["subtle|rgb", "cdd0d17a5fc88a723138d982aa2d997f88e6b475d13012c5ac57d0006528ffb9"],
-  ["subtle|hsl", "d14f36fca89f21208b0a1b0b5713a0050031fc8c0c01433a9d493bb1808bc881"],
-  ["subtle|hsl-values", "fffa0b5fe5ddd5d1b8a7af1a34eeb9158e648b55615863566b88ca4220fb267c"],
-  ["subtle|oklab", "b4f7b58328ec943a0cbf44c515e885fef028d176361c890c6681737efabd7436"],
-  ["subtle|oklch", "b2b43974ed830beff8a063f74975225cbe3b514af1898361a64be43b4e519ba0"],
-  ["strong|hex", "80fdeacf99bfef09de9354075caf1a03af4cf38b856af4aa0bbb8e0ef0d5164f"],
-  ["strong|rgb", "1c87197947f5d084b4ff23ea3da8cf76878d80819efec2a414dab0ec4cf7a1f6"],
-  ["strong|hsl", "dfe0c6dee07e984125f0f920fb81f15292ed033f0cf06df26e600c6226979bcc"],
-  ["strong|hsl-values", "7fef24485b70716322d9ed4c5bc341327b5e00b4c560c62ff217665e1e73e5ce"],
-  ["strong|oklab", "ef0e98ef68987f2ee7ff1605a860ed5abbe5d15c10c96d40c39a3796e600ed27"],
-  ["strong|oklch", "757fd8e9f9af0556100e5be615f989828fe198ee1e8037b2709cd90393d97b10"],
+  ["subtle|hex", "b52f53c26455a4e82e13b190b061d539fcfd915f6fc2272bb0df2c296962477b"],
+  ["subtle|rgb", "1a8fe88b8c1bc9b9646206dcb4814ef84535111e34a9438db7bb30450c06779d"],
+  ["subtle|hsl", "5f730e53ac9361c7bde201b253f41f7bdf7e2c9195f16176c98659fc6d65a467"],
+  ["subtle|hsl-values", "45ae6573d4a0adc8e2e966c39afe3a0796ad0331e3946cd7dbcaa17d898e16ff"],
+  ["subtle|oklab", "8a534b6bdc60eebc91c86cd15899e5054b4e4b215151e14c6ad4d4b981b7bede"],
+  ["subtle|oklch", "f5f401eea77e3eb4bf4d066ce990a654e68b5f40843a0f0d079c446c0022ac58"],
+  ["strong|hex", "d16fd628201880a73352c3e6b903a15ebdd26c5720d3fab41a5f125c6e922d6d"],
+  ["strong|rgb", "183c289bec221003f5f730c44e61e097c13f016238a87ece873c3ce584ac4153"],
+  ["strong|hsl", "dd9ee59245d85581c1973f7c33719e289b7507e3809b01cfaaa26758828f1d44"],
+  ["strong|hsl-values", "c089ef87ef8e6bc108f5bfc21786aa0f328d69812394887636b7c3d297ae05f5"],
+  ["strong|oklab", "f42239bd952cc854cd03040defd88baa9b27cd297d28f364c66ff4cb6a268297"],
+  ["strong|oklch", "a132ffc6da1c7826eb4dad55f1ff5f71cc3c203478744732ee442d733f810cbf"],
 ]);
 
-function declarationHash(css, { omitForegroundSubtle = false } = {}) {
+function declarationHash(css) {
   const declarationText = [...css.matchAll(/--[a-z0-9-]+:\s*[^;]+;/g)]
     .map((match) => match[0])
-    .filter(
-      (declaration) =>
-        !omitForegroundSubtle || !declaration.startsWith("--foreground-subtle:"),
-    )
     .join("\n");
   return createHash("sha256").update(declarationText).digest("hex");
 }
@@ -96,12 +93,9 @@ test("omitting neutralTint is byte-identical to explicit subtle", () => {
   assert.match(omitted, /neutral tint: subtle/);
 });
 
-for (const [key, expectedHash] of UNCHANGED_DECLARATION_HASHES) {
+for (const [key, expectedHash] of CURRENT_DECLARATION_HASHES) {
   const [neutralTint, preset, format] = key.split("|");
-  const scope = preset === "shadcn"
-    ? "all declarations except corrected foreground-subtle"
-    : "the complete declaration baseline";
-  test(`${neutralTint} preserves ${scope} for ${preset} x ${format}`, () => {
+  test(`${neutralTint} locks the current declaration baseline for ${preset} x ${format}`, () => {
     const css = fixture.api.generateThemeCss({
       hex: "#4DA0FF",
       preset,
@@ -109,7 +103,7 @@ for (const [key, expectedHash] of UNCHANGED_DECLARATION_HASHES) {
       neutralTint,
     });
     assert.equal(
-      declarationHash(css, { omitForegroundSubtle: preset === "shadcn" }),
+      declarationHash(css),
       expectedHash,
     );
   });

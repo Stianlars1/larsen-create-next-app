@@ -55,7 +55,15 @@ authored by Stian Larsen.
     8-bit sRGB candidate at the isolated boundary. The twelve-step gray ramp
     remains unchanged.
 
-When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 12 (or
+13. `generateSemanticColors.js` and `semantic-scales.js`: semantic statuses
+    select complete named Radix Colors scales from the original normalized
+    seed. Selection compares each role's listed candidate light sRGB step 9
+    by OKLAB Delta E, breaks ties by candidate order, uses documented
+    achromatic fallbacks below 6 percent HSL saturation, and reuses the
+    selected name for both appearances. Upstream instead generates and shifts
+    semantic hues, which can move a status outside its curated family.
+
+When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 13 (or
 port them upstream first).
 
 ## License

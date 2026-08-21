@@ -232,7 +232,7 @@ export function generateThemeCss(opts) {
 
   const render = (/** @type {string} */ s) =>
     extractBlocks(
-      generateExportCode(generatePalette({ hex: s, scheme: engineScheme }), {
+      generateExportCode(generatePalette({ hex: s, semanticSeed: seed, scheme: engineScheme }), {
         preset,
         format: FORMATS[format],
       }),

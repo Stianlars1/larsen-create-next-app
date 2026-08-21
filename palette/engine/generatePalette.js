@@ -5,6 +5,7 @@ function generatePalette({
   harmonized = false,
   hex,
   scheme = "analogous",
+  semanticSeed = hex,
   pureColorTheory = false,
   harmonyColorIndex = 0
 }) {
@@ -58,10 +59,9 @@ function generatePalette({
     background: baseColorsComplementary.darkBackground
   });
   const semanticColors = generateSemanticColors(
-    baseColors.accent,
-    baseColors.gray,
-    baseColors.lightBackground,
-    baseColors.darkBackground
+    semanticSeed,
+    light.grayScale,
+    dark.grayScale,
   );
   return {
     // Preserve original user input for reference

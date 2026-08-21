@@ -239,16 +239,26 @@ Current custom choices are:
 - Formats: `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, `oklch`.
 - Neutral tints: `subtle`, `strong`.
 
-Neutral tint changes the gray ramp and the semantic tokens derived from it,
-without rotating the requested seed or rebuilding the accent palette. The
-public wrapper maps `subtle` to the vendored engine's former analogous path
-and `strong` to its monochromatic path. The mapping itself preserves the
-former output. The vendored engine also has recorded local deviations for
-output corrections, including hue normalization and foreground-subtle, in
-`palette/NOTICE.md`. A direct palette API call containing the removed `scheme`
-property fails explicitly. The generated analogous and complementary support
-tokens, their foregrounds, and the existing chart mappings remain part of
-every preset contract.
+Neutral tint changes the gray ramp without rotating the requested seed or
+rebuilding the accent palette. The public wrapper maps `subtle` to the
+vendored engine's former analogous path and `strong` to its monochromatic
+path. The mapping itself preserves the former output. A direct palette API
+call containing the removed `scheme` property fails explicitly. The generated
+analogous and complementary support tokens, their foregrounds, and the
+existing chart mappings remain part of every preset contract.
+
+Semantic statuses use complete, unmodified named Radix Colors scales. The
+original normalized seed selects the smallest OKLAB Delta E from each role's
+candidate light sRGB step 9, with listed candidate order breaking ties. The
+same selected name resolves both light and dark modes. A seed below 6 percent
+HSL saturation uses its role's achromatic default: success `green`, danger
+`red`, warning `amber`, and info `blue`. The candidate families are success
+`jade|green|grass`, danger `tomato|red|ruby|crimson`, warning `amber|orange`,
+and info `sky|blue|cyan`. Base, muted, and border map to named scale steps 9,
+3, and 7. Status foregrounds use the existing palette-first chooser at 4.6.
+Shadcn `destructive` remains a resolved alias of `danger`; chart 4 and chart 5
+remain resolved aliases of warning and success. `palette/NOTICE.md` records
+this vendored-engine deviation.
 
 `--background`, `--primary`, `--ring`, and the twelve accent steps are
 unaffected for every chromatic seed. The hueless exceptions `#000000`,
