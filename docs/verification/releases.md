@@ -2,8 +2,9 @@
 
 Registry evidence for `@larsen-utvikling/create-next-app` versions 0.1.0
 through 0.4.0, queried from npm on 2026-08-09, and 0.5.0 through 0.5.1,
-queried on 2026-08-10. This is a publication trace, not proof that current
-local source matches a published artifact.
+queried on 2026-08-10. Version 0.6.0 was queried on 2026-08-21. This is a
+publication trace, not proof that current local source matches a published
+artifact.
 
 ## Evidence method
 
@@ -32,9 +33,10 @@ the registry for that tarball.
 | 0.4.0 | 2026-08-09T17:08:02.674Z | `e9c64798538285910e5cf31b45ce53bdc5926de7` | `ad7c2acd1695d5062f3132f07fe10b530454b4c5` |
 | 0.5.0 | 2026-08-10T09:51:56.334Z | `33ca295831dcfaa52f4c2e96b73b0f00f95a33fc` | `eda6271799069b14482c6b6ca4f48e8448f2ec86` |
 | 0.5.1 | 2026-08-10T12:12:31.498Z | `838f6ce21813866d7d4d7c5789fe46f7d6125e06` | `56ea45adf6373282281038500ba0f53b1cd0e1d3` |
+| 0.6.0 | 2026-08-21T17:40:43.509Z | `c0c5222c737cdfb16453825bc22a6b8a7036dddc` | `80c82fb9350bec0f14ed63e3e4b2ad9e5dffe26b` |
 
-At the 2026-08-10 query, npm listed exactly those nine versions and the
-`latest` dist tag pointed to 0.5.1.
+At the 2026-08-21 query, npm listed all ten versions above and the `latest`
+dist tag pointed to 0.6.0.
 
 ## Actual release deltas
 
@@ -170,6 +172,24 @@ Changes between the 0.5.0 and 0.5.1 registry `gitHead` objects:
 - expanded deterministic contrast, declaration, generated-documentation, and
   release-artifact coverage for those corrections
 
+### 0.6.0
+
+Changes between the 0.5.1 and 0.6.0 registry `gitHead` objects:
+
+- selected complete named Radix scales for success, danger, warning, and info
+  from stable semantic families based on the normalized input seed
+- raised generated text pairs to the 4.6 project target while retaining
+  palette-first foregrounds and deterministic neutral fallbacks
+- checked primary at the project 1.5 visibility floor and ring at 3 against
+  background, card, and popover, with locked cross-tint behavior
+- corrected black-white crossover roles minimally while preserving raw harmony
+  scales and coherent Radix solid, alpha, indicator, track, and contrast aliases
+- validated 3, 6, and 8 digit HEX overrides before generation while preserving
+  alpha and caller-owned custom token names
+- expanded the generated DESIGN contract, semantic collision tests, 762-seed
+  sweep, starter accessibility checks, package-manager release matrix, skill
+  provenance, and isolated release-candidate handling
+
 ## 0.3.0 publication verification
 
 npm listed 0.3.0 with `latest` pointing to it. The published `gitHead` is the
@@ -236,3 +256,25 @@ Release as Latest, published, not a draft, and not a prerelease:
 [local-0.5.1.md](local-0.5.1.md) remains the local implementation,
 contrast-sweep, generated-app, and pre-publication artifact record. The two
 documents are separate evidence layers.
+
+## 0.6.0 publication verification
+
+npm listed 0.6.0 with `latest` pointing to it. It was published at
+`2026-08-21T17:40:43.509Z`. Its published artifact has 44 files, unpacked size
+237276 bytes, registry shasum
+`80c82fb9350bec0f14ed63e3e4b2ad9e5dffe26b`, and `gitHead`
+`c0c5222c737cdfb16453825bc22a6b8a7036dddc`.
+
+The published tarball was downloaded from the registry and compared byte for
+byte against the local artifact that passed `npm run pack:release`,
+`npm run smoke:full`, and npm publish dry-run. Both are SHA-256
+`d88ee7d813acbb792b0234a577432fc94fc2401f45a6fccb7a6f7561856bbebb`, so the
+artifact on npm is the verified candidate rather than a re-pack.
+
+Annotated tag `v0.6.0` peels to the same `gitHead`. GitHub reports the matching
+Release as Latest, published, not a draft, and not a prerelease:
+[v0.6.0 - Curated semantic colors and surface-safe contrast](https://github.com/Stianlars1/larsen-create-next-app/releases/tag/v0.6.0).
+
+[local-0.6.0.md](local-0.6.0.md) remains the pre-publication source, sweep,
+scaffold, build, and local-artifact record. The local and final registry
+evidence layers remain separate.
