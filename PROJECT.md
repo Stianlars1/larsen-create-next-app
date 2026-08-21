@@ -3,7 +3,7 @@
 Current package contract. This document describes the behavior implemented in
 this repository, not the original plan, release history, or any separate site.
 
-Last checked against source and tests: 2026-08-11.
+Last checked against source and tests: 2026-08-21.
 
 ## Product boundary
 
@@ -260,38 +260,44 @@ Shadcn `destructive` remains a resolved alias of `danger`; chart 4 and chart 5
 remain resolved aliases of warning and success. `palette/NOTICE.md` records
 this vendored-engine deviation.
 
-`--background`, `--primary`, `--ring`, and the twelve accent steps are
-unaffected for every chromatic seed. The hueless exceptions `#000000`,
-`#010101`, `#FEFEFE`, and `#FFFFFF` have their accent scale derived from the
-same tinted neutral, so those seeds do move accent values.
+`--background` and the twelve accent steps are unaffected by neutral tint for
+every chromatic seed. Primary and ring are derived corrections against the
+final card and popover surfaces, so a tint may select a different passing
+candidate. The hueless exceptions `#000000`, `#010101`, `#FEFEFE`, and
+`#FFFFFF` have their accent scale derived from the same tinted neutral, so
+those seeds do move accent values.
 [docs/reference/palette.md](docs/reference/palette.md) lists the exact token
 groups, and `create-next-app/test/neutral-tint.test.mjs` locks both halves of
 the claim.
 
 For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
-before export. For every seed, shadcn keeps the selected seed as primary and
-ring only when it reaches the role's floor in that mode. Otherwise it selects
-the perceptually closest passing accent-scale color. Primary foreground is
-then recomputed with the existing accent-scale-first chooser. Radix keeps the
-upstream accent contrast only when it reaches 4.5 against accent step 9 and
-otherwise uses that same scale-first chooser.
+before export. For every seed, shadcn keeps the selected seed as primary only
+when it reaches the 1.5 visibility floor against background, card, and
+popover and supports a 4.6 foreground. Ring keeps the seed only when it
+reaches 3 against all three surfaces. Otherwise each role selects the
+perceptually closest passing accent-scale color, then primary foreground is
+recomputed with the accent-scale-first chooser. Analogous and complementary
+aliases move to the closest text-safe color in their own unchanged scale when
+step 9 falls in the black-white contrast crossover. Radix applies the same
+text-safe step-9 correction while keeping its solid and alpha values,
+indicator, track, and contrast aliases coherent.
 
 The mechanical CSS verifier parses `shadcn`, `radix`, and `css-variables` in
 `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`, and checks both
 generated modes. The shadcn role checks are:
 
-- `--foreground` vs `--background` must reach 4.5.
-- `--foreground-subtle` vs `--background` must reach the 4.6 project target,
-  a 0.1 margin above the WCAG AA 4.5 normal-text minimum.
-- `--card-foreground` vs `--card` must reach 4.5.
-- `--popover-foreground` vs `--popover` must reach 4.5.
-- `--ring` vs `--background` must reach 3.
+- `--foreground` vs `--background` must reach the 4.6 project target, a 0.1
+  margin above the WCAG AA 4.5 normal-text minimum.
+- `--foreground-subtle` vs `--background` must reach 4.6.
+- `--card-foreground` vs `--card` must reach 4.6.
+- `--popover-foreground` vs `--popover` must reach 4.6.
+- `--ring` vs `--background`, `--card`, and `--popover` must each reach 3.
 - `--input` vs `--background`, `--card`, and `--popover` must each reach 3.
-- `--primary-foreground` vs `--primary` must reach 4.5.
-- `--primary` vs `--background` must reach a deliberately non-WCAG 1.5
-  visibility floor.
+- `--primary-foreground` vs `--primary` must reach 4.6.
+- `--primary` vs `--background`, `--card`, and `--popover` must each reach a
+  deliberately non-WCAG 1.5 visibility floor.
 - Secondary, muted, accent, destructive, harmony, and status foreground pairs
-  must reach 4.5 where those roles exist.
+  must reach 4.6 where those roles exist.
 
 `--input` carries the 3 floor because it paints the boundary of text fields,
 selects, and outline buttons, where nothing else identifies the control -
@@ -303,9 +309,10 @@ the same floor would give every card a heavy outline.
 `--foreground-subtle` starts at gray-10. If it is below 4.6 against the mode
 background, a fixed 24-round binary search follows the OKLAB path toward
 gray-11 and selects the passing 8-bit sRGB candidate at the isolated boundary.
-The generator applies primary, ring, input, and foreground-subtle corrections
-before serialization, so format selection cannot bypass them. Radix accent
-and gray contrast pairs are checked at 4.5 in all six generated formats.
+The generator applies primary, ring, input, foreground-subtle, harmony-alias,
+and Radix step-9 corrections before serialization, so format selection cannot
+bypass them. Radix accent and gray contrast pairs are checked at 4.6 in all
+six generated formats.
 
 The deterministic 2 x 3 x 6 neutral-tint, preset, and format matrix locks the
 implemented contracts: shadcn exposes 81 color names in both modes plus

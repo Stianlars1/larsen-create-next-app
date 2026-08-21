@@ -135,6 +135,7 @@ export function runPaletteSweep() {
     seedHash,
     seeds: all.length,
     themes,
+    pairs: worstByPair.size,
     failures,
     worst: [...worstByPair.values()],
   };
@@ -148,6 +149,7 @@ if (isMain) {
       `contrast-sweep: ${result.seeds} unique seeds x 2 neutral tints = ${result.themes} themes`,
     );
     console.log(`contrast-sweep: seed SHA-256 ${result.seedHash}`);
+    console.log(`contrast-sweep: ${result.pairs} role pairs measured in both modes per theme`);
     for (const item of result.worst) {
       console.log(
         `contrast-sweep: --${item.token} vs --${item.against} >= ${item.minimum} (${item.standard}), worst ${item.actual.toFixed(6)} at ${item.hex} ${item.neutralTint} ${item.mode}`,

@@ -1,6 +1,10 @@
 import Color from "colorjs.io";
 import { hexToRGB } from "./color-utils.js";
-import { getBestForeground, getContrastRatio } from "./contrast-utils.js";
+import {
+  getBestForeground,
+  getContrastRatio,
+  PROJECT_TEXT_CONTRAST,
+} from "./contrast-utils.js";
 function generateExportCode(data, options) {
   switch (options.preset) {
     case "shadcn":
@@ -86,17 +90,111 @@ function formatSemanticColorSet(name, colorSet, format, indent = "  ") {
     `${indent}--${name}-border: ${formatFn(colorSet.border)};`
   ].join("\n");
 }
-function closestContrastSafeColor(preferred, background, accentScale, grayScale, minimum) {
-  if (getContrastRatio(preferred, background) >= minimum) return preferred;
+function closestContrastSafeColorOverSurfaces(
+  preferred,
+  surfaces,
+  accentScale,
+  grayScale,
+  minimum,
+) {
+  const worst = (color) => Math.min(
+    ...surfaces.map((surface) => getContrastRatio(color, surface)),
+  );
+  if (worst(preferred) >= minimum) return preferred;
 
   const preferredColor = new Color(preferred);
-  const candidates = accentScale
-    .filter((color) => getContrastRatio(color, background) >= minimum)
-    .map((color) => ({ color, distance: preferredColor.deltaEOK(new Color(color)) }))
-    .sort((a, b) => a.distance - b.distance);
+  for (const scale of [accentScale, grayScale]) {
+    const passing = scale
+      .filter((color) => worst(color) >= minimum)
+      .map((color, index) => ({
+        color,
+        index,
+        distance: preferredColor.deltaEOK(new Color(color)),
+      }))
+      .sort((a, b) => a.distance - b.distance || a.index - b.index);
+    if (passing[0]) return passing[0].color;
+  }
 
-  return candidates[0]?.color
-    ?? getBestForeground(background, accentScale, grayScale, minimum).color;
+  const neutral = ["#000000", "#FFFFFF"]
+    .filter((color) => worst(color) >= minimum)
+    .map((color, index) => ({
+      color,
+      index,
+      distance: preferredColor.deltaEOK(new Color(color)),
+    }))
+    .sort((a, b) => a.distance - b.distance || a.index - b.index)[0];
+  if (!neutral) {
+    throw new Error(`No color clears ${minimum}:1 against every role surface`);
+  }
+  return neutral.color;
+}
+function supportsProjectText(background, colorScale, grayScale) {
+  return getBestForeground(
+    background,
+    colorScale,
+    grayScale,
+    PROJECT_TEXT_CONTRAST,
+  ).contrast >= PROJECT_TEXT_CONTRAST;
+}
+function closestTextSafeColorOverSurfaces(
+  preferred,
+  surfaces,
+  accentScale,
+  grayScale,
+  minimum,
+) {
+  const worst = (color) => Math.min(
+    ...surfaces.map((surface) => getContrastRatio(color, surface)),
+  );
+  const passes = (color, colorScale = accentScale) =>
+    worst(color) >= minimum && supportsProjectText(color, colorScale, grayScale);
+  if (passes(preferred)) return preferred;
+
+  const preferredColor = new Color(preferred);
+  for (const scale of [accentScale, grayScale]) {
+    const passing = scale
+      .filter((color) => passes(color, scale))
+      .map((color, index) => ({
+        color,
+        index,
+        distance: preferredColor.deltaEOK(new Color(color)),
+      }))
+      .sort((a, b) => a.distance - b.distance || a.index - b.index);
+    if (passing[0]) return passing[0].color;
+  }
+
+  const neutral = ["#000000", "#FFFFFF"]
+    .filter((color) => passes(color, ["#000000", "#FFFFFF"]))
+    .map((color, index) => ({
+      color,
+      index,
+      distance: preferredColor.deltaEOK(new Color(color)),
+    }))
+    .sort((a, b) => a.distance - b.distance || a.index - b.index)[0];
+  if (!neutral) {
+    throw new Error(`No text-safe color clears ${minimum}:1 against every role surface`);
+  }
+  return neutral.color;
+}
+function closestTextSafeScaleIndex(preferred, colorScale, grayScale) {
+  const preferredIndex = colorScale.indexOf(preferred);
+  if (supportsProjectText(preferred, colorScale, grayScale)) {
+    return preferredIndex;
+  }
+
+  const preferredColor = new Color(preferred);
+  const passing = colorScale
+    .map((color, index) => ({ color, index }))
+    .filter(({ color }) => supportsProjectText(color, colorScale, grayScale))
+    .map(({ color, index }) => ({
+      index,
+      distance: preferredColor.deltaEOK(new Color(color)),
+    }))
+    .sort((a, b) => a.distance - b.distance || a.index - b.index)[0];
+  if (!passing) {
+    throw new Error(`No color in the role scale supports ${PROJECT_TEXT_CONTRAST}:1 text`);
+  }
+  return passing.index;
 }
 /**
  * The closest gray to `preferred` that clears `minimum` against every surface
@@ -159,7 +257,7 @@ function generateShadcnCSS(data, format) {
   // lifts them to gray-2 and gray-3, which is the harder surface to clear.
   const lightInput = closestNeutralOverSurfaces(
     data.grayScale.light[6],
-    [data.lightBackground],
+    [data.lightBackground, data.lightBackground, data.lightBackground],
     data.grayScale.light,
     3
   );
@@ -173,38 +271,38 @@ function generateShadcnCSS(data, format) {
     data.grayScale.light[9],
     data.grayScale.light[10],
     data.lightBackground,
-    4.6
+    PROJECT_TEXT_CONTRAST
   );
   const darkForegroundSubtle = minimallyCorrectedNeutral(
     data.grayScale.dark[9],
     data.grayScale.dark[10],
     data.darkBackground,
-    4.6
+    PROJECT_TEXT_CONTRAST
   );
-  const lightPrimary = closestContrastSafeColor(
+  const lightPrimary = closestTextSafeColorOverSurfaces(
     data.accent,
-    data.lightBackground,
+    [data.lightBackground, data.lightBackground, data.lightBackground],
     data.accentScale.light,
     data.grayScale.light,
     1.5
   );
-  const lightRing = closestContrastSafeColor(
+  const lightRing = closestContrastSafeColorOverSurfaces(
     data.accent,
-    data.lightBackground,
+    [data.lightBackground, data.lightBackground, data.lightBackground],
     data.accentScale.light,
     data.grayScale.light,
     3
   );
-  const darkPrimary = closestContrastSafeColor(
+  const darkPrimary = closestTextSafeColorOverSurfaces(
     data.accent,
-    data.darkBackground,
+    [data.darkBackground, data.grayScale.dark[1], data.grayScale.dark[2]],
     data.accentScale.dark,
     data.grayScale.dark,
     1.5
   );
-  const darkRing = closestContrastSafeColor(
+  const darkRing = closestContrastSafeColorOverSurfaces(
     data.accent,
-    data.darkBackground,
+    [data.darkBackground, data.grayScale.dark[1], data.grayScale.dark[2]],
     data.accentScale.dark,
     data.grayScale.dark,
     3
@@ -259,23 +357,51 @@ function generateShadcnCSS(data, format) {
     data.accentScale.dark,
     data.grayScale.dark
   );
+  const lightAnalogous = data.analogous.accentScale.light[
+    closestTextSafeScaleIndex(
+      data.analogous.accentScale.light[8],
+      data.analogous.accentScale.light,
+      data.grayScale.light,
+    )
+  ];
   const lightAnalogousForeground = getBestForeground(
-    data.analogous.accentScale.light[8],
+    lightAnalogous,
     data.analogous.accentScale.light,
     data.grayScale.light
   );
+  const lightComplementary = data.complementary.accentScale.light[
+    closestTextSafeScaleIndex(
+      data.complementary.accentScale.light[8],
+      data.complementary.accentScale.light,
+      data.grayScale.light,
+    )
+  ];
   const lightComplementaryForeground = getBestForeground(
-    data.complementary.accentScale.light[8],
+    lightComplementary,
     data.complementary.accentScale.light,
     data.grayScale.light
   );
+  const darkAnalogous = data.analogous.accentScale.dark[
+    closestTextSafeScaleIndex(
+      data.analogous.accentScale.dark[8],
+      data.analogous.accentScale.dark,
+      data.grayScale.dark,
+    )
+  ];
   const darkAnalogousForeground = getBestForeground(
-    data.analogous.accentScale.dark[8],
+    darkAnalogous,
     data.analogous.accentScale.dark,
     data.grayScale.dark
   );
+  const darkComplementary = data.complementary.accentScale.dark[
+    closestTextSafeScaleIndex(
+      data.complementary.accentScale.dark[8],
+      data.complementary.accentScale.dark,
+      data.grayScale.dark,
+    )
+  ];
   const darkComplementaryForeground = getBestForeground(
-    data.complementary.accentScale.dark[8],
+    darkComplementary,
     data.complementary.accentScale.dark,
     data.grayScale.dark
   );
@@ -314,9 +440,9 @@ function generateShadcnCSS(data, format) {
   --sidebar-accent-foreground: ${formatFn(lightAccentForeground.color)};
   --sidebar-border: ${formatFn(data.grayScale.light[6])};
   --sidebar-ring: ${formatFn(lightRing)};
-  --analogous: ${formatFn(data.analogous.accentScale.light[8])};
+  --analogous: ${formatFn(lightAnalogous)};
   --analogous-foreground: ${formatFn(lightAnalogousForeground.color)};
-  --complementary: ${formatFn(data.complementary.accentScale.light[8])};
+  --complementary: ${formatFn(lightComplementary)};
   --complementary-foreground: ${formatFn(lightComplementaryForeground.color)};
 
   /* Accent Scale - Light */
@@ -367,9 +493,9 @@ ${formatSemanticColorSet("info", data.semantic.light.info, format)}
     --sidebar-accent-foreground: ${formatFn(darkAccentForeground.color)};
     --sidebar-border: ${formatFn(data.grayScale.dark[6])};
     --sidebar-ring: ${formatFn(darkRing)};
-    --analogous: ${formatFn(data.analogous.accentScale.dark[8])};
+    --analogous: ${formatFn(darkAnalogous)};
     --analogous-foreground: ${formatFn(darkAnalogousForeground.color)};
-    --complementary: ${formatFn(data.complementary.accentScale.dark[8])};
+    --complementary: ${formatFn(darkComplementary)};
     --complementary-foreground: ${formatFn(darkComplementaryForeground.color)};
 
     /* Accent Scale - Dark */
@@ -398,23 +524,51 @@ function generateCSSVariables(data, format) {
     data.grayScale.dark,
     data.grayScale.dark
   );
+  const lightAnalogous = data.analogous.accentScale.light[
+    closestTextSafeScaleIndex(
+      data.analogous.accentScale.light[8],
+      data.analogous.accentScale.light,
+      data.grayScale.light,
+    )
+  ];
   const lightAnalogousForeground = getBestForeground(
-    data.analogous.accentScale.light[8],
+    lightAnalogous,
     data.analogous.accentScale.light,
     data.grayScale.light
   );
+  const darkAnalogous = data.analogous.accentScale.dark[
+    closestTextSafeScaleIndex(
+      data.analogous.accentScale.dark[8],
+      data.analogous.accentScale.dark,
+      data.grayScale.dark,
+    )
+  ];
   const darkAnalogousForeground = getBestForeground(
-    data.analogous.accentScale.dark[8],
+    darkAnalogous,
     data.analogous.accentScale.dark,
     data.grayScale.dark
   );
+  const lightComplementary = data.complementary.accentScale.light[
+    closestTextSafeScaleIndex(
+      data.complementary.accentScale.light[8],
+      data.complementary.accentScale.light,
+      data.grayScale.light,
+    )
+  ];
   const lightComplementaryForeground = getBestForeground(
-    data.complementary.accentScale.light[8],
+    lightComplementary,
     data.complementary.accentScale.light,
     data.grayScale.light
   );
+  const darkComplementary = data.complementary.accentScale.dark[
+    closestTextSafeScaleIndex(
+      data.complementary.accentScale.dark[8],
+      data.complementary.accentScale.dark,
+      data.grayScale.dark,
+    )
+  ];
   const darkComplementaryForeground = getBestForeground(
-    data.complementary.accentScale.dark[8],
+    darkComplementary,
     data.complementary.accentScale.dark,
     data.grayScale.dark
   );
@@ -430,11 +584,11 @@ ${data.accentScale.light.map((color, i) => `  --accent-${i + 1}: ${formatFn(colo
 ${data.grayScale.light.map((color, i) => `  --gray-${i + 1}: ${formatFn(color)};`).join("\n")}
 
   /* Analogous Harmony */
-  --analogous: ${formatFn(data.analogous.accentScale.light[8])};
+  --analogous: ${formatFn(lightAnalogous)};
   --analogous-foreground: ${formatFn(lightAnalogousForeground.color)};
 
   /* Complementary Harmony */
-  --complementary: ${formatFn(data.complementary.accentScale.light[8])};
+  --complementary: ${formatFn(lightComplementary)};
   --complementary-foreground: ${formatFn(lightComplementaryForeground.color)};
 
   /* Semantic Colors */
@@ -457,11 +611,11 @@ ${data.accentScale.dark.map((color, i) => `    --accent-${i + 1}: ${formatFn(col
 ${data.grayScale.dark.map((color, i) => `    --gray-${i + 1}: ${formatFn(color)};`).join("\n")}
 
     /* Analogous Harmony - Dark */
-    --analogous: ${formatFn(data.analogous.accentScale.dark[8])};
+    --analogous: ${formatFn(darkAnalogous)};
     --analogous-foreground: ${formatFn(darkAnalogousForeground.color)};
 
     /* Complementary Harmony - Dark */
-    --complementary: ${formatFn(data.complementary.accentScale.dark[8])};
+    --complementary: ${formatFn(darkComplementary)};
     --complementary-foreground: ${formatFn(darkComplementaryForeground.color)};
 
     /* Semantic Colors - Dark */
@@ -481,17 +635,44 @@ function formatRadixMode(data, mode, format, indent) {
   const analogousScale = data.analogous.accentScale[mode];
   const complementaryScale = data.complementary.accentScale[mode];
   const foreground = getBestForeground(background, grayScale, grayScale);
-  const grayContrast = getBestForeground(radix.grayScale[8], radix.grayScale, radix.grayScale);
-  const accentContrast = getContrastRatio(radix.accentContrast, radix.accentScale[8]) >= 4.5
+  const accentIndex = closestTextSafeScaleIndex(
+    radix.accentScale[8],
+    radix.accentScale,
+    radix.grayScale,
+  );
+  const resolvedAccentScale = radix.accentScale.with(8, radix.accentScale[accentIndex]);
+  const resolvedAccentScaleAlpha = radix.accentScaleAlpha.with(
+    8,
+    radix.accentScaleAlpha[accentIndex],
+  );
+  const grayIndex = closestTextSafeScaleIndex(
+    radix.grayScale[8],
+    radix.grayScale,
+    radix.grayScale,
+  );
+  const resolvedGrayScale = radix.grayScale.with(8, radix.grayScale[grayIndex]);
+  const resolvedGrayScaleAlpha = radix.grayScaleAlpha.with(8, radix.grayScaleAlpha[grayIndex]);
+  const grayContrast = getBestForeground(
+    resolvedGrayScale[8],
+    radix.grayScale,
+    radix.grayScale,
+  );
+  const accentContrast = getContrastRatio(radix.accentContrast, resolvedAccentScale[8]) >= PROJECT_TEXT_CONTRAST
     ? radix.accentContrast
-    : getBestForeground(radix.accentScale[8], radix.accentScale, radix.grayScale).color;
+    : getBestForeground(resolvedAccentScale[8], radix.accentScale, radix.grayScale).color;
+  const analogous = analogousScale[
+    closestTextSafeScaleIndex(analogousScale[8], analogousScale, grayScale)
+  ];
   const analogousForeground = getBestForeground(
-    analogousScale[8],
+    analogous,
     analogousScale,
     grayScale
   );
+  const complementary = complementaryScale[
+    closestTextSafeScaleIndex(complementaryScale[8], complementaryScale, grayScale)
+  ];
   const complementaryForeground = getBestForeground(
-    complementaryScale[8],
+    complementary,
     complementaryScale,
     grayScale
   );
@@ -503,25 +684,25 @@ ${indent}--foreground: ${formatFn(foreground.color)};
 ${indent}--color-background: ${formatFn(radix.background)};
 
 ${indent}/* Radix accent */
-${radix.accentScale.map((color, i) => `${indent}--accent-${i + 1}: ${formatFn(color)};`).join("\n")}
-${radix.accentScaleAlpha.map((color, i) => `${indent}--accent-a${i + 1}: ${formatFn(color)};`).join("\n")}
+${resolvedAccentScale.map((color, i) => `${indent}--accent-${i + 1}: ${formatFn(color)};`).join("\n")}
+${resolvedAccentScaleAlpha.map((color, i) => `${indent}--accent-a${i + 1}: ${formatFn(color)};`).join("\n")}
 ${indent}--accent-contrast: ${formatFn(accentContrast)};
 ${indent}--accent-surface: ${formatFn(radix.accentSurface)};
-${indent}--accent-indicator: ${formatFn(radix.accentScale[8])};
-${indent}--accent-track: ${formatFn(radix.accentScale[8])};
+${indent}--accent-indicator: ${formatFn(resolvedAccentScale[8])};
+${indent}--accent-track: ${formatFn(resolvedAccentScale[8])};
 
 ${indent}/* Radix gray */
-${radix.grayScale.map((color, i) => `${indent}--gray-${i + 1}: ${formatFn(color)};`).join("\n")}
-${radix.grayScaleAlpha.map((color, i) => `${indent}--gray-a${i + 1}: ${formatFn(color)};`).join("\n")}
+${resolvedGrayScale.map((color, i) => `${indent}--gray-${i + 1}: ${formatFn(color)};`).join("\n")}
+${resolvedGrayScaleAlpha.map((color, i) => `${indent}--gray-a${i + 1}: ${formatFn(color)};`).join("\n")}
 ${indent}--gray-contrast: ${formatFn(grayContrast.color)};
 ${indent}--gray-surface: ${formatFn(radix.graySurface)};
-${indent}--gray-indicator: ${formatFn(radix.grayScale[8])};
-${indent}--gray-track: ${formatFn(radix.grayScale[8])};
+${indent}--gray-indicator: ${formatFn(resolvedGrayScale[8])};
+${indent}--gray-track: ${formatFn(resolvedGrayScale[8])};
 
 ${indent}/* Larsen harmony */
-${indent}--analogous: ${formatFn(analogousScale[8])};
+${indent}--analogous: ${formatFn(analogous)};
 ${indent}--analogous-foreground: ${formatFn(analogousForeground.color)};
-${indent}--complementary: ${formatFn(complementaryScale[8])};
+${indent}--complementary: ${formatFn(complementary)};
 ${indent}--complementary-foreground: ${formatFn(complementaryForeground.color)};
 
 ${indent}/* Larsen semantic colors */

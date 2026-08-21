@@ -1,6 +1,5 @@
 import { hexToRGB } from "./color-utils.js";
-const WCAG_AA_NORMAL_TEXT = 4.5;
-const WCAG_AA_LARGE_TEXT = 3;
+export const PROJECT_TEXT_CONTRAST = 4.6;
 function getLuminance(hex) {
   const { r, g, b } = hexToRGB(hex);
   const [rs, gs, bs] = [r, g, b].map((c) => {
@@ -16,7 +15,12 @@ function getContrastRatio(color1, color2) {
   const darker = Math.min(lum1, lum2);
   return (lighter + 0.05) / (darker + 0.05);
 }
-function getBestForeground(background, accentScale, grayScale, minContrast = WCAG_AA_NORMAL_TEXT) {
+function getBestForeground(
+  background,
+  accentScale,
+  grayScale,
+  minContrast = PROJECT_TEXT_CONTRAST,
+) {
   const findBestInScale = (scale, source) => {
     let bestStep = -1;
     let bestContrast = 0;

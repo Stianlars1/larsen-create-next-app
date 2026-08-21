@@ -26,10 +26,10 @@ authored by Stian Larsen.
    57-name Radix Themes custom-palette override contract plus the existing 26
    Larsen tokens. P3 wide-gamut blocks remain deferred.
 8. `export-formats.js`: shadcn primary and ring roles keep the requested seed
-   when it passes their contrast floor, otherwise use the closest passing
-   accent-scale color. Radix accent contrast keeps the upstream value only
-   when it reaches WCAG AA, otherwise it uses the existing scale-first
-   foreground chooser.
+   only when it passes against background, card, and popover. Primary also
+   requires a 4.6 foreground. A failing role uses the closest passing
+   accent-scale color, then gray, then a neutral. Primary foreground is
+   recomputed after correction.
 9. `formatColor`: HSL and HSL Values retain up to four decimal places instead
    of rounding every component to an integer. This prevents serialization
    from moving a passing foreground pair below its WCAG threshold.
@@ -63,7 +63,14 @@ authored by Stian Larsen.
     selected name for both appearances. Upstream instead generates and shifts
     semantic hues, which can move a status outside its curated family.
 
-When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 13 (or
+14. `contrast-utils.js`, `generateSemanticColors.js`, and `export-formats.js`:
+    generated text uses the shared 4.6 project target. Analogous and
+    complementary aliases that fall in the black-white crossover resolve to
+    the closest text-safe color in their own unchanged scale. Radix accent
+    and gray step 9 use the same rule while keeping the selected solid and
+    alpha scale index, indicator, track, and contrast aliases coherent.
+
+When re-syncing with upstream, re-apply deviations 2, 3, and 5 through 14 (or
 port them upstream first).
 
 ## License

@@ -7,8 +7,10 @@ const fixture = await createPaletteMasterFixture();
 after(fixture.cleanup);
 
 // Task 1 deliberately changes the 20 status declarations. In shadcn it also
-// changes destructive aliases and chart 4/5. These hashes lock every resulting
-// declaration across both neutral tints, presets, and serialization formats.
+// changes destructive aliases and chart 4/5. Task 2's reviewed #4DA0FF diff
+// changes no declaration: its 4.6 text pairs and surface-aware primary, ring,
+// harmony, and Radix step-9 roles already pass. These final hashes lock every
+// resulting declaration across both neutral tints, presets, and formats.
 const CURRENT_DECLARATION_HASHES = new Map([
   ["subtle|shadcn|hex", "b52f53c26455a4e82e13b190b061d539fcfd915f6fc2272bb0df2c296962477b"],
   ["subtle|shadcn|rgb", "1a8fe88b8c1bc9b9646206dcb4814ef84535111e34a9438db7bb30450c06779d"],
@@ -144,11 +146,11 @@ function modeTokens(css, from, to) {
   return tokens;
 }
 
-function tintedModes(hex, neutralTint) {
+function tintedModes(hex, neutralTint, format = "hsl-values") {
   const css = fixture.api.generateThemeCss({
     hex,
     preset: "shadcn",
-    format: "hsl-values",
+    format,
     neutralTint,
   });
   return {
@@ -158,11 +160,11 @@ function tintedModes(hex, neutralTint) {
 }
 
 const ACCENT_STEPS = Array.from({ length: 12 }, (_, index) => `accent-${index + 1}`);
-const TINT_INDEPENDENT = [...ACCENT_STEPS, "background", "primary", "ring"];
+const TINT_INDEPENDENT = [...ACCENT_STEPS, "background"];
 
 // The claim the CLI help, the generated DESIGN.md and the site all make.
 for (const hex of ["#4DA0FF", "#E11D48", "#22C55E", "#7C3AED", "#EFB100", "#A1A1A1"]) {
-  test(`neutral tint leaves the accent scale, background, primary and ring alone for ${hex}`, () => {
+  test(`neutral tint leaves the accent scale and background alone for ${hex}`, () => {
     const subtle = tintedModes(hex, "subtle");
     const strong = tintedModes(hex, "strong");
     for (const mode of ["light", "dark"]) {
@@ -187,6 +189,23 @@ for (const hex of ["#4DA0FF", "#E11D48", "#22C55E", "#7C3AED", "#EFB100", "#A1A1
     assert.ok(moved.length > 0, "expected at least one gray step to differ");
   });
 }
+
+test("surface-aware primary and ring may follow tint-specific dark surfaces", () => {
+  for (const [hex, token, expected] of [
+    ["#611431", "primary", { subtle: "#72203d", strong: "#8c2e4e" }],
+    ["#9F46B1", "ring", { subtle: "#9f46b1", strong: "#e498f3" }],
+  ]) {
+    const subtle = tintedModes(hex, "subtle", "hex");
+    const strong = tintedModes(hex, "strong", "hex");
+    assert.deepEqual(
+      {
+        subtle: subtle.dark[token].toLowerCase(),
+        strong: strong.dark[token].toLowerCase(),
+      },
+      expected,
+    );
+  }
+});
 
 // The documented exception: a seed with no hue of its own takes its accent
 // scale from the same tinted neutral, so the accent scale moves too.

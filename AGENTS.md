@@ -31,18 +31,20 @@ about npm publication.
 - Test the generated app and release artifact, not only source helpers.
 - The mechanical CSS contrast parser supports `shadcn`, `radix`, and
   `css-variables` in `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`.
-  For shadcn, `--foreground` vs `--background` is checked at 4.5, `--foreground-subtle` vs `--background` at the 4.6 project target with a 0.1 margin above the WCAG 4.5 minimum, `--ring` vs `--background` at 3,
-  `--card-foreground` vs `--card` at 4.5, `--popover-foreground` vs
-  `--popover` at 4.5, `--input` vs each of `--background`, `--card` and
-  `--popover` at 3, `--primary-foreground` vs `--primary` at 4.5, and
-  `--primary` vs `--background` at the deliberately non-WCAG 1.5 visibility
-  floor. `--border` is deliberately not checked: cards and separators are not
-  user interface components, so WCAG 2.1 SC 1.4.11 does not apply to their
-  outline. Foreground pairs for secondary, muted, accent, destructive,
-  harmony, and status roles are checked at 4.5 where those roles exist. The
-  generator applies primary, ring, input, and foreground-subtle corrections
-  before all format serialization. Radix accent and gray contrast pairs are
-  checked at 4.5 in all six formats.
+  Every generated text pair uses the 4.6 project target, a 0.1 margin above
+  the WCAG 4.5 minimum. This includes foreground on background,
+  foreground-subtle on background, card and popover foregrounds, and the
+  `--primary-foreground` on `--primary` plus the foreground roles for
+  secondary, muted, accent, destructive, harmony, and status colors. For
+  shadcn, `--ring` is checked at 3 against
+  `--background`, `--card`, and `--popover`; `--input` is checked against the
+  same three surfaces at 3; and `--primary` is checked against all three at
+  the deliberately non-WCAG 1.5 visibility floor. `--border` is deliberately
+  not checked: cards and separators are not user interface components, so
+  WCAG 2.1 SC 1.4.11 does not apply to their outline. The generator applies
+  primary, ring, input, foreground-subtle, harmony-alias, and Radix step-9
+  corrections before all format serialization. Radix accent and gray
+  contrast pairs are checked at 4.6 in all six formats.
 
 ## Edit map
 

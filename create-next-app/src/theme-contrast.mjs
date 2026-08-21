@@ -12,8 +12,14 @@ export const CONTRAST_FORMATS = Object.freeze([
   "oklch",
 ]);
 
-const textPair = (token, against, minimum = 4.5, standard = "WCAG") =>
-  Object.freeze({ token, against, minimum, standard });
+const textPair = (token, against) =>
+  Object.freeze({ token, against, minimum: 4.6, standard: "WCAG-margin" });
+
+const nonTextPair = (token, against, minimum) =>
+  Object.freeze({ token, against, minimum, standard: "WCAG" });
+
+const visibilityPair = (token, against, minimum) =>
+  Object.freeze({ token, against, minimum, standard: "visibility-floor" });
 
 const harmonyAndStatusChecks = () => [
   textPair("analogous-foreground", "analogous"),
@@ -26,15 +32,19 @@ const harmonyAndStatusChecks = () => [
 
 const SHADCN_CHECKS = Object.freeze([
   textPair("foreground", "background"),
-  textPair("foreground-subtle", "background", 4.6, "WCAG-margin"),
+  textPair("foreground-subtle", "background"),
   textPair("card-foreground", "card"),
   textPair("popover-foreground", "popover"),
-  textPair("ring", "background", 3),
-  textPair("input", "background", 3),
-  textPair("input", "card", 3),
-  textPair("input", "popover", 3),
+  nonTextPair("ring", "background", 3),
+  nonTextPair("ring", "card", 3),
+  nonTextPair("ring", "popover", 3),
+  nonTextPair("input", "background", 3),
+  nonTextPair("input", "card", 3),
+  nonTextPair("input", "popover", 3),
   textPair("primary-foreground", "primary"),
-  textPair("primary", "background", 1.5, "visibility-floor"),
+  visibilityPair("primary", "background", 1.5),
+  visibilityPair("primary", "card", 1.5),
+  visibilityPair("primary", "popover", 1.5),
   textPair("secondary-foreground", "secondary"),
   textPair("muted-foreground", "muted"),
   textPair("accent-foreground", "accent"),

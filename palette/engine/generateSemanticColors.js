@@ -1,15 +1,14 @@
-import { getBestForeground } from "./contrast-utils.js";
+import { getBestForeground, PROJECT_TEXT_CONTRAST } from "./contrast-utils.js";
 import { getSemanticScale, selectSemanticScaleName } from "./semantic-scales.js";
 
-const SEMANTIC_TEXT_TARGET = 4.6;
 const ROLES = ["success", "danger", "warning", "info"];
 
 function colorSet(scale, grayScale) {
   return {
     base: scale[8],
-    foreground: getBestForeground(scale[8], scale, grayScale, SEMANTIC_TEXT_TARGET).color,
+    foreground: getBestForeground(scale[8], scale, grayScale, PROJECT_TEXT_CONTRAST).color,
     muted: scale[2],
-    mutedForeground: getBestForeground(scale[2], scale, grayScale, SEMANTIC_TEXT_TARGET).color,
+    mutedForeground: getBestForeground(scale[2], scale, grayScale, PROJECT_TEXT_CONTRAST).color,
     border: scale[6],
   };
 }

@@ -170,14 +170,14 @@ test("contrast authorities state the exact supported boundary and thresholds", (
     const normalized = document.replaceAll(/\s+/g, " ");
     assert.match(normalized, /shadcn.*radix.*css-variables/i);
     assert.match(normalized, /hex.*rgb.*hsl.*hsl-values.*oklab.*oklch/i);
-    assert.match(normalized, /foreground.*background.*4\.5/i);
-    assert.match(normalized, /foreground-subtle.*background.*4\.6.*margin/i);
-    assert.match(normalized, /ring.*background.*3(?:\.0)?/i);
-    assert.match(normalized, /primary-foreground.*primary.*4\.5/i);
-    assert.match(normalized, /primary.*background.*1\.5/i);
+    assert.match(normalized, /foreground.*background.*4\.6/i);
+    assert.match(normalized, /foreground-subtle.*background/i);
+    assert.match(normalized, /ring.*background.*card.*popover.*3(?:\.0)?/i);
+    assert.match(normalized, /primary-foreground.*primary.*4\.6/i);
+    assert.match(normalized, /primary.*background.*card.*popover.*1\.5/i);
     assert.match(normalized, /non-WCAG/i);
     assert.match(normalized, /generator.*before.*serializ/i);
-    assert.match(normalized, /Radix.*accent.*4\.5/i);
-    assert.match(normalized, /foreground.*status.*4\.5/i);
+    assert.match(normalized, /Radix.*accent.*gray.*4\.6/i);
+    assert.match(normalized, /foreground.*status.*4\.6/i);
   }
 });

@@ -197,17 +197,25 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
   );
   assert.deepEqual(CONTRAST_PRESETS, ["shadcn", "radix", "css-variables"]);
   assert.deepEqual(CONTRAST_FORMATS, ["hex", "rgb", "hsl", "hsl-values", "oklab", "oklch"]);
-  assert.deepEqual(CONTRAST_CHECKS.slice(0, 10), [
-    { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
+  assert.deepEqual(CONTRAST_CHECKS.slice(0, 18), [
+    { token: "foreground", against: "background", minimum: 4.6, standard: "WCAG-margin" },
     { token: "foreground-subtle", against: "background", minimum: 4.6, standard: "WCAG-margin" },
-    { token: "card-foreground", against: "card", minimum: 4.5, standard: "WCAG" },
-    { token: "popover-foreground", against: "popover", minimum: 4.5, standard: "WCAG" },
+    { token: "card-foreground", against: "card", minimum: 4.6, standard: "WCAG-margin" },
+    { token: "popover-foreground", against: "popover", minimum: 4.6, standard: "WCAG-margin" },
     { token: "ring", against: "background", minimum: 3, standard: "WCAG" },
+    { token: "ring", against: "card", minimum: 3, standard: "WCAG" },
+    { token: "ring", against: "popover", minimum: 3, standard: "WCAG" },
     { token: "input", against: "background", minimum: 3, standard: "WCAG" },
     { token: "input", against: "card", minimum: 3, standard: "WCAG" },
     { token: "input", against: "popover", minimum: 3, standard: "WCAG" },
-    { token: "primary-foreground", against: "primary", minimum: 4.5, standard: "WCAG" },
+    { token: "primary-foreground", against: "primary", minimum: 4.6, standard: "WCAG-margin" },
     { token: "primary", against: "background", minimum: 1.5, standard: "visibility-floor" },
+    { token: "primary", against: "card", minimum: 1.5, standard: "visibility-floor" },
+    { token: "primary", against: "popover", minimum: 1.5, standard: "visibility-floor" },
+    { token: "secondary-foreground", against: "secondary", minimum: 4.6, standard: "WCAG-margin" },
+    { token: "muted-foreground", against: "muted", minimum: 4.6, standard: "WCAG-margin" },
+    { token: "accent-foreground", against: "accent", minimum: 4.6, standard: "WCAG-margin" },
+    { token: "destructive-foreground", against: "destructive", minimum: 4.6, standard: "WCAG-margin" },
   ]);
   // --border is deliberately not here: cards and separators are not user
   // interface components, so SC 1.4.11 does not apply to their outline.
@@ -222,15 +230,27 @@ test("contrast verification exposes its exact shadcn hsl-values checks", async (
       minimum,
     })),
     [
-      { token: "foreground", against: "background", minimum: 4.5 },
-      { token: "accent-contrast", against: "accent-9", minimum: 4.5 },
-      { token: "gray-contrast", against: "gray-9", minimum: 4.5 },
+      { token: "foreground", against: "background", minimum: 4.6 },
+      { token: "accent-contrast", against: "accent-9", minimum: 4.6 },
+      { token: "gray-contrast", against: "gray-9", minimum: 4.6 },
     ],
   );
   assert.deepEqual(
     CONTRAST_CHECKS_BY_PRESET["css-variables"][0],
-    { token: "foreground", against: "background", minimum: 4.5, standard: "WCAG" },
+    { token: "foreground", against: "background", minimum: 4.6, standard: "WCAG-margin" },
   );
+  const nonTextPairs = new Set([
+    "ring|background", "ring|card", "ring|popover",
+    "input|background", "input|card", "input|popover",
+    "primary|background", "primary|card", "primary|popover",
+  ]);
+  for (const checks of Object.values(CONTRAST_CHECKS_BY_PRESET)) {
+    for (const check of checks) {
+      if (nonTextPairs.has(`${check.token}|${check.against}`)) continue;
+      assert.equal(check.minimum, 4.6, `${check.token}/${check.against}`);
+      assert.equal(check.standard, "WCAG-margin", `${check.token}/${check.against}`);
+    }
+  }
 });
 
 test("contrast verification exposes finite structured measurements for release sweeps", async () => {

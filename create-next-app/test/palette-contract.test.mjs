@@ -323,7 +323,7 @@ test("Radix Themes maps its representative contract roles to engine data", () =>
   });
 });
 
-test("Radix accent contrast reaches WCAG AA while preserving scale-first foregrounds", () => {
+test("Radix accent contrast reaches the project text target while preserving scale-first foregrounds", () => {
   const seeds = [
     "#262626", "#D8D8D8", "#4DA0FF", "#22C55E", "#F59E0B",
     "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#EC4899",
@@ -341,7 +341,7 @@ test("Radix accent contrast reaches WCAG AA while preserving scale-first foregro
         declarations(block).map(({ name, value }) => [name, value]),
       );
       assert.ok(
-        contrastRatio(values["accent-contrast"], values["accent-9"]) >= 4.5,
+        contrastRatio(values["accent-contrast"], values["accent-9"]) >= 4.6,
         `${hex} block ${index} emitted ${values["accent-contrast"]} against ${values["accent-9"]}`,
       );
     }
@@ -437,15 +437,76 @@ test("foreground-subtle minimally corrects failing gray-10 values without changi
   }
 });
 
+test("ring clears every documented surface", () => {
+  const css = generateThemeCss({ hex: "#432836", preset: "shadcn", format: "hex", neutralTint: "strong" });
+  const dark = Object.fromEntries(declarations(declarationBlocks(css)[1]).map(({ name, value }) => [name, value]));
+  assert.equal(dark.ring, "#93647c");
+  for (const surface of ["background", "card", "popover"]) {
+    assert.ok(contrastRatio(dark.ring, dark[surface]) >= 3);
+  }
+});
+
+test("primary preserves the 1.5 visibility floor on every documented surface", () => {
+  const css = generateThemeCss({ hex: "#4D0039", preset: "shadcn", format: "hex", neutralTint: "strong" });
+  const dark = Object.fromEntries(declarations(declarationBlocks(css)[1]).map(({ name, value }) => [name, value]));
+  assert.equal(dark.primary, "#711d57");
+  for (const surface of ["background", "card", "popover"]) {
+    assert.ok(contrastRatio(dark.primary, dark[surface]) >= 1.5);
+  }
+  assert.ok(contrastRatio(dark["primary-foreground"], dark.primary) >= 4.6);
+});
+
+test("primary leaves the black-white crossover while preserving every surface floor", () => {
+  const css = generateThemeCss({ hex: "#C9495A", preset: "shadcn", format: "hex", neutralTint: "subtle" });
+  for (const block of declarationBlocks(css)) {
+    const values = Object.fromEntries(declarations(block).map(({ name, value }) => [name, value]));
+    assert.notEqual(values.primary.toLowerCase(), "#c9495a");
+    assert.ok(contrastRatio(values["primary-foreground"], values.primary) >= 4.6);
+    for (const surface of ["background", "card", "popover"]) {
+      assert.ok(contrastRatio(values.primary, values[surface]) >= 1.5);
+    }
+  }
+});
+
+test("harmony aliases leave the black-white crossover without changing their raw scales", () => {
+  for (const [hex, role, previous] of [
+    ["#06946E", "analogous", "#147f9f"],
+    ["#361212", "complementary", "#328181"],
+  ]) {
+    const css = generateThemeCss({ hex, preset: "shadcn", format: "hex", neutralTint: "subtle" });
+    for (const block of declarationBlocks(css)) {
+      const values = Object.fromEntries(declarations(block).map(({ name, value }) => [name, value]));
+      assert.notEqual(values[role].toLowerCase(), previous);
+      assert.ok(contrastRatio(values[`${role}-foreground`], values[role]) >= 4.6);
+    }
+  }
+});
+
+test("Radix crossover correction keeps accent step 9 aliases coherent", () => {
+  const css = generateThemeCss({ hex: "#C9495A", preset: "radix", format: "hex", neutralTint: "subtle" });
+  for (const block of declarationBlocks(css)) {
+    const values = Object.fromEntries(declarations(block).map(({ name, value }) => [name, value]));
+    const sourceIndex = Array.from({ length: 12 }, (_, index) => index + 1)
+      .find((index) => index !== 9 && values[`accent-${index}`] === values["accent-9"]);
+    assert.ok(sourceIndex, "corrected accent-9 should come from the existing accent scale");
+    assert.equal(values["accent-a9"], values[`accent-a${sourceIndex}`]);
+    assert.equal(values["accent-indicator"], values["accent-9"]);
+    assert.equal(values["accent-track"], values["accent-9"]);
+    assert.ok(contrastRatio(values["accent-contrast"], values["accent-9"]) >= 4.6);
+  }
+});
+
 test("every serialized format preserves required foreground contrast", () => {
   const requiredPairs = {
     shadcn: [
-      ["foreground", "background"], ["foreground-subtle", "background", 4.6],
+      ["foreground", "background"], ["foreground-subtle", "background"],
       ["card-foreground", "card"],
       ["popover-foreground", "popover"], ["primary-foreground", "primary"],
       ["secondary-foreground", "secondary"], ["muted-foreground", "muted"],
       ["accent-foreground", "accent"], ["destructive-foreground", "destructive"],
-      ["ring", "background", 3], ["primary", "background", 1.5],
+      ["ring", "background", 3], ["ring", "card", 3], ["ring", "popover", 3],
+      ["primary", "background", 1.5], ["primary", "card", 1.5],
+      ["primary", "popover", 1.5],
       ["input", "background", 3], ["input", "card", 3], ["input", "popover", 3],
     ],
     radix: [
@@ -481,7 +542,7 @@ test("every serialized format preserves required foreground contrast", () => {
             const values = Object.fromEntries(
               declarations(block).map(({ name, value }) => [name, value]),
             );
-            for (const [foreground, background, minimum = 4.5] of requiredPairs[preset]) {
+            for (const [foreground, background, minimum = 4.6] of requiredPairs[preset]) {
               const actual = serializedContrastRatio(
                 values[foreground],
                 values[background],

@@ -71,13 +71,18 @@ Measured across a 233-seed sweep of hue, saturation, and lightness, in
 | Group | Tokens that can differ between `subtle` and `strong` |
 | --- | --- |
 | Gray ramp | `--gray-1` through `--gray-12` |
-| Derived from the gray ramp | `--foreground`, `--foreground-subtle`, `--muted`, `--muted-foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--border`, `--input`, `--secondary`, `--accent`, `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-accent`, `--primary-foreground`, `--sidebar-primary-foreground`, `--analogous-foreground`, `--complementary-foreground` |
+| Derived from the gray ramp or its final surfaces | `--foreground`, `--foreground-subtle`, `--muted`, `--muted-foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--border`, `--input`, `--secondary`, `--accent`, `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-accent`, `--primary`, `--primary-foreground`, `--ring`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-ring`, `--analogous-foreground`, `--complementary-foreground` |
 | Accent scale | unchanged for chromatic seeds; changes for the four hueless exceptions below |
 
-`--background`, `--primary`, `--ring`, and `--accent-1` through `--accent-12`
-were identical under both tints for every chromatic seed in the sweep. The
-largest single-channel difference observed anywhere was 4 of 255, so the
-change is real but deliberately small.
+`--background` and `--accent-1` through `--accent-12` remain identical under
+both tints for every chromatic seed. Primary and ring are corrected against
+the final card and popover surfaces, which belong to the selected gray ramp.
+In the locked 762-seed corpus, two dark roles require tint-specific candidates:
+`#611431` primary moves from `#72203d` under subtle to `#8c2e4e` under strong,
+and `#9F46B1` ring moves from `#9f46b1` to `#e498f3`. No other primary or ring
+in that corpus differs by tint. The largest single-channel difference in the
+earlier gray-ramp sweep was 4 of 255, so the underlying tint remains
+deliberately small even when a contrast boundary selects another scale step.
 
 The documented exceptions have no usable hue of their own: `#000000`,
 `#010101`, `#FEFEFE`, and `#FFFFFF`. The engine derives each accent scale from
@@ -148,9 +153,9 @@ The approved derived roles are:
 | popover | background | gray step 3 |
 | popover-foreground | foreground | foreground |
 | foreground-subtle | gray step 10, corrected only if needed to reach the 4.6 project target against background | gray step 10, corrected only if needed to reach the 4.6 project target against background |
-| primary | requested seed when it reaches 1.5, otherwise closest passing accent step | same rule |
+| primary | requested seed when it reaches 1.5 against background, card, and popover and supports a 4.6 foreground; otherwise closest passing text-safe accent step | same rule |
 | primary-foreground | scale-first chooser against corrected primary | same rule |
-| ring | requested seed when it reaches 3, otherwise closest passing accent step | same rule |
+| ring | requested seed when it reaches 3 against background, card, and popover; otherwise closest passing accent step | same rule |
 | radius | `var(--radius-md)` | inherited |
 | chart-1 | accent step 9 | accent step 9 |
 | chart-2 | analogous step 9 | analogous step 9 |
@@ -185,16 +190,16 @@ The exact Radix mappings are:
 | Radix token | Engine source |
 | --- | --- |
 | color-background | Radix mode background |
-| accent-1 through accent-12 | accent solid scale |
-| accent-a1 through accent-a12 | accent alpha scale |
-| accent-contrast | upstream value when it reaches 4.5 against accent step 9, otherwise scale-first foreground chooser |
+| accent-1 through accent-12 | accent solid scale; step 9 resolves to the closest text-safe scale step only in the black-white crossover |
+| accent-a1 through accent-a12 | accent alpha scale; step 9 follows the same source index as corrected solid step 9 |
+| accent-contrast | upstream value when it reaches 4.6 against resolved accent step 9, otherwise scale-first foreground chooser |
 | accent-surface | generated accent surface |
-| accent-indicator and accent-track | accent step 9 |
-| gray-1 through gray-12 | gray solid scale |
-| gray-a1 through gray-a12 | gray alpha scale |
-| gray-contrast | foreground chooser against gray step 9 |
+| accent-indicator and accent-track | resolved accent step 9 |
+| gray-1 through gray-12 | gray solid scale; step 9 uses the same text-safe correction rule |
+| gray-a1 through gray-a12 | gray alpha scale; step 9 follows the same source index as corrected solid step 9 |
+| gray-contrast | foreground chooser against resolved gray step 9 |
 | gray-surface | generated gray surface |
-| gray-indicator and gray-track | gray step 9 |
+| gray-indicator and gray-track | resolved gray step 9 |
 
 P3 wide-gamut blocks are deliberately deferred and can be added later. This
 contract does not claim full Radix Themes runtime or framework compatibility.
@@ -256,12 +261,21 @@ seed with a lightness-inverted counterpart. The tested near-black case uses
 shadcn and Radix value is rendered after this mode selection.
 
 Mode selection alone is not sufficient for every mid-range hue. The shadcn
-exporter therefore preserves the selected seed only when primary reaches the
-1.5 visibility floor and ring reaches 3 against the mode background. A
-failing role uses the perceptually closest passing color from the same accent
-scale. Primary foreground is recomputed against the corrected primary with
-the accent-scale-first, gray-scale-second chooser. Radix accent contrast keeps
-the upstream value at 4.5 or higher and otherwise uses the same chooser.
+exporter therefore preserves the selected seed for primary only when it
+reaches the 1.5 visibility floor against background, card, and popover and
+supports a 4.6 foreground. Ring keeps it only when it reaches 3 against all
+three surfaces. A failing role uses the perceptually closest passing color
+from the same accent scale, then the gray scale, then a passing neutral.
+Primary foreground is recomputed against the corrected primary with the
+accent-scale-first, gray-scale-second chooser.
+
+The black-white crossover has a narrow luminance interval where neither
+neutral can reach 4.6. Analogous and complementary aliases in that interval
+move to the closest text-safe color in their own scale, while the underlying
+12-step harmony scales and chart mappings remain unchanged. Radix resolves an
+affected accent or gray step 9 from one existing scale index and emits its
+matching alpha step, indicator, track, and contrast value together. The raw
+engine arrays remain unchanged.
 
 `--input` is corrected the same way, but from the gray scale rather than the
 accent scale, so a control boundary stays neutral. It is the closest gray
@@ -283,18 +297,17 @@ The mechanical contrast parser supports `shadcn`, `radix`, and
 `css-variables` in `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`,
 and checks both generated modes. The shadcn role checks are:
 
-- foreground against background at 4.5.
-- foreground-subtle against background at the 4.6 project target, with a 0.1
-  margin above the WCAG 4.5 minimum.
-- card-foreground against card at 4.5.
-- popover-foreground against popover at 4.5.
-- ring against background at 3.
+- foreground and foreground-subtle against background at the 4.6 project
+  target, with a 0.1 margin above the WCAG 4.5 minimum.
+- card-foreground against card at 4.6.
+- popover-foreground against popover at 4.6.
+- ring against background, card, and popover at 3.
 - input against background, card, and popover at 3.
-- primary-foreground against primary at 4.5.
-- primary against background at the deliberately non-WCAG 1.5 visibility
-  floor.
+- primary-foreground against primary at 4.6.
+- primary against background, card, and popover at the deliberately non-WCAG
+  1.5 visibility floor.
 - Secondary, muted, accent, destructive, harmony, and status foreground pairs
-  at 4.5 where those roles exist.
+  at 4.6 where those roles exist.
 
 `--border` is deliberately absent. WCAG 2.1 SC 1.4.11 covers visual
 information required to identify a user interface component, and `--border`
@@ -304,16 +317,19 @@ is the only thing identifying the control, so it carries the 3:1 floor
 instead.
 
 It fails on missing required tokens or unparseable serialized colours. The
-generator performs primary, ring, input, and foreground-subtle shadcn role
-corrections before all six serialization formats. Radix accent and gray
-contrast pairs are checked at 4.5 in all six formats. Both neutral tints run
-through the representative shadcn contrast seeds and the serialized-format
-checks. The deterministic matrix separately proves names, order, mode
-structure, selected syntax, alpha preservation, exact declaration baselines,
-approved mappings, and the distinction between Radix Themes and CSS Variables.
+generator performs primary, ring, input, foreground-subtle, harmony-alias,
+and Radix step-9 corrections before all six serialization formats. Radix
+accent and gray contrast pairs are checked at 4.6 in all six formats. Both
+neutral tints run through the representative shadcn contrast seeds and the
+serialized-format checks. The deterministic matrix separately proves names,
+order, mode structure, selected syntax, alpha preservation, exact declaration
+baselines, approved mappings, and the distinction between Radix Themes and
+CSS Variables.
 
 The deterministic release sweep is `npm run verify:palette-sweep` from
-`create-next-app`. It checks 762 unique seeds under both neutral tints and
-locks the seed corpus SHA-256. Upstream drift checks remain a separate
-networked verification concern. The runtime suite is intentionally offline;
-the deterministic sweep locks its seed corpus and order by SHA-256.
+`create-next-app`. It checks 762 unique seeds under both neutral tints, locks
+the seed corpus SHA-256, and reports the weakest observed ratio for every
+text, ring-surface, primary-surface, input, harmony, and semantic pair.
+Upstream drift checks remain a separate networked verification concern. The
+runtime suite is intentionally offline; the deterministic sweep locks its
+seed corpus and order by SHA-256.
