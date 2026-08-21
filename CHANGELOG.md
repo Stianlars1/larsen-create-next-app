@@ -11,6 +11,9 @@ a generated project contains counts as user-facing.
 ## [Unreleased]
 
 ### Changed
+- Curated success, danger, warning, and info scales now stay inside recognizable semantic families selected from the input HEX.
+- Generated text pairs use a 4.6 project contrast target, while primary and focus ring are checked against page, card, and popover surfaces.
+- Palette override values now reject malformed HEX before generation.
 - `--foreground-subtle` now targets 4.6:1 against its mode background. This is
   a 0.1 safety margin above WCAG AA's 4.5:1 normal-text minimum and is applied
   before all six output formats are serialized.
