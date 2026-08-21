@@ -71,7 +71,7 @@ Measured across a 233-seed sweep of hue, saturation, and lightness, in
 | Group | Tokens that can differ between `subtle` and `strong` |
 | --- | --- |
 | Gray ramp | `--gray-1` through `--gray-12` |
-| Derived from the gray ramp or its final surfaces | `--foreground`, `--foreground-subtle`, `--muted`, `--muted-foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--border`, `--input`, `--secondary`, `--accent`, `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-accent`, `--primary`, `--primary-foreground`, `--ring`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-ring`, `--analogous-foreground`, `--complementary-foreground` |
+| Derived from the gray ramp or its final surfaces | `--foreground`, `--foreground-subtle`, `--muted`, `--muted-foreground`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--border`, `--input`, `--secondary`, `--accent`, `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-accent`, `--primary`, `--ring`, `--sidebar-primary`, `--sidebar-ring`, `--analogous-foreground`, `--complementary-foreground` |
 | Accent scale | unchanged for chromatic seeds; changes for the four hueless exceptions below |
 
 `--background` and `--accent-1` through `--accent-12` remain identical under
@@ -156,7 +156,7 @@ The approved derived roles are:
 | popover-foreground | foreground | foreground |
 | foreground-subtle | gray step 10, corrected only if needed to reach the 4.6 project target against background | gray step 10, corrected only if needed to reach the 4.6 project target against background |
 | primary | requested seed when it reaches 1.5 against background, card, and popover and supports a 4.6 foreground; otherwise closest passing text-safe accent step; fail explicitly if none exists | same rule |
-| primary-foreground | scale-first chooser against corrected primary | same rule |
+| primary-foreground | accent-scale-first chooser against corrected primary, then pure black or white; an achromatic primary below 6 percent saturation skips accent candidates | same rule |
 | ring | requested seed when it reaches 3 against background, card, and popover; otherwise closest passing accent step, then gray step, then neutral | same rule |
 | radius | `var(--radius-md)` | inherited |
 | chart-1 | accent step 9 | accent step 9 |
@@ -271,7 +271,10 @@ color from its accent scale and fails explicitly when that scale has no color
 that satisfies both constraints. It never falls back to gray, black, or
 white. A failing ring searches the accent scale, then the gray scale, then
 black and white. Primary foreground is recomputed against the corrected
-primary with the accent-scale-first, gray-scale-second chooser.
+primary from the accent scale, then pure black or white without a
+tint-specific gray candidate. When primary has HSL saturation below the
+existing 6 percent achromatic threshold, it skips accent candidates and uses
+the higher-contrast pure neutral directly.
 
 The black-white crossover has a narrow luminance interval where neither
 neutral can reach 4.6. Analogous and complementary aliases in that interval
@@ -336,6 +339,9 @@ the seed corpus SHA-256, and reports the weakest observed ratio for every
 text, ring-surface, primary-surface, input, harmony, and semantic pair. It
 also compares tint-corrected role output and locks exactly four changed
 declarations: dark primary and sidebar-primary for `#611431`, plus dark ring
-and sidebar-ring for `#9F46B1`. Upstream drift checks remain a separate
-networked verification concern. The runtime suite is intentionally offline;
-the deterministic sweep locks its seed corpus and order by SHA-256.
+and sidebar-ring for `#9F46B1`. The explicit comparison set is primary,
+primary-foreground, sidebar-primary, sidebar-primary-foreground, ring, and
+sidebar-ring, so any foreground difference or additional dependent-alias
+difference fails. Upstream drift checks remain a separate networked
+verification concern. The runtime suite is intentionally offline; the
+deterministic sweep locks its seed corpus and order by SHA-256.

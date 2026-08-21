@@ -57,14 +57,22 @@ test("the release sweep locks exact cross-tint primary and ring differences", ()
   assert.deepEqual(
     compareTintCorrectedRoles(
       "#123456",
-      css("--primary: red; --sidebar-primary: red; --ring: blue; --sidebar-ring: blue;", "--primary: red; --sidebar-primary: red; --ring: blue; --sidebar-ring: blue;"),
-      css("--primary: red; --sidebar-primary: red; --ring: green; --sidebar-ring: green;", "--primary: orange; --sidebar-primary: orange; --ring: blue; --sidebar-ring: blue;"),
+      css(
+        "--primary: red; --primary-foreground: black; --sidebar-primary: red; --sidebar-primary-foreground: black; --ring: blue; --sidebar-ring: blue;",
+        "--primary: red; --primary-foreground: black; --sidebar-primary: red; --sidebar-primary-foreground: black; --ring: blue; --sidebar-ring: blue;",
+      ),
+      css(
+        "--primary: red; --primary-foreground: white; --sidebar-primary: red; --sidebar-primary-foreground: black; --ring: green; --sidebar-ring: green;",
+        "--primary: orange; --primary-foreground: black; --sidebar-primary: orange; --sidebar-primary-foreground: white; --ring: blue; --sidebar-ring: blue;",
+      ),
     ),
     [
+      { hex: "#123456", mode: "light", token: "primary-foreground", subtle: "black", strong: "white" },
       { hex: "#123456", mode: "light", token: "ring", subtle: "blue", strong: "green" },
       { hex: "#123456", mode: "light", token: "sidebar-ring", subtle: "blue", strong: "green" },
       { hex: "#123456", mode: "dark", token: "primary", subtle: "red", strong: "orange" },
       { hex: "#123456", mode: "dark", token: "sidebar-primary", subtle: "red", strong: "orange" },
+      { hex: "#123456", mode: "dark", token: "sidebar-primary-foreground", subtle: "black", strong: "white" },
     ],
   );
 });

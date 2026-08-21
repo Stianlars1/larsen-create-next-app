@@ -30,7 +30,9 @@ authored by Stian Larsen.
    requires a 4.6 foreground. A failing primary uses only the closest valid
    accent-scale color and fails explicitly if none exists. A failing ring
    searches accent, gray, then neutral candidates. Primary foreground is
-   recomputed after correction.
+   recomputed from accent candidates with direct black/white fallback,
+   skipping tint-specific grays. An achromatic primary below 6 percent HSL
+   saturation uses the pure fallback directly.
 9. `formatColor`: HSL and HSL Values retain up to four decimal places instead
    of rounding every component to an integer. This prevents serialization
    from moving a passing foreground pair below its WCAG threshold.

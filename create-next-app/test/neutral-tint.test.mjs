@@ -207,6 +207,42 @@ test("surface-aware primary and ring may follow tint-specific dark surfaces", ()
   }
 });
 
+test("primary foreground skips tint-specific grays in both modes", () => {
+  for (const [hex, mode] of [
+    ["#84B33E", "light"],
+    ["#B5360F", "dark"],
+  ]) {
+    const subtle = tintedModes(hex, "subtle", "hex");
+    const strong = tintedModes(hex, "strong", "hex");
+    assert.equal(subtle[mode]["primary-foreground"], strong[mode]["primary-foreground"]);
+    assert.equal(
+      subtle[mode]["sidebar-primary-foreground"],
+      strong[mode]["sidebar-primary-foreground"],
+    );
+    assert.equal(
+      subtle[mode]["sidebar-primary-foreground"],
+      subtle[mode]["primary-foreground"],
+    );
+  }
+});
+
+test("achromatic primary foreground uses a tint-invariant pure neutral", () => {
+  for (const hex of ["#000000", "#010101", "#FEFEFE", "#FFFFFF"]) {
+    const subtle = tintedModes(hex, "subtle", "hex");
+    const strong = tintedModes(hex, "strong", "hex");
+    for (const mode of ["light", "dark"]) {
+      assert.equal(subtle[mode]["primary-foreground"], strong[mode]["primary-foreground"]);
+      assert.ok(
+        ["#000000", "#ffffff"].includes(subtle[mode]["primary-foreground"].toLowerCase()),
+      );
+      assert.equal(
+        subtle[mode]["sidebar-primary-foreground"],
+        subtle[mode]["primary-foreground"],
+      );
+    }
+  }
+});
+
 // The documented exception: a seed with no hue of its own takes its accent
 // scale from the same tinted neutral, so the accent scale moves too.
 for (const [hex, expected] of new Map([

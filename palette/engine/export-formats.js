@@ -1,5 +1,5 @@
 import Color from "colorjs.io";
-import { hexToRGB } from "./color-utils.js";
+import { hexToHSL, hexToRGB } from "./color-utils.js";
 import {
   getBestForeground,
   getContrastRatio,
@@ -136,18 +136,22 @@ function supportsProjectText(background, colorScale, grayScale) {
     PROJECT_TEXT_CONTRAST,
   ).contrast >= PROJECT_TEXT_CONTRAST;
 }
+function getPrimaryForeground(background, accentScale) {
+  const candidates = hexToHSL(background).s < 6 ? [] : accentScale;
+  return getBestForeground(background, candidates, [], PROJECT_TEXT_CONTRAST);
+}
 function closestPrimaryColorOverSurfaces(
   preferred,
   surfaces,
   accentScale,
-  grayScale,
   minimum,
 ) {
   const worst = (color) => Math.min(
     ...surfaces.map((surface) => getContrastRatio(color, surface)),
   );
   const passes = (color) =>
-    worst(color) >= minimum && supportsProjectText(color, accentScale, grayScale);
+    worst(color) >= minimum
+    && getPrimaryForeground(color, accentScale).contrast >= PROJECT_TEXT_CONTRAST;
   if (passes(preferred)) return preferred;
 
   const preferredColor = new Color(preferred);
@@ -273,7 +277,6 @@ function generateShadcnCSS(data, format) {
     data.accent,
     [data.lightBackground, data.lightBackground, data.lightBackground],
     data.accentScale.light,
-    data.grayScale.light,
     1.5
   );
   const lightRing = closestContrastSafeColorOverSurfaces(
@@ -287,7 +290,6 @@ function generateShadcnCSS(data, format) {
     data.accent,
     [data.darkBackground, data.grayScale.dark[1], data.grayScale.dark[2]],
     data.accentScale.dark,
-    data.grayScale.dark,
     1.5
   );
   const darkRing = closestContrastSafeColorOverSurfaces(
@@ -302,10 +304,9 @@ function generateShadcnCSS(data, format) {
     data.grayScale.light,
     data.grayScale.light
   );
-  const lightPrimaryForeground = getBestForeground(
+  const lightPrimaryForeground = getPrimaryForeground(
     lightPrimary,
-    data.accentScale.light,
-    data.grayScale.light
+    data.accentScale.light
   );
   const lightSecondaryForeground = getBestForeground(
     data.accentScale.light[2],
@@ -327,10 +328,9 @@ function generateShadcnCSS(data, format) {
     data.grayScale.dark,
     data.grayScale.dark
   );
-  const darkPrimaryForeground = getBestForeground(
+  const darkPrimaryForeground = getPrimaryForeground(
     darkPrimary,
-    data.accentScale.dark,
-    data.grayScale.dark
+    data.accentScale.dark
   );
   const darkSecondaryForeground = getBestForeground(
     data.accentScale.dark[2],

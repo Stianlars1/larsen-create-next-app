@@ -40,9 +40,11 @@ export const EXPECTED_TINT_CORRECTION_DIFFERENCES = Object.freeze([
   }),
 ]);
 
-const TINT_CORRECTED_ROLES = Object.freeze([
+const TINT_RELEVANT_ROLES = Object.freeze([
   "primary",
+  "primary-foreground",
   "sidebar-primary",
+  "sidebar-primary-foreground",
   "ring",
   "sidebar-ring",
 ]);
@@ -142,7 +144,7 @@ function correctedRoleModes(css) {
   return Object.fromEntries(blocks.map(([mode, block]) => [
     mode,
     Object.fromEntries(
-      [...block.matchAll(/--(primary|sidebar-primary|ring|sidebar-ring):\s*([^;]+);/g)]
+      [...block.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)]
         .map((match) => [match[1], match[2].trim()]),
     ),
   ]));
@@ -153,7 +155,7 @@ export function compareTintCorrectedRoles(hex, subtleCss, strongCss) {
   const strong = correctedRoleModes(strongCss);
   const differences = [];
   for (const mode of ["light", "dark"]) {
-    for (const token of TINT_CORRECTED_ROLES) {
+    for (const token of TINT_RELEVANT_ROLES) {
       if (subtle[mode][token] === strong[mode][token]) continue;
       differences.push({
         hex,

@@ -278,11 +278,14 @@ reaches 3 against all three surfaces. A failing primary selects only the
 perceptually closest valid accent-scale color and fails explicitly if none
 exists; it never becomes gray or neutral. Ring selects from accent, then gray,
 then neutral candidates. Primary foreground is recomputed with the
-accent-scale-first chooser. Analogous and complementary aliases move to the
-closest text-safe color in their own unchanged scale when step 9 falls in the
-black-white contrast crossover. Radix applies the same text-safe step-9
-correction while keeping its solid and alpha values, indicator, track, and
-contrast aliases coherent.
+accent-scale-first chooser and falls back directly to pure black or white,
+skipping tint-specific grays. An achromatic primary below 6 percent HSL
+saturation skips accent candidates as well and uses the higher-contrast pure
+neutral. Analogous and complementary aliases move to the closest text-safe
+color in their own unchanged scale when step 9 falls in the black-white
+contrast crossover. Radix applies the same text-safe step-9 correction while
+keeping its solid and alpha values, indicator, track, and contrast aliases
+coherent.
 
 The mechanical CSS verifier parses `shadcn`, `radix`, and `css-variables` in
 `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`, and checks both
