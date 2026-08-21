@@ -92,9 +92,12 @@ The existing neutral-tint and extreme-seed mode behavior remains intact.
 
 Semantic roles use complete, unmodified named Radix Colors scales. The
 original normalized HEX selects one scale inside each allowed family by the
-smallest OKLAB Delta E between the seed and each candidate's sRGB step 9.
-Selection uses the emitted sRGB fallback values because this package does not
-yet emit P3 overrides.
+smallest OKLAB Delta E between the seed and each candidate's light-mode sRGB
+step 9. Light-mode step 9 is the canonical comparison set because selection
+must produce one family name before either mode is resolved. The selected
+family name is then reused for both modes, and each mode receives that named
+scale's own light or dark values. Selection uses the emitted sRGB fallback
+values because this package does not yet emit P3 overrides.
 
 Allowed candidates are:
 
@@ -108,7 +111,10 @@ Allowed candidates are:
 A seed with HSL saturation below 6 percent uses the documented achromatic
 default. Equal distances use the listed candidate order. Selection depends on
 the original normalized input, not on neutral tint, corrected primary, or a
-mode-specific foreground decision.
+mode-specific foreground decision. A permanent dependency-drift test requires
+the allowed Radix scales to retain equal light and dark sRGB step-9 values. If
+that upstream fact changes, the test fails and requires an explicit contract
+decision instead of silently changing family selection or mode identity.
 
 The selected scale supplies the corresponding light or dark values directly:
 
@@ -256,6 +262,7 @@ Permanent tests cover:
 - baked-default post-override contrast
 - all three presets, all six formats, both tints, and both modes
 - exact token-name and alpha-serialization contracts
+- canonical light-step-9 semantic selection and allowed-scale mode stability
 
 The deterministic 762-seed release sweep gains the new role checks and reports
 the weakest observed ratio for every pair. Focused serialization tests continue
@@ -269,13 +276,14 @@ theme and passes its existing build boundary.
 
 Behavior changes update these authorities in the same implementation:
 
+- `AGENTS.md`
 - `PROJECT.md`
 - `docs/reference/palette.md`
 - `CHANGELOG.md` under Unreleased
 - `palette/NOTICE.md`
 - generated theme output and synced package copies
-- generated-project README or DESIGN text only where the palette contract is
-  described
+- `create-next-app/template/DESIGN.md` for semantic border and color-alone
+  guidance
 
 The historical 0.5.0 and 0.5.1 verification records are not rewritten. New
 local verification belongs in a later release record only when an owner chooses
