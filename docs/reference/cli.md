@@ -182,7 +182,7 @@ choices.
 Default unattended scaffold:
 
 ```bash
-PACKAGE_VERSION=0.5.0 # use after this exact version is published
+PACKAGE_VERSION=0.6.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --defaults --no-git --no-install
 ```
@@ -190,7 +190,7 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
 Fully explicit custom scaffold:
 
 ```bash
-PACKAGE_VERSION=0.5.0 # use after this exact version is published
+PACKAGE_VERSION=0.6.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --hex 4DA0FF --preset shadcn --format hsl-values --neutral-tint strong \
   --linter eslint --pm npm --no-skills --no-git --no-install

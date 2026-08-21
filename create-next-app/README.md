@@ -48,13 +48,13 @@ for prompt conditions, interactions, invalid pairs, and CI behavior.
 Every prompt has a flag - useful for scripts and CI:
 
 ```bash
-PACKAGE_VERSION=0.5.0 # use after this exact version is published
+PACKAGE_VERSION=0.6.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" \
   my-app --defaults --pm npm
 ```
 
 ```bash
-PACKAGE_VERSION=0.5.0 # use after this exact version is published
+PACKAGE_VERSION=0.6.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
   --hex 4DA6FF --preset shadcn --format hsl-values \
   --neutral-tint strong --linter eslint --pm pnpm --no-skills \

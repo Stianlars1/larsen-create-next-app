@@ -10,6 +10,8 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-21
+
 ### Changed
 - Curated success, danger, warning, and info scales now stay inside recognizable semantic families selected from the input HEX.
 - Generated text pairs use a 4.6 project contrast target, while primary and focus ring are checked against page, card, and popover surfaces.
