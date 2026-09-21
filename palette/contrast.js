@@ -65,9 +65,23 @@ function parseColor(value, format) {
   return new Color(format === "hsl-values" ? `hsl(${value})` : value);
 }
 
-/** @param {string} a @param {string} b @param {string} format */
-function ratio(a, b, format) {
-  return parseColor(a, format).contrastWCAG21(parseColor(b, format));
+/** WCAG 2.x uses its normative sRGB weights, not general XYZ-D65 Y.
+ * https://www.w3.org/TR/WCAG22/#dfn-relative-luminance
+ * Color.js is used only to parse/convert the serialized CSS color.
+ */
+export function wcagRelativeLuminance(value, format) {
+  const channels = parseColor(value, format).to("srgb").coords;
+  const linear = channels.map(channel => {
+    const c = Math.max(0, Math.min(1, channel));
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+export function wcagContrastRatio(a, b, format = "rgb") {
+  const first = wcagRelativeLuminance(a, format);
+  const second = wcagRelativeLuminance(b, format);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
 }
 
 /**
@@ -114,7 +128,7 @@ export function measureThemeContrast(
     for (const check of checks) {
       let actual = Number.NaN;
       try {
-        actual = ratio(values[check.token], values[check.against], format);
+        actual = wcagContrastRatio(values[check.token], values[check.against], format);
       } catch {
         // A malformed serialized value is reported by the same non-finite
         // failure path as any other unmeasurable contrast result.

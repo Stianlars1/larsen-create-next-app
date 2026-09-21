@@ -90,13 +90,16 @@ and checks shadcn HSL channels under all three neutrals (2,286 exports).
 Release packing, actual scaffold/install/build, website parity and browser
 behavior are separate verification gates.
 
-## Measured 0.1.1 boundary discrepancy
+## Measurement method
 
-The consumer's Color.js WCAG 2.1 calculation measures light-mode text pairs
-below the exact 4.6 project target for #7B534B (destructive), #5736FE (warning),
-and #FE9762 (destructive), under all three neutrals in HSL channels. Ratios are
-4.599920231337044, 4.5997560607671, and 4.599677741566318 respectively.
-These exceed WCAG AA's 4.5 minimum but do not meet this project's extra margin.
-The integration rejects the original export with consumer diagnostics. It does
-not alter Tintful colors or lower the target. The release sweep locks these
-nine known rejections and fails on new failures or changed rejection behavior.
+Consumer checks parse CSS with Color.js, then calculate contrast using the
+normative WCAG 2.x sRGB coefficients 0.2126, 0.7152 and 0.0722, and the 0.04045
+linearization threshold. Color.js's contrastWCAG21 helper uses general XYZ-D65
+luminance instead; that slight coefficient difference must not classify exact
+4.6 boundary colors here.
+
+The initial report of three Tintful failures was incorrect. With the normative
+formula, #7B534B, #5736FE and #FE9762 pass at 4.60025885591219,
+4.600182615352269 and 4.60002238236111 respectively. Tintful 0.1.1 requires no
+engine change for these cases. Regression tests accept all nine seed/tint
+combinations; there is no rejection allowlist in the sweep.

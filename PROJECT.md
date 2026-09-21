@@ -225,7 +225,8 @@ css-variables/subtle values fail with migration guidance.
 
 Both generation and serialization must succeed and pass export quality. The
 shared integration additionally checks final native CSS against consumer
-contrast targets and rejects a mismatch without modifying engine output. A
+contrast targets using the normative WCAG sRGB coefficients (not general
+XYZ-D65 luminance), rejecting a mismatch without modifying engine output. A
 failed-quality artifact is never written, and requested formats never switch
 silently. Known Radix fidelity failures can reject otherwise supported syntax.
 This is an explicit diagnostic path, not a claim of universal seed support.

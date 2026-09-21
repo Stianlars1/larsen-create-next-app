@@ -122,13 +122,8 @@ export function buildSweepSeeds() {
   return { named, random, edge, all };
 }
 
-const BOUNDARY_REJECTIONS = {
-  "#7B534B": "light --destructive-foreground vs --destructive = 4.599920 (needs 4.6)",
-  "#5736FE": "light --warning-foreground vs --warning = 4.599756 (needs 4.6)",
-  "#FE9762": "light --destructive-foreground vs --destructive = 4.599678 (needs 4.6)",
-};
 function verifySeeds(seeds) {
-  const failures = [], rejected = [];
+  const failures = [];
   let completed = 0, weakest = Infinity;
   for (const hex of seeds) for (const neutralTint of ["none", "weak", "strong"]) {
     try {
@@ -139,14 +134,12 @@ function verifySeeds(seeds) {
         if (!Number.isFinite(pair.actual) || pair.actual < pair.minimum) failures.push(`${hex}/${neutralTint}/${pair.mode}: ${pair.token} on ${pair.against} = ${pair.actual}, needs ${pair.minimum}`);
         if (pair.minimum === 4.6) weakest = Math.min(weakest, pair.actual);
       }
-      if (BOUNDARY_REJECTIONS[hex]) failures.push(`${hex}/${neutralTint}: expected the locked consumer rejection; review engine drift`);
     } catch (error) {
-      if (BOUNDARY_REJECTIONS[hex] && error.message.startsWith("Consumer contrast rejected") && JSON.stringify(error.diagnostics) === JSON.stringify([BOUNDARY_REJECTIONS[hex]])) rejected.push(`${hex}/${neutralTint}`);
-      else failures.push(`${hex}/${neutralTint}: ${error.message}`);
+      failures.push(`${hex}/${neutralTint}: ${error.message}`);
     }
     completed++;
   }
-  return { completed, weakest, failures, rejected };
+  return { completed, weakest, failures };
 }
 export async function runSweep() {
   const { all } = buildSweepSeeds();
@@ -158,10 +151,8 @@ export async function runSweep() {
     worker.once("error", reject);
     worker.once("exit", code => { if (code) reject(new Error(`Sweep worker exited ${code}`)); });
   })));
-  const rejected = results.flatMap(r => r.rejected).sort();
   const failures = results.flatMap(r => r.failures);
-  if (rejected.length !== 9) failures.push(`Expected 9 locked boundary rejections, got ${rejected.length}`);
-  console.log(JSON.stringify({ seeds: all.length, exports: results.reduce((n,r)=>n+r.completed,0), hash, weakestTextContrast: Math.min(...results.map(r=>r.weakest)), rejected, failures }, null, 2));
+  console.log(JSON.stringify({ seeds: all.length, exports: results.reduce((n,r)=>n+r.completed,0), hash, weakestTextContrast: Math.min(...results.map(r=>r.weakest)), failures }, null, 2));
   if (failures.length) process.exitCode = 1;
 }
 if (!isMainThread) parentPort.postMessage(verifySeeds(workerData));

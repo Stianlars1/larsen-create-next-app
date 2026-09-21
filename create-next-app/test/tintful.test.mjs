@@ -1,3 +1,4 @@
+import { wcagContrastRatio, wcagRelativeLuminance } from "../../palette/contrast.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHash } from "node:crypto";
@@ -192,8 +193,22 @@ test("black, white, neutral, saturated and boundary seeds meet final consumer co
     }
 });
 
-test("engine-pass boundary exports below the project margin are rejected unchanged", () => {
-  for (const hex of ["#7B534B", "#5736FE", "#FE9762"]) for (const neutralTint of NEUTRAL_TINTS) {
-    assert.throws(() => generateThemeArtifacts({ hex, neutralTint }), /Consumer contrast rejected.*No files emitted/s);
+test("normative WCAG weights accept the previously misclassified boundary exports", () => {
+  const cases = [["#7B534B", "destructive", 4.60025885591219], ["#5736FE", "warning", 4.600182615352269], ["#FE9762", "destructive", 4.60002238236111]];
+  for (const [hex, role, expected] of cases) for (const neutralTint of NEUTRAL_TINTS) {
+    const result = generateThemeArtifacts({ hex, neutralTint });
+    const tokens = parseThemeTokens(result.css).light;
+    const measured = wcagContrastRatio(tokens[`${role}-foreground`], tokens[role], "hsl-values");
+    assert.ok(measured >= 4.6);
+    assert.ok(Math.abs(measured - expected) < 1e-10);
   }
+});
+
+test("WCAG luminance uses normative sRGB coefficients and threshold", () => {
+  assert.equal(wcagRelativeLuminance("rgb(255, 0, 0)", "rgb"), 0.2126);
+  assert.equal(wcagRelativeLuminance("rgb(0, 255, 0)", "rgb"), 0.7152);
+  assert.equal(wcagRelativeLuminance("rgb(0, 0, 255)", "rgb"), 0.0722);
+  assert.equal(wcagContrastRatio("#000", "#fff", "hex"), 21);
+  assert.equal(wcagContrastRatio("#fff", "#000", "hex"), 21);
+  assert.equal(wcagContrastRatio("#777", "#777", "hex"), 1);
 });

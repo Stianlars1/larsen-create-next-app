@@ -10,6 +10,8 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-22
+
 ### Changed
 - Migrate all new palettes to the exact published `tintful@0.1.1` dependency.
 - Require Node >=22.20.0. Native shadcn, radix and canonical tokens replace
