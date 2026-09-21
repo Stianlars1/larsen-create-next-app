@@ -31,7 +31,7 @@ stability. Use `--cna-version <spec>` to request an explicit upstream spec.
   - `index.css` - single entry importing all of the above
 - Agent docs: `AGENTS.md` (project rules), `CLAUDE.md` (pointer), and `DESIGN.md` (token documentation). `NEXTJS.md` preserves upstream guidance only when create-next-app supplies `AGENTS.md`
 - A welcome page demonstrating the tokens
-- Optional **custom color palette**: answer one prompt with a HEX color and get a 12-step accent scale, gray scale, and semantic colors in both light and dark mode from the vendored engine. `--neutral-tint subtle|strong` controls how much seed hue reaches the gray ramp and the tokens built on it, and leaves the accent scale unchanged for chromatic seeds. The hueless exceptions are `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`
+- **A color palette generated from one HEX** - native Tintful light/dark tokens, with none, weak or strong neutral hue influence. Generated CSS and audit sidecars stay together; no runtime engine in the app.
 - Optional **agent skills**: request entries from [Larsen Skills](https://github.com/Stianlars1/larsen-skills) or Jakub Antalik's [`transitions-dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev). Each source installs directly from its own repository, and the wrapper verifies only `.agents/skills/<name>/SKILL.md`
 
 ## Prompts
@@ -48,13 +48,13 @@ for prompt conditions, interactions, invalid pairs, and CI behavior.
 Every prompt has a flag - useful for scripts and CI:
 
 ```bash
-PACKAGE_VERSION=0.6.0 # use after this exact version is published
+PACKAGE_VERSION=0.7.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" \
   my-app --defaults --pm npm
 ```
 
 ```bash
-PACKAGE_VERSION=0.6.0 # use after this exact version is published
+PACKAGE_VERSION=0.7.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
   --hex 4DA6FF --preset shadcn --format hsl-values \
   --neutral-tint strong --linter eslint --pm pnpm --no-skills \
@@ -67,9 +67,9 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
 | `-d, --defaults` | Skip all prompts, use defaults (no skills) |
 | `--default-palette` | Answer No to a custom palette and use the default palette. Interactive default: `no`. Conflicts with `--hex` |
 | `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
-| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
+| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `canonical`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
 | `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
-| `--neutral-tint <name>` | Neutral gray-ramp tint: `subtle` \| `strong`. Default: `subtle`. Value must not be empty. Requires `--hex` |
+| `--neutral-tint <name>` | Neutral gray-ramp tint: `none` \| `weak` \| `strong`. Default: `weak`. Value must not be empty. Requires `--hex` |
 | `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
 | `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
 | `--skills <list>` | Agent skills: recommended, all Larsen, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
@@ -85,7 +85,7 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" my-app \
 
 ## Requirements
 
-- Node.js >= 20.12.0
+- Node.js >= 22.20.0
 - Network access (fetches the selected create-next-app spec, `latest` by default)
 
 ## License

@@ -10,6 +10,20 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+### Changed
+- Migrate all new palettes to the exact published `tintful@0.1.1` dependency.
+- Require Node >=22.20.0. Native shadcn, radix and canonical tokens replace
+  the legacy engine; canonical explicitly replaces css-variables.
+- Offer none, weak and strong neutral hues, with weak as the custom default.
+- Preserve original CSS, audit sidecars and serialization manifests. Keep
+  starter document styles separate and remove baked brand/surface overrides.
+- Reject unsupported combinations and failed export quality before scaffolding.
+- Retain the shared 18-color seed catalog for the companion demo.
+
+### Removed
+- Vendored engine code, legacy token overrides, extreme-seed inversion, the
+  subtle compatibility name and obsolete Radix Colors/bezier dependencies.
+
 ## [0.6.0] - 2026-08-21
 
 ### Changed

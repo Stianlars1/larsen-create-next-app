@@ -1,3 +1,8 @@
+import {
+  generateThemeArtifacts,
+  DEFAULT_THEME,
+  parseThemeTokens,
+} from "../../palette/index.js";
 // @ts-check
 
 /**
@@ -37,7 +42,8 @@ const repoRoot = join(pkgDir, "..");
 const dev = process.argv.includes("--dev");
 const full = process.argv.includes("--full");
 const tarballFlag = process.argv.indexOf("--tarball");
-const suppliedTarball = tarballFlag === -1 ? undefined : process.argv[tarballFlag + 1];
+const suppliedTarball =
+  tarballFlag === -1 ? undefined : process.argv[tarballFlag + 1];
 
 const EXPECTED_GLOBALS = `/* All styling comes from the design system - keep this file as a single import. */
 @import "../lib/design-system/index.css";
@@ -84,28 +90,28 @@ function commandAvailable(command) {
   return !result.error && result.status === 0;
 }
 
-/** @param {string} css */
-function themeBlocks(css) {
-  const mediaStart = css.indexOf("@media (prefers-color-scheme: dark)");
-  const explicitLightStart = css.indexOf('[data-theme="light"]');
-  const explicitDarkStart = css.indexOf('[data-theme="dark"]');
-  const defaultsStart = css.indexOf("/* Document defaults");
-  return [
-    css.slice(css.indexOf(":root {"), mediaStart),
-    css.slice(mediaStart, explicitLightStart),
-    css.slice(explicitLightStart, explicitDarkStart),
-    css.slice(explicitDarkStart, defaultsStart),
-  ];
-}
-
-/** @param {string} block */
-function themeDeclarations(block) {
-  return [...block.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)]
-    .map((match) => ({ name: match[1], value: match[2] }));
+function verifyArtifacts(directory, options) {
+  const generated = generateThemeArtifacts(options);
+  for (const artifact of generated.artifacts)
+    check(
+      readFileSync(join(directory, artifact.fileName), "utf8") ===
+        artifact.text,
+      `${artifact.fileName} preserves exact engine bytes`,
+    );
+  check(
+    JSON.stringify(
+      JSON.parse(readFileSync(join(directory, "theme.manifest.json"), "utf8")),
+    ) === JSON.stringify(generated.manifest),
+    "serialization manifest preserved",
+  );
 }
 
 const work = mkdtempSync(join(tmpdir(), "lu-smoke-"));
-const mode = dev ? "dev" : suppliedTarball ? "supplied tarball" : "packed tarball";
+const mode = dev
+  ? "dev"
+  : suppliedTarball
+    ? "supplied tarball"
+    : "packed tarball";
 console.log(`smoke: workdir ${work} (${mode}${full ? ", full" : ""} mode)`);
 
 try {
@@ -116,7 +122,9 @@ try {
     throw new Error("--dev cannot be combined with --tarball");
   }
   if (full && !suppliedTarball) {
-    throw new Error("--full requires the tarball path reported by pack:release");
+    throw new Error(
+      "--full requires the tarball path reported by pack:release",
+    );
   }
 
   /** @type {string[]} */
@@ -127,17 +135,25 @@ try {
     cliCmd = ["node", join(pkgDir, "bin", "cli.js")];
   } else {
     const artifactPath = suppliedTarball ?? packRelease({ destination: work });
-    if (!existsSync(artifactPath)) throw new Error(`tarball missing at ${artifactPath}`);
+    if (!existsSync(artifactPath))
+      throw new Error(`tarball missing at ${artifactPath}`);
     const tarball = basename(artifactPath);
     const localArtifact = join(work, tarball);
-    if (artifactPath !== localArtifact) copyFileSync(artifactPath, localArtifact);
+    if (artifactPath !== localArtifact)
+      copyFileSync(artifactPath, localArtifact);
     check(existsSync(localArtifact), "packed tarball is the CLI artifact");
     console.log(`smoke: CLI artifact ${artifactPath}`);
     // Relative "./x.tgz" is required - npx treats a bare absolute path as an
     // executable and fails with "Permission denied" instead of installing it.
     cliCmd = ["npx", "--yes", `./${tarball}`];
-    const artifactVersion = runSync(cliCmd[0], [...cliCmd.slice(1), "--version"], work);
-    const expectedVersion = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8")).version;
+    const artifactVersion = runSync(
+      cliCmd[0],
+      [...cliCmd.slice(1), "--version"],
+      work,
+    );
+    const expectedVersion = JSON.parse(
+      readFileSync(join(pkgDir, "package.json"), "utf8"),
+    ).version;
     check(
       artifactVersion.ok && artifactVersion.output.trim() === expectedVersion,
       `tarball CLI reports version ${expectedVersion}`,
@@ -147,7 +163,16 @@ try {
   // Run 1: defaults (baked-in theme)
   const run1 = runSync(
     cliCmd[0],
-    [...cliCmd.slice(1), "app-default", "--defaults", "--pm", "npm", "--no-git", "--no-install", "--no-skills"],
+    [
+      ...cliCmd.slice(1),
+      "app-default",
+      "--defaults",
+      "--pm",
+      "npm",
+      "--no-git",
+      "--no-install",
+      "--no-skills",
+    ],
     work,
   );
   check(run1.ok, "scaffold with --defaults exits 0");
@@ -156,7 +181,13 @@ try {
   const app = join(work, "app-default");
   const ds = join(app, "src", "lib", "design-system");
 
-  for (const file of ["index.css", "core.css", "theme.css", "motion.css", "base.css"]) {
+  for (const file of [
+    "index.css",
+    "core.css",
+    "theme.css",
+    "motion.css",
+    "base.css",
+  ]) {
     check(existsSync(join(ds, file)), `design-system/${file} exists`);
   }
   const indexCss = readFileSync(join(ds, "index.css"), "utf8");
@@ -164,31 +195,52 @@ try {
   const motion = readFileSync(join(ds, "motion.css"), "utf8");
   check(motion.includes("--ease-drawer"), "motion.css has the easing set");
   check(
-    motion.includes("prefers-reduced-motion") && motion.includes("--enter-distance: 0px"),
+    motion.includes("prefers-reduced-motion") &&
+      motion.includes("--enter-distance: 0px"),
     "motion.css collapses movement under reduced motion",
   );
-  for (const docCheck of generatedDocsChecks(app)) check(docCheck.ok, docCheck.label);
-  check(existsSync(join(app, "public", "larsen-utvikling", "logo.svg")), "logo assets exist");
-  check(!existsSync(join(app, "src", "app", "page.module.css")), "page.module.css removed");
+  for (const docCheck of generatedDocsChecks(app))
+    check(docCheck.ok, docCheck.label);
+  check(
+    existsSync(join(app, "public", "larsen-utvikling", "logo.svg")),
+    "logo assets exist",
+  );
+  check(
+    !existsSync(join(app, "src", "app", "page.module.css")),
+    "page.module.css removed",
+  );
   check(!existsSync(join(app, "public", "next.svg")), "branding svgs removed");
 
   const claudeMd = readFileSync(join(app, "CLAUDE.md"), "utf8");
-  check(claudeMd.trim() === "@AGENTS.md", "CLAUDE.md is the @AGENTS.md pointer");
+  check(
+    claudeMd.trim() === "@AGENTS.md",
+    "CLAUDE.md is the @AGENTS.md pointer",
+  );
 
   const globals = readFileSync(join(app, "src", "app", "globals.css"), "utf8");
-  check(globals === EXPECTED_GLOBALS, "globals.css is exactly the single design-system import");
+  check(
+    globals === EXPECTED_GLOBALS,
+    "globals.css is exactly the single design-system import",
+  );
 
   const theme = readFileSync(join(ds, "theme.css"), "utf8");
-  check(theme.includes("--accent-9:"), "default theme has accent scale");
-  check(theme.includes('[data-theme="dark"]'), "default theme has [data-theme] override");
-  check(theme.includes("body {"), "default theme has document defaults");
-  check(theme.includes("--brand-blue:"), "default theme has brand accents");
-  check(theme.includes("neutral tint: strong"), "default theme uses the strong neutral tint");
+  verifyArtifacts(ds, DEFAULT_THEME);
+  check(theme.includes("--primary:"), "default theme has native shadcn roles");
+  check(
+    theme.includes('[data-theme="dark"]'),
+    "default theme has explicit overrides",
+  );
+  check(!theme.includes("body {"), "audited theme excludes consumer styling");
+  check(
+    !theme.includes("--brand-blue:"),
+    "default theme has no brand overrides",
+  );
+  check(
+    existsSync(join(ds, "document.css")),
+    "consumer document styles exist separately",
+  );
 
-  // Regression guard: an extreme seed used to leave --primary and --ring at
-  // the seed color in both modes, so dark mode rendered near-black on
-  // The checker supports only shadcn hsl-values themes. The default and this
-  // custom smoke case both use that exact preset-format combination.
+  // Verify final native roles separately from the engine audit.
   const contrastFailures = checkThemeContrast(theme);
   check(
     contrastFailures.length === 0,
@@ -197,15 +249,30 @@ try {
 
   // No unsubstituted {{VARS}} in text files (JSX style={{...}} is fine)
   const placeholderHits = [];
-  for (const file of ["AGENTS.md", "DESIGN.md", "README.md", "src/app/layout.tsx", "src/app/page.tsx", "src/app/page.css"]) {
+  for (const file of [
+    "AGENTS.md",
+    "DESIGN.md",
+    "README.md",
+    "src/app/layout.tsx",
+    "src/app/page.tsx",
+    "src/app/page.css",
+  ]) {
     const content = readFileSync(join(app, file), "utf8");
     if (/\{\{[A-Z_]+\}\}/.test(content)) placeholderHits.push(file);
   }
-  check(placeholderHits.length === 0, `no leftover {{PLACEHOLDERS}} (${placeholderHits.join(", ") || "clean"})`);
+  check(
+    placeholderHits.length === 0,
+    `no leftover {{PLACEHOLDERS}} (${placeholderHits.join(", ") || "clean"})`,
+  );
 
   const appPkg = JSON.parse(readFileSync(join(app, "package.json"), "utf8"));
   const allDeps = { ...appPkg.dependencies, ...appPkg.devDependencies };
-  check(!Object.keys(allDeps).some((d) => d.includes("tailwind")), "no tailwind dependency");
+  check(
+    !Object.keys(allDeps).some(
+      (d) => d.includes("tailwind") || d === "tintful",
+    ),
+    "no Tailwind or runtime Tintful dependency",
+  );
   const tailwindArtifacts = [
     "tailwind.config.js",
     "tailwind.config.cjs",
@@ -220,27 +287,42 @@ try {
     tailwindArtifacts.length === 0,
     `no Tailwind config artifacts (${tailwindArtifacts.join(", ") || "clean"})`,
   );
-  check(!/@tailwind|tailwindcss/.test(globals), "globals.css has no Tailwind directive or import");
+  check(
+    !/@tailwind|tailwindcss/.test(globals),
+    "globals.css has no Tailwind directive or import",
+  );
 
   const defaultAgents = readFileSync(join(app, "AGENTS.md"), "utf8");
   check(
-    defaultAgents.slice(defaultAgents.indexOf("## Skills")).trimEnd() === NO_SKILLS_SECTION,
+    defaultAgents.slice(defaultAgents.indexOf("## Skills")).trimEnd() ===
+      NO_SKILLS_SECTION,
     "AGENTS.md has the exact no-skills documentation",
   );
   const defaultReadme = readFileSync(join(app, "README.md"), "utf8");
   check(
-    defaultReadme.slice(defaultReadme.indexOf("## Skills"), defaultReadme.indexOf("## Tech")).trimEnd()
-      === NO_SKILLS_SECTION,
+    defaultReadme
+      .slice(
+        defaultReadme.indexOf("## Skills"),
+        defaultReadme.indexOf("## Tech"),
+      )
+      .trimEnd() === NO_SKILLS_SECTION,
     "README.md has the exact no-skills documentation",
   );
 
   // Masters == synced copies (dev mode only; tarball content came from the same sync)
   if (dev) {
     for (const [master, copy] of [
-      [join(repoRoot, "CSS"), join(pkgDir, "template", "src", "lib", "design-system")],
+      [
+        join(repoRoot, "CSS"),
+        join(pkgDir, "template", "src", "lib", "design-system"),
+      ],
       [join(repoRoot, "palette"), join(pkgDir, "palette")],
     ]) {
-      const diff = runSync("diff", ["-r", "--exclude", ".DS_Store", master, copy], repoRoot);
+      const diff = runSync(
+        "diff",
+        ["-r", "--exclude", ".DS_Store", master, copy],
+        repoRoot,
+      );
       check(diff.ok, `master in sync: ${master.split("/").pop()}`);
     }
   }
@@ -251,31 +333,64 @@ try {
     [
       ...cliCmd.slice(1),
       "app-custom",
-      "--hex", "0A0A0A",
-      "--preset", "shadcn",
-      "--format", "hsl-values",
-      "--neutral-tint", "strong",
-      "--linter", "none",
-      "--pm", "npm",
+      "--hex",
+      "0A0A0A",
+      "--preset",
+      "shadcn",
+      "--format",
+      "hsl-values",
+      "--neutral-tint",
+      "strong",
+      "--linter",
+      "none",
+      "--pm",
+      "npm",
       "--no-git",
       "--no-install",
-      "--skills", "motion-craft,transitions-dev",
+      "--skills",
+      "motion-craft,transitions-dev",
     ],
     work,
   );
   check(run2.ok, "scaffold with custom palette exits 0");
-  const skillDir = join(work, "app-custom", ".agents", "skills", "motion-craft");
-  check(existsSync(join(skillDir, "SKILL.md")), "requested skill installed into .agents/skills/");
-  const thirdPartySkillDir = join(work, "app-custom", ".agents", "skills", "transitions-dev");
+  const skillDir = join(
+    work,
+    "app-custom",
+    ".agents",
+    "skills",
+    "motion-craft",
+  );
+  check(
+    existsSync(join(skillDir, "SKILL.md")),
+    "requested skill installed into .agents/skills/",
+  );
+  const thirdPartySkillDir = join(
+    work,
+    "app-custom",
+    ".agents",
+    "skills",
+    "transitions-dev",
+  );
   check(
     existsSync(join(thirdPartySkillDir, "SKILL.md")),
     "requested third-party skill installed from its source repository",
   );
-  const customAgents = readFileSync(join(work, "app-custom", "AGENTS.md"), "utf8");
-  const customReadme = readFileSync(join(work, "app-custom", "README.md"), "utf8");
-  const agentsSkills = customAgents.slice(customAgents.indexOf("## Installed skills")).trimEnd();
+  const customAgents = readFileSync(
+    join(work, "app-custom", "AGENTS.md"),
+    "utf8",
+  );
+  const customReadme = readFileSync(
+    join(work, "app-custom", "README.md"),
+    "utf8",
+  );
+  const agentsSkills = customAgents
+    .slice(customAgents.indexOf("## Installed skills"))
+    .trimEnd();
   const readmeSkills = customReadme
-    .slice(customReadme.indexOf("## Installed skills"), customReadme.indexOf("## Tech"))
+    .slice(
+      customReadme.indexOf("## Installed skills"),
+      customReadme.indexOf("## Tech"),
+    )
     .trimEnd();
   check(
     agentsSkills === readmeSkills,
@@ -283,8 +398,8 @@ try {
   );
   check(
     ["motion-craft", "transitions-dev"].every((skill) =>
-      agentsSkills.includes(`.agents/skills/${skill}/SKILL.md`)) &&
-      !agentsSkills.includes("interface-craft/SKILL.md"),
+      agentsSkills.includes(`.agents/skills/${skill}/SKILL.md`),
+    ) && !agentsSkills.includes("interface-craft/SKILL.md"),
     "generated docs list exactly the requested verified skill files",
   );
   check(
@@ -294,41 +409,37 @@ try {
     "generated docs credit both selected sources and third-party terms",
   );
   check(
-    [...agentsSkills.matchAll(/verified SKILL\.md SHA-256 `([0-9a-f]{64})`/g)].length === 2 &&
-      [...agentsSkills.matchAll(/(?:HEAD `([0-9a-f]{40})`|HEAD unavailable)/g)].length === 2,
+    [...agentsSkills.matchAll(/verified SKILL\.md SHA-256 `([0-9a-f]{64})`/g)]
+      .length === 2 &&
+      [...agentsSkills.matchAll(/(?:HEAD `([0-9a-f]{40})`|HEAD unavailable)/g)]
+        .length === 2,
     "generated docs record revision availability and verified content hashes",
   );
   const customTheme = readFileSync(
     join(work, "app-custom", "src", "lib", "design-system", "theme.css"),
     "utf8",
   );
-  check(
-    customTheme.includes("Seed: #0A0A0A (light from #0A0A0A, dark from #F5F5F5)"),
-    "extreme seed assigns separate light and dark mode seeds",
-  );
-  check(customTheme.includes("neutral tint: strong"), "custom theme records the strong neutral tint");
-  check(customTheme.includes("--accent-9:") && customTheme.includes('[data-theme="dark"]'), "custom theme structure");
+  verifyArtifacts(join(work, "app-custom", "src", "lib", "design-system"), {
+    hex: "#0A0A0A",
+    preset: "shadcn",
+    format: "hsl-values",
+    neutralTint: "strong",
+  });
   const customContrastFailures = checkThemeContrast(customTheme);
   check(
     customContrastFailures.length === 0,
-    `extreme-seed shadcn hsl-values contrast checks (${customContrastFailures.join("; ") || "all pairs pass"})`,
+    `extreme seed consumer contrast: ${customContrastFailures.join("; ") || "pass"}`,
   );
-  const requiredShadcnNames = [
-    "radius", "chart-1", "chart-2", "chart-3", "chart-4", "chart-5",
-    "sidebar", "sidebar-foreground", "sidebar-primary",
-    "sidebar-primary-foreground", "sidebar-accent",
-    "sidebar-accent-foreground", "sidebar-border", "sidebar-ring",
-  ];
-  const customBlocks = themeBlocks(customTheme).map(themeDeclarations);
+  const customModes = parseThemeTokens(customTheme);
   check(
-    customBlocks.every((block, index) => block.length === (index % 2 === 0 ? 82 : 81)),
-    "custom shadcn artifact keeps the 82/81 declaration contract",
-  );
-  check(
-    requiredShadcnNames.every((name) => customBlocks[0].some((item) => item.name === name))
-      && requiredShadcnNames.filter((name) => name !== "radius")
-        .every((name) => customBlocks[1].some((item) => item.name === name)),
-    "custom shadcn artifact includes radius, chart, and sidebar contracts",
+    [
+      "chart-1",
+      "sidebar",
+      "sidebar-primary",
+      "sidebar-ring",
+      "primary-foreground",
+    ].every((name) => customModes.light[name] && customModes.dark[name]),
+    "native shadcn chart/sidebar roles exist in both modes",
   );
 
   // Run 3: Radix Themes custom-palette override contract with alpha output.
@@ -337,12 +448,18 @@ try {
     [
       ...cliCmd.slice(1),
       "app-radix",
-      "--hex", "F59E0B",
-      "--preset", "radix",
-      "--format", "oklch",
-      "--neutral-tint", "subtle",
-      "--linter", "biome",
-      "--pm", "npm",
+      "--hex",
+      "4DA0FF",
+      "--preset",
+      "radix",
+      "--format",
+      "oklch",
+      "--neutral-tint",
+      "weak",
+      "--linter",
+      "biome",
+      "--pm",
+      "npm",
       "--no-git",
       "--no-install",
       "--no-skills",
@@ -354,15 +471,21 @@ try {
     join(work, "app-radix", "src", "lib", "design-system", "theme.css"),
     "utf8",
   );
-  const radixBlocks = themeBlocks(radixTheme).map(themeDeclarations);
+  verifyArtifacts(join(work, "app-radix", "src", "lib", "design-system"), {
+    hex: "#4DA0FF",
+    preset: "radix",
+    format: "oklch",
+    neutralTint: "weak",
+  });
+  const radixModes = parseThemeTokens(radixTheme);
   check(
-    radixBlocks.every((block) => block.length === 83),
-    "Radix artifact keeps 83 declarations in every mode block",
-  );
-  check(
-    radixBlocks.every((block) => ["accent-a1", "gray-a1", "accent-surface", "gray-surface"]
-      .every((name) => block.find((item) => item.name === name)?.value.includes(" / "))),
-    "Radix artifact preserves alpha in representative OKLCH tokens",
+    Object.values(radixModes).every((tokens) =>
+      Object.entries(tokens).some(
+        ([name, value]) =>
+          /^(accent|gray)-a\d+$/.test(name) && value.includes(" / "),
+      ),
+    ),
+    "native Radix alpha tokens remain alpha-bearing",
   );
 
   // Run 4: generic CSS Variables contract remains independent and compact.
@@ -370,37 +493,47 @@ try {
     cliCmd[0],
     [
       ...cliCmd.slice(1),
-      "app-css-variables",
-      "--hex", "F5F5F5",
-      "--preset", "css-variables",
-      "--format", "oklab",
-      "--neutral-tint", "subtle",
-      "--linter", "none",
-      "--pm", "npm",
+      "app-canonical",
+      "--hex",
+      "F5F5F5",
+      "--preset",
+      "canonical",
+      "--format",
+      "oklab",
+      "--neutral-tint",
+      "weak",
+      "--linter",
+      "none",
+      "--pm",
+      "npm",
       "--no-git",
       "--no-install",
       "--no-skills",
     ],
     work,
   );
-  check(run4.ok, "scaffold with generic CSS Variables exits 0");
+  check(run4.ok, "scaffold with native canonical tokens exits 0");
   const cssVariablesTheme = readFileSync(
-    join(work, "app-css-variables", "src", "lib", "design-system", "theme.css"),
+    join(work, "app-canonical", "src", "lib", "design-system", "theme.css"),
     "utf8",
   );
-  const cssVariablesBlocks = themeBlocks(cssVariablesTheme).map(themeDeclarations);
+  verifyArtifacts(join(work, "app-canonical", "src", "lib", "design-system"), {
+    hex: "#F5F5F5",
+    preset: "canonical",
+    format: "oklab",
+    neutralTint: "weak",
+  });
   check(
-    cssVariablesBlocks.every((block) => block.length === 50),
-    "CSS Variables artifact keeps 50 declarations in every mode block",
-  );
-  check(
-    !cssVariablesTheme.includes("--sidebar:") && !cssVariablesTheme.includes("--accent-a1:"),
-    "CSS Variables artifact does not acquire shadcn or Radix-only names",
+    cssVariablesTheme.includes("--cpe-canvas:") &&
+      cssVariablesTheme.includes("--cpe-ramp-brand-primary-12:"),
+    "canonical exports native roles and ramps",
   );
 
   // Full mode: install + production build
   if (full) {
-    console.log("smoke: full mode - checking every package manager sequentially");
+    console.log(
+      "smoke: full mode - checking every package manager sequentially",
+    );
     let npmInstallApp = "";
     for (const manager of PACKAGE_MANAGER_CONTRACT) {
       const available = commandAvailable(manager.name);
@@ -411,7 +544,8 @@ try {
           ...cliCmd.slice(1),
           appName,
           "--defaults",
-          "--pm", manager.name,
+          "--pm",
+          manager.name,
           "--no-git",
           "--install",
           "--no-skills",
@@ -425,16 +559,24 @@ try {
       const readme = existsSync(join(installApp, "README.md"))
         ? readFileSync(join(installApp, "README.md"), "utf8")
         : "";
-      check(readme.includes(`${manager.run} dev`), `${manager.name} commands reach generated docs`);
+      check(
+        readme.includes(`${manager.run} dev`),
+        `${manager.name} commands reach generated docs`,
+      );
 
       if (available) {
         check(
           installRun.output.includes("Dependencies installed"),
           `${manager.name} reports a completed dependency install`,
         );
-        check(existsSync(join(installApp, "node_modules")), `${manager.name} creates node_modules`);
         check(
-          manager.lockfiles.some((lockfile) => existsSync(join(installApp, lockfile))),
+          existsSync(join(installApp, "node_modules")),
+          `${manager.name} creates node_modules`,
+        );
+        check(
+          manager.lockfiles.some((lockfile) =>
+            existsSync(join(installApp, lockfile)),
+          ),
           `${manager.name} creates a recognized lockfile`,
         );
       } else {
@@ -442,14 +584,20 @@ try {
           installRun.output.includes(`${manager.name} is not installed`),
           `${manager.name} missing-manager warning is explicit`,
         );
-        check(!existsSync(join(installApp, "node_modules")), `${manager.name} missing case stays uninstalled`);
+        check(
+          !existsSync(join(installApp, "node_modules")),
+          `${manager.name} missing case stays uninstalled`,
+        );
       }
 
       if (manager.name === "npm" && available) npmInstallApp = installApp;
       else rmSync(installApp, { recursive: true, force: true });
     }
 
-    check(Boolean(npmInstallApp), "npm install output is available for the build gate");
+    check(
+      Boolean(npmInstallApp),
+      "npm install output is available for the build gate",
+    );
     const build = npmInstallApp
       ? runSync("npm", ["run", "build"], npmInstallApp)
       : { ok: false, output: "npm install output was unavailable" };
@@ -458,7 +606,9 @@ try {
     if (npmInstallApp) rmSync(npmInstallApp, { recursive: true, force: true });
   }
 } catch (err) {
-  failures.push(`unexpected error: ${/** @type {any} */ (err)?.message ?? err}`);
+  failures.push(
+    `unexpected error: ${/** @type {any} */ (err)?.message ?? err}`,
+  );
 } finally {
   rmSync(work, { recursive: true, force: true });
 }

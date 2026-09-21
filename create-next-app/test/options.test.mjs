@@ -165,7 +165,7 @@ test("the radix preset is presented as a Radix Themes custom-palette contract", 
   assert.deepEqual(radix, {
     value: "radix",
     label: "Radix Themes custom-palette tokens",
-    hint: "57 override names + 26 Larsen tokens",
+    hint: "native Radix Themes custom-palette tokens",
   });
 });
 
@@ -357,7 +357,7 @@ test("--defaults remains shorthand and accepts valid explicit overrides", () => 
     "--preset",
     "radix",
     "--format",
-    "hex",
+    "rgb",
     "--neutral-tint",
     "strong",
     "--linter",
@@ -390,7 +390,7 @@ test("rejects the removed --scheme flag", () => {
     assert.match(run.output, /Unknown option '--scheme'/);
     // The removed flag names its replacement rather than only failing.
     assert.match(run.output, /--scheme was removed in 0\.5\.0/);
-    assert.match(run.output, /--neutral-tint <subtle\|strong>/);
+    assert.match(run.output, /--neutral-tint <none\|weak\|strong>/);
     // A user error is reported as one, not as an uncaught throw.
     assert.doesNotMatch(run.output, /ERR_PARSE_ARGS_UNKNOWN_OPTION/);
   } finally {
@@ -432,7 +432,7 @@ test("rejects an unknown --neutral-tint value", () => {
   ]);
   try {
     assert.equal(run.status, 1, run.output);
-    assert.match(run.output, /Unknown --neutral-tint "vivid" \(expected subtle \| strong\)/);
+    assert.match(run.output, /Unknown --neutral-tint "vivid" \(expected none \| weak \| strong\)/);
   } finally {
     run.cleanup();
   }

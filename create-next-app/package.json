@@ -1,6 +1,6 @@
 {
   "name": "@larsen-utvikling/create-next-app",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Request create-next-app, then add the Larsen Utvikling vanilla CSS design system, agent docs, and an optional palette generated from one HEX.",
   "keywords": [
     "create-next-app",
@@ -33,7 +33,7 @@
     "template"
   ],
   "engines": {
-    "node": ">=20.12.0"
+    "node": ">=22.20.0"
   },
   "publishConfig": {
     "access": "public"
@@ -52,8 +52,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
-    "@radix-ui/colors": "^3.0.0",
-    "bezier-easing": "^2.1.0",
-    "colorjs.io": "^0.5.2"
+    "colorjs.io": "0.7.1",
+    "tintful": "0.1.1"
   }
 }

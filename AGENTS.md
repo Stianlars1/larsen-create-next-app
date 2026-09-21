@@ -29,22 +29,15 @@ about npm publication.
 - Clarify decisions with more than one defensible answer. Do not guess.
 - Never publish to npm or handle an npm OTP. Stian publishes.
 - Test the generated app and release artifact, not only source helpers.
-- The mechanical CSS contrast parser supports `shadcn`, `radix`, and
-  `css-variables` in `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`.
-  Every generated text pair uses the 4.6 project target, a 0.1 margin above
-  the WCAG 4.5 minimum. This includes foreground on background,
-  foreground-subtle on background, card and popover foregrounds, and the
-  `--primary-foreground` on `--primary` plus the foreground roles for
-  secondary, muted, accent, destructive, harmony, and status colors. For
-  shadcn, `--ring` is checked at 3 against
-  `--background`, `--card`, and `--popover`; `--input` is checked against the
-  same three surfaces at 3; and `--primary` is checked against all three at
-  the deliberately non-WCAG 1.5 visibility floor. `--border` is deliberately
-  not checked: cards and separators are not user interface components, so
-  WCAG 2.1 SC 1.4.11 does not apply to their outline. The generator applies
-  primary, ring, input, foreground-subtle, harmony-alias, and Radix step-9
-  corrections before all format serialization. Radix accent and gray
-  contrast pairs are checked at 4.6 in all six formats.
+- Use published `tintful@0.1.1` through `palette/index.js`. No vendored engine,
+  internal dist imports, legacy color correction or post-export modifications.
+- Require generation and export success plus passing quality. Keep original
+  artifact bytes, audit sidecars and serialization manifests together.
+- Native strict shadcn, radix and canonical tokens replace legacy contracts.
+  Use capabilities for format support. See docs/reference/palette.md for exact
+  quality and consumer verification boundaries. Standard engine targets are
+  4.6 for text and 3 for defined non-text relationships; consumer styling needs
+  separate verification. Do not claim full WCAG conformance from a palette.
 
 ## Edit map
 
@@ -52,7 +45,7 @@ about npm publication.
 | --- | --- | --- |
 | Design tokens | `CSS/*.css` | `create-next-app/template/src/lib/design-system/` |
 | Color generation | `palette/index.js` | `create-next-app/palette/` |
-| Vendored engine | `palette/engine/` and `palette/NOTICE.md` | `create-next-app/palette/engine/` |
+| Engine | Exact published Tintful dependency | Copied or modified engine source |
 | Wrapper flags, choices, defaults | `create-next-app/src/options.js` | Hand-maintained option lists |
 | Upstream create-next-app arguments | `create-next-app/src/scaffold.js` | Other CLI modules |
 | Generated-project contents | `create-next-app/template/` | Synced design-system copy |

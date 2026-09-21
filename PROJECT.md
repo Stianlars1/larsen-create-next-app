@@ -3,7 +3,7 @@
 Current package contract. This document describes the behavior implemented in
 this repository, not the original plan, release history, or any separate site.
 
-Last checked against source and tests: 2026-08-21.
+Migration contract: 2026-09-21. See dated verification evidence for completed checks.
 
 ## Product boundary
 
@@ -23,7 +23,7 @@ its stability. The CLI does not bundle or fork Next.js. `--cna-version <spec>`
 passes a different npm spec to create-next-app and names the requested spec in
 progress and generated-project text.
 
-The package requires Node.js `>=20.12.0`. Network access is required to fetch
+The package requires Node.js `>=22.20.0`. Network access is required to fetch
 the wrapper, the selected create-next-app spec, dependencies when installation
 is enabled, and optional skills.
 
@@ -50,7 +50,7 @@ The root contains the editable masters and the publishable package:
 
 ```text
 CSS/                           editable design-system master
-palette/                       editable palette master and vendored engine
+palette/                       shared integration with published tintful@0.1.1
 create-next-app/               publishable npm package
   bin/cli.js                   orchestration
   src/options.js               wrapper option contract
@@ -75,9 +75,9 @@ masters into the package. Direct package packing runs sync through `prepack`.
 The release packer syncs into an isolated staging copy. Smoke and source tests
 check that the artifact contains the intended copies.
 
-Package code imports only `palette/index.js`, never `palette/engine/`
-directly. Changes to the vendored engine require a corresponding entry in
-`palette/NOTICE.md`.
+Package code imports the shared `palette/index.js` boundary. Tintful 0.1.1 is
+an exact runtime dependency of the CLI; generated applications need no engine.
+No engine source is copied or forked.
 
 ## CLI contract
 
@@ -146,6 +146,9 @@ src/
     index.css
     core.css
     theme.css
+    theme.audit.json
+    theme.manifest.json
+    document.css
     motion.css
     base.css
 ```
@@ -168,8 +171,8 @@ Generated projects are copies. This package does not update them later.
 
 ## Design system contract
 
-`src/lib/design-system/index.css` imports the four modules in this order:
-`core.css`, `theme.css`, `motion.css`, and `base.css`.
+`src/lib/design-system/index.css` imports the five modules in this order:
+`core.css`, `theme.css`, `motion.css`, `base.css`, and `document.css`.
 
 ### core.css
 
@@ -185,32 +188,15 @@ Generated projects are copies. This package does not update them later.
 
 ### theme.css
 
-The palette generator emits the same declarations in four selector blocks:
+Unmodified native Tintful CSS, generated from #4DA0FF using strict shadcn,
+HSL channels and strong derived neutrals. It follows system dark preference
+and explicit `[data-theme]` overrides. The Tailwind bridge is omitted.
+`theme.audit.json` and `theme.manifest.json` preserve its audit and serialization
+identity. Keep the original artifacts together; modifications invalidate their
+original hash relationship. `document.css` supplies consumer body/rule styles.
+There are no post-generation surface, ring or brand overrides.
 
-```text
-:root                              light
-prefers-color-scheme dark :root   dark
-[data-theme="light"]              explicit light
-[data-theme="dark"]               explicit dark
-```
-
-Explicit selectors follow the media query and therefore override it without
-JavaScript. A generated document-defaults block supplies body, selection, and
-horizontal-rule colors using real tokens for the selected preset and format.
-
-The baked default is `#4DA0FF`, `shadcn`, `hsl-values`, and the `strong`
-neutral tint. Its background, foreground, and ring are pinned to the
-`#FAFAFA` and `#0A0A0A` surface pair. It also adds `--brand-blue`,
-`--brand-blue-soft`, and `--brand-blue-subtle`. Card, Popover, and Sidebar
-aliases stay aligned with the final pinned background, foreground, and ring
-values. Regenerate that exact default from the repository root with:
-
-```bash
-npm run gen:theme
-```
-
-Passing a HEX argument deliberately generates a different candidate and is
-not the command for reproducing the default contract.
+Regenerate with `npm run gen:theme`, then `npm run sync`.
 
 ### motion.css
 
@@ -229,114 +215,32 @@ generated `theme.css` block.
 
 ## Palette contract
 
-`palette/index.js` exposes palette generation, normalization, role mapping,
-usage idioms, and the supported choice constants. The vendored engine source
-and local deviations are recorded in `palette/NOTICE.md`.
+The complete native contract is [docs/reference/palette.md](docs/reference/palette.md).
+The shared boundary generates, serializes and checks quality with published
+`tintful@0.1.1`. Choices are shadcn, radix and canonical; hex, rgb, hsl,
+hsl-values, oklab and oklch; neutral hues none, weak and strong. Engine
+capabilities determine valid combinations. Radix rejects hsl-values. Custom
+neutral defaults to weak; the baked default remains strong. Removed
+css-variables/subtle values fail with migration guidance.
 
-Current custom choices are:
+Both generation and serialization must succeed and pass export quality. The
+shared integration additionally checks final native CSS against consumer
+contrast targets and rejects a mismatch without modifying engine output. A
+failed-quality artifact is never written, and requested formats never switch
+silently. Known Radix fidelity failures can reject otherwise supported syntax.
+This is an explicit diagnostic path, not a claim of universal seed support.
 
-- Presets: `shadcn`, `radix`, `css-variables`.
-- Formats: `hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, `oklch`.
-- Neutral tints: `subtle`, `strong`.
+Tintful owns its standard 4.6 text and 3 non-text constraints. Consumer checks
+separately verify final starter roles and native semantic pairs, including
+shadcn ring/input against its three surfaces. Removed legacy token names and
+correction algorithms are no longer contractual. A passing theme is not full
+application WCAG certification.
 
-Neutral tint changes the gray ramp without rotating the requested seed or
-rebuilding the accent palette. The public wrapper maps `subtle` to the
-vendored engine's former analogous path and `strong` to its monochromatic
-path. The mapping itself preserves the former output. A direct palette API
-call containing the removed `scheme` property fails explicitly. The generated
-analogous and complementary support tokens, their foregrounds, and the
-existing chart mappings remain part of every preset contract.
-
-`generateThemeCss()` accepts optional `overrides` and `darkOverrides` maps.
-Each override value must be three-, six-, or eight-digit HEX with an optional
-leading `#`; valid values are normalized before rendering, including
-three-digit expansion and eight-digit alpha preservation. Override keys remain
-caller-owned token names, so they replace an existing declaration or append a
-custom token. Overrides are applied after generation and contrast correction:
-they are escape hatches outside the palette matrix, contrast checks, and
-release-sweep evidence. A caller who overrides either member of a foreground
-and background pair must verify the final pair again.
-
-Semantic statuses use complete, unmodified named Radix Colors scales. The
-original normalized seed selects the smallest OKLAB Delta E from each role's
-candidate light sRGB step 9, with listed candidate order breaking ties. The
-same selected name resolves both light and dark modes. A seed below 6 percent
-HSL saturation uses its role's achromatic default: success `green`, danger
-`red`, warning `amber`, and info `blue`. The candidate families are success
-`jade|green|grass`, danger `tomato|red|ruby|crimson`, warning `amber|orange`,
-and info `sky|blue|cyan`. Base, muted, and border map to named scale steps 9,
-3, and 7. Status foregrounds use the existing palette-first chooser at 4.6.
-Shadcn `destructive` remains a resolved alias of `danger`; chart 4 and chart 5
-remain resolved aliases of warning and success. `palette/NOTICE.md` records
-this vendored-engine deviation.
-
-`--background` and the twelve accent steps are unaffected by neutral tint for
-every chromatic seed. Primary and ring are derived corrections against the
-final card and popover surfaces, so a tint may select a different passing
-candidate. The hueless exceptions `#000000`, `#010101`, `#FEFEFE`, and
-`#FFFFFF` have their accent scale derived from the same tinted neutral, so
-those seeds do move accent values.
-[docs/reference/palette.md](docs/reference/palette.md) lists the exact token
-groups, and `create-next-app/test/neutral-tint.test.mjs` locks both halves of
-the claim.
-
-For an extreme seed, `seedsForModes()` pairs it with a lightness-inverted seed
-before export. For every seed, shadcn keeps the selected seed as primary only
-when it reaches the 1.5 visibility floor against background, card, and
-popover and supports a 4.6 foreground. Ring keeps the seed only when it
-reaches 3 against all three surfaces. A failing primary selects only the
-perceptually closest valid accent-scale color and fails explicitly if none
-exists; it never becomes gray or neutral. Ring selects from accent, then gray,
-then neutral candidates. Primary foreground is recomputed with the
-accent-scale-first chooser and falls back directly to pure black or white,
-skipping tint-specific grays. An achromatic primary below 6 percent HSL
-saturation skips accent candidates as well and uses the higher-contrast pure
-neutral. Analogous and complementary aliases move to the closest text-safe
-color in their own unchanged scale when step 9 falls in the black-white
-contrast crossover. Radix applies the same text-safe step-9 correction while
-keeping its solid and alpha values, indicator, track, and contrast aliases
-coherent.
-
-The mechanical CSS verifier parses `shadcn`, `radix`, and `css-variables` in
-`hex`, `rgb`, `hsl`, `hsl-values`, `oklab`, and `oklch`, and checks both
-generated modes. The shadcn role checks are:
-
-- `--foreground` vs `--background` must reach the 4.6 project target, a 0.1
-  margin above the WCAG AA 4.5 normal-text minimum.
-- `--foreground-subtle` vs `--background` must reach 4.6.
-- `--card-foreground` vs `--card` must reach 4.6.
-- `--popover-foreground` vs `--popover` must reach 4.6.
-- `--ring` vs `--background`, `--card`, and `--popover` must each reach 3.
-- `--input` vs `--background`, `--card`, and `--popover` must each reach 3.
-- `--primary-foreground` vs `--primary` must reach 4.6.
-- `--primary` vs `--background`, `--card`, and `--popover` must each reach a
-  deliberately non-WCAG 1.5 visibility floor.
-- Secondary, muted, accent, destructive, harmony, and status foreground pairs
-  must reach 4.6 where those roles exist.
-
-`--input` carries the 3 floor because it paints the boundary of text fields,
-selects, and outline buttons, where nothing else identifies the control -
-WCAG 2.1 SC 1.4.11. It is corrected from the gray scale so the boundary stays
-neutral. `--border` and `--sidebar-border` are deliberately not checked and
-keep gray-7: card edges and separators are not user interface components, and
-the same floor would give every card a heavy outline.
-
-`--foreground-subtle` starts at gray-10. If it is below 4.6 against the mode
-background, a fixed 24-round binary search follows the OKLAB path toward
-gray-11 and selects the passing 8-bit sRGB candidate at the isolated boundary.
-The generator applies primary, ring, input, foreground-subtle, harmony-alias,
-and Radix step-9 corrections before serialization, so format selection cannot
-bypass them. Radix accent and gray contrast pairs are checked at 4.6 in all
-six generated formats.
-
-The deterministic 2 x 3 x 6 neutral-tint, preset, and format matrix locks the
-implemented contracts: shadcn exposes 81 color names in both modes plus
-root-level `--radius`, Radix Themes exposes 83 names in both modes, and CSS
-Variables remains the generic 50-name contract. Radix alpha scales and
-surfaces preserve alpha in all six formats. HSL and HSL Values retain enough
-component precision to preserve contrast through serialization. See
-[docs/reference/palette.md](docs/reference/palette.md) for exact names,
-mappings, serialization, and deliberately deferred P3 output.
+`generateThemeCss()` remains a string API. `generateThemeArtifacts()` returns
+original files and their serialization manifest; `generateThemePreview()` adds
+native canonical ramp data for the demo without changing export bytes.
+`usageIdioms()` and `tokenRoles()` make starter CSS match the selected preset
+and format. Generated projects remain static copies with no engine dependency.
 
 ## Optional agent skills
 
@@ -380,7 +284,7 @@ Different commands prove different things:
 | --- | --- | --- |
 | `node scripts/generate-cli-reference.mjs --check` | Both generated CLI tables match `OPTION_CONTRACT` | CLI behavior or package publication |
 | `npm test` | Focused source behavior, palette contracts, docs, overlay, contrast, and artifact-shape checks | A real upstream scaffold or production build |
-| `npm run verify:palette-sweep` | Deterministic 762-seed x 2 neutral-tint shadcn contrast sweep | Release artifact, npm publication, or other preset-format behavior |
+| `npm run verify:palette-sweep` | Deterministic 762-seed x 3 neutral-tint shadcn contrast sweep | Release artifact, npm publication, or other preset-format behavior |
 | `npm run smoke` | Real generated projects from one release-style tarball with scaffold assertions | Dependency installation and `next build` |
 | `npm run pack:release` | One consumer-clean tarball from clean release-relevant source, with exact `gitHead`, plus standard tarball smoke | Full install/build or npm publication |
 | `npm run smoke:full -- <same-tarball>` | Sequential npm, pnpm, yarn, and bun install or missing-manager behavior from the supplied artifact, plus `next build` from npm output | npm publication |

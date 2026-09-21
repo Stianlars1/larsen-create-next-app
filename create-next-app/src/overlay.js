@@ -8,7 +8,7 @@
  *   2. copies every template file, substituting {{VAR}} placeholders in text
  *      files and renaming a leading "_" to "." (npm never packs .gitignore-like
  *      dotfiles inside packages)
- *   3. optionally writes a generated theme.css (custom palette runs)
+ *   3. writes unmodified generated artifacts and separate consumer styling
  *   4. removes superseded create-next-app files (tolerant of upstream drift)
  */
 
@@ -24,7 +24,16 @@ import {
 } from "node:fs";
 import { dirname, extname, join } from "node:path";
 
-const TEXT_EXT = new Set([".md", ".ts", ".tsx", ".css", ".json", ".txt", ".mjs", ".js"]);
+const TEXT_EXT = new Set([
+  ".md",
+  ".ts",
+  ".tsx",
+  ".css",
+  ".json",
+  ".txt",
+  ".mjs",
+  ".js",
+]);
 
 const REMOVE = [
   "src/app/page.module.css",
@@ -40,10 +49,18 @@ const REMOVE = [
  * @param {string} opts.templateDir - absolute path to the template folder
  * @param {string} opts.appDir - absolute path to the scaffolded app
  * @param {Record<string, string>} opts.vars - {{VAR}} substitutions
- * @param {string} [opts.themeCss] - generated theme.css content; when omitted
- *   the synced default theme from the template is kept
+ * @param {Array<{fileName: string, text: string}>} [opts.themeArtifacts]
+ * @param {object} [opts.themeManifest]
+ * @param {string} [opts.documentCss]
  */
-export function overlay({ templateDir, appDir, vars, themeCss }) {
+export function overlay({
+  templateDir,
+  appDir,
+  vars,
+  themeArtifacts,
+  themeManifest,
+  documentCss,
+}) {
   const cnaAgents = join(appDir, "AGENTS.md");
   if (existsSync(cnaAgents)) {
     rmSync(join(appDir, "NEXTJS.md"), { force: true });
@@ -66,9 +83,19 @@ export function overlay({ templateDir, appDir, vars, themeCss }) {
     }
   }
 
-  if (themeCss) {
-    writeFileSync(join(appDir, "src", "lib", "design-system", "theme.css"), themeCss);
+  const designDir = join(appDir, "src", "lib", "design-system");
+  if (themeArtifacts) {
+    for (const artifact of themeArtifacts) {
+      if (!/^[a-zA-Z0-9.-]+$/.test(artifact.fileName))
+        throw new Error("Unsafe artifact filename");
+      writeFileSync(join(designDir, artifact.fileName), artifact.text);
+    }
+    writeFileSync(
+      join(designDir, "theme.manifest.json"),
+      JSON.stringify(themeManifest, null, 2) + "\n",
+    );
   }
+  if (documentCss) writeFileSync(join(designDir, "document.css"), documentCss);
 
   for (const rel of REMOVE) {
     rmSync(join(appDir, rel), { force: true });

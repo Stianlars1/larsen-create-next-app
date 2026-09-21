@@ -32,7 +32,8 @@ import { installSkillsWithProvenance, renderSkillsNote } from "../src/skills.js"
 import { packageManagerByName } from "../src/package-managers.js";
 import {
   DEFAULT_THEME,
-  generateThemeCss,
+  generateThemeArtifacts,
+  documentStyles,
   normalizeHex,
   tokenRoles,
   usageIdioms,
@@ -99,6 +100,9 @@ try {
   cnaVersion = config.cnaVersion;
   appDir = join(process.cwd(), config.name);
 
+  const paletteMeta = config.palette ?? DEFAULT_THEME;
+  const generated = generateThemeArtifacts(paletteMeta);
+
   // Scaffold
   phase = "scaffold";
   createdDir = true;
@@ -142,15 +146,11 @@ try {
   }
 
   // Palette + overlay
-  const paletteMeta = config.palette ?? DEFAULT_THEME;
   const idioms = usageIdioms(/** @type {any} */ (paletteMeta.format));
   const roles = tokenRoles(
     /** @type {any} */ (paletteMeta.preset),
     /** @type {any} */ (paletteMeta.format),
   );
-  const themeCss = config.palette
-    ? generateThemeCss(/** @type {any} */ (config.palette))
-    : undefined; // keep the baked-in default theme
 
   overlay({
     templateDir,
@@ -179,14 +179,12 @@ try {
       C_ACCENT_SOFT: roles.accentSoft.expr,
       T_LINE: roles.line.name,
       C_LINE: roles.line.expr,
-      // The brand accents ship with the default theme only - a custom palette
-      // makes its own seed the accent, so the note must not appear there.
-      BRAND_NOTE: config.palette
-        ? ""
-        : "\nThe default Larsen Utvikling theme additionally ships the brand\naccents `--brand-blue`, `--brand-blue-soft` and `--brand-blue-subtle`\n(used for links and highlights on larsenutvikling.no).",
+      BRAND_NOTE: "",
       SKILLS_NOTE: renderSkillsNote(installedSkills, skillSourceProvenance),
     },
-    themeCss,
+    themeArtifacts: generated.artifacts,
+    themeManifest: generated.manifest,
+    documentCss: documentStyles(generated.options),
   });
   p.log.success(
     config.palette

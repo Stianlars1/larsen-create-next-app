@@ -1,0 +1,21 @@
+/** Named input shortcuts; every selection still passes the live export quality gate. */
+export const PREDEFINED_COLOURS = [
+  { name: "Neutral", hex: "#A1A1A1" },
+  { name: "Amber", hex: "#973C00" },
+  { name: "Blue", hex: "#193CB8" },
+  { name: "Cyan", hex: "#005F78" },
+  { name: "Emerald", hex: "#006045" },
+  { name: "Fuchsia", hex: "#8A0194" },
+  { name: "Green", hex: "#016630" },
+  { name: "Indigo", hex: "#372AAC" },
+  { name: "Lime", hex: "#7CCF00" },
+  { name: "Orange", hex: "#9F2D00" },
+  { name: "Pink", hex: "#A3004C" },
+  { name: "Purple", hex: "#6E11B0" },
+  { name: "Red", hex: "#9F0712" },
+  { name: "Rose", hex: "#A50036" },
+  { name: "Sky", hex: "#00598A" },
+  { name: "Teal", hex: "#005F5A" },
+  { name: "Violet", hex: "#5D0EC0" },
+  { name: "Yellow", hex: "#EFB100" },
+];
