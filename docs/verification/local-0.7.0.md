@@ -85,3 +85,32 @@ A fresh owner Touch ID confirmation completed the authorized publish.
 Registry verified at 2026-09-21T22:53:08.621Z: version/latest 0.7.0, gitHead
 497e1baaf23b90413f6a91a4132cd6937b6dd1e1, byte-identical candidate download.
 See releases.md for the final published record. The earlier timeout is superseded.
+
+## Website production verification
+
+The companion website installed the published npm package, completed npm ci and
+passed its publication identity gate. Combined tests after integrating existing
+remote main: 39 Node tests and 84 Vitest tests; lint, types and build passed.
+
+Website PR #5 merged as d676d971233b8f22d9c74dec0cc5f3afd7bf2835:
+https://github.com/Stianlars1/larsen-create-next-app-site/pull/5.
+Vercel production deployment dpl_6pXtZicE121revFaZ38M6UuKszjw is Ready:
+https://larsen-create-next-app-site-1xz0rrt32-stians-applications.vercel.app.
+The domain https://create-next-app.larsenutvikling.no points to that deployment.
+Build duration: 24s. The remote build verified the published CLI identity.
+
+Fresh browser verification on the production domain confirmed versioned 0.7.0
+commands, native controls, the named Cyan seed picker and successful #FE9762
+export. The live copied stylesheet for #FE9762/shadcn/hsl-values/weak matches the
+npm generator's 10,935-character length and FNV-1a-64 bcc678142b4166ab, including
+its exact destructive token. No browser errors were observed. The unauthenticated
+admin browser navigation resolves to /admin/unlock and displays Admin locked;
+that gate has no Umami or GA tracker. The streamed /admin response initially uses
+HTTP 200 before redirecting, so the status alone was not treated as access proof.
+Vercel's error-level log query for this exact deployment returned zero entries.
+
+A real npx invocation of the registry package generated published-check from
+#FE9762 successfully, retaining CSS/audit/manifest files. The CLI's annotated
+v0.7.0 tag and GitHub Release point to source 497e1ba, with the verified tarball
+attached. Publication and deployment are complete; no engine defect message was
+sent because the disputed contrast result was a consumer measurement error.
