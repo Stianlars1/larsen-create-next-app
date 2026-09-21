@@ -18,9 +18,9 @@ test("palette tests load an isolated copy of the root master", () => {
         hex: "#4DA0FF",
         preset: "shadcn",
         format: "hex",
-        neutralTint: "subtle",
+        neutralTint: "weak",
       });
-      assert.match(css, /Seed: #4DA0FF/);
+      assert.match(css, /--primary:/);
     } finally {
       fixture.cleanup();
     }

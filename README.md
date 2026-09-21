@@ -31,7 +31,7 @@ prompt, choice, default, interaction, and invalid combination.
   which version npm resolves or that it is stable
 - **TypeScript, App Router, `src/` directory** - and never Tailwind
 - **A vanilla CSS design system** in `src/lib/design-system/`: spacing, widths, type, color and motion tokens, light and dark, with zero JS
-- **A color palette generated from one HEX** - a 12-step accent scale, gray scale and semantic colors in both modes, produced locally by the vendored engine. `--neutral-tint subtle|strong` controls how much seed hue reaches the gray ramp and the tokens built on it, and leaves the accent scale unchanged for chromatic seeds. The hueless exceptions are `#000000`, `#010101`, `#FEFEFE`, and `#FFFFFF`
+- **A color palette generated from one HEX** - native Tintful light/dark tokens, with none, weak or strong neutral hue influence. Generated CSS and audit sidecars stay together; no runtime engine in the app.
 - **Agent docs** - `AGENTS.md` with the project rules, `CLAUDE.md` pointing at it, and `DESIGN.md` with the token reference. Upstream agent guidance is preserved as `NEXTJS.md` only when create-next-app supplies it
 - **Optional agent skills from their source repositories** - nine [Larsen Skills](https://github.com/Stianlars1/larsen-skills), plus Jakub Antalik's explicitly selected [`transitions-dev`](https://github.com/Jakubantalik/transitions.dev/tree/main/skills/transitions-dev), with installation verified only by `.agents/skills/<name>/SKILL.md`
 
@@ -72,7 +72,7 @@ This repo holds the published package and the masters it is built from.
 | --- | --- |
 | [`create-next-app/`](create-next-app) | The published npm package |
 | [`CSS/`](CSS) | Master design system - edit tokens here |
-| [`palette/`](palette) | Master color generator (rampkit engine, vendored - see [NOTICE](palette/NOTICE.md)) |
+| [`palette/`](palette) | Master color generator (Tintful engine, vendored - see [NOTICE](palette/NOTICE.md)) |
 | [`docs/plans/`](docs/plans) | Design and implementation notes |
 
 `create-next-app/scripts/sync.mjs` copies both masters into the package. Direct

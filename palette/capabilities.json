@@ -1,0 +1,25 @@
+{
+  "shadcn": [
+    "hex",
+    "rgb",
+    "hsl",
+    "hsl-values",
+    "oklab",
+    "oklch"
+  ],
+  "radix": [
+    "hex",
+    "rgb",
+    "hsl",
+    "oklab",
+    "oklch"
+  ],
+  "canonical": [
+    "hex",
+    "rgb",
+    "hsl",
+    "hsl-values",
+    "oklab",
+    "oklch"
+  ]
+}

@@ -8,7 +8,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import * as p from "@clack/prompts";
-import { isValidHex } from "../palette/index.js";
+import { isValidHex, normalizeOptions, supportedFormats } from "../palette/index.js";
 import {
   optionChoices,
   optionDefault,
@@ -222,8 +222,8 @@ export async function promptConfig(flags, positionalName, cwd) {
 
       const format = await p.select({
         message: paletteMessage("format"),
-        options: optionChoices("format"),
-        initialValue: optionDefault("format"),
+        options: optionChoices("format").filter(choice => supportedFormats(String(preset)).includes(choice.value)),
+        initialValue: supportedFormats(String(preset)).includes(optionDefault("format")) ? optionDefault("format") : "oklch",
       });
       handleCancel(/** @type {never} */ (format));
 
@@ -257,6 +257,8 @@ export async function promptConfig(flags, positionalName, cwd) {
       process.exit(1);
     }
   }
+
+  if (palette) palette = normalizeOptions(palette);
 
   // Linter
   let linter = flags.linter;

@@ -35,7 +35,7 @@ export function syncMasters({
       name: "palette master",
       source: join(repoRoot, "palette"),
       target: join(packageDir, "palette"),
-      required: ["index.js", "NOTICE.md", join("engine", "generatePalette.js")],
+      required: ["index.js", "tokens.js", "NOTICE.md"],
     },
   ];
 

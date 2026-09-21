@@ -58,29 +58,10 @@ test("a generated project only credits the sources it actually installed", () =>
 });
 
 test("palette option choices follow the public palette API", async () => {
-  PRESETS["test-preset"] = "test-preset";
-  FORMATS["test-format"] = "TEST_FORMAT";
-  NEUTRAL_TINTS.push("test-tint");
-
-  try {
-    const { optionChoices } = await import(`../src/options.js?palette-test=${Date.now()}`);
-    assert.deepEqual(
-      optionChoices("preset").map((choice) => choice.value),
-      Object.keys(PRESETS),
-    );
-    assert.deepEqual(
-      optionChoices("format").map((choice) => choice.value),
-      Object.keys(FORMATS),
-    );
-    assert.deepEqual(
-      optionChoices("neutral-tint").map((choice) => choice.value),
-      NEUTRAL_TINTS,
-    );
-  } finally {
-    delete PRESETS["test-preset"];
-    delete FORMATS["test-format"];
-    NEUTRAL_TINTS.pop();
-  }
+  const { optionChoices } = await import("../src/options.js");
+  assert.deepEqual(optionChoices("preset").map(c => c.value), Object.keys(PRESETS));
+  assert.deepEqual(optionChoices("format").map(c => c.value), Object.keys(FORMATS));
+  assert.deepEqual(optionChoices("neutral-tint").map(c => c.value), NEUTRAL_TINTS);
 });
 
 test("the published README CLI reference matches OPTION_CONTRACT", () => {
@@ -129,18 +110,7 @@ test("the palette prompt contract covers the seed and every option requiring it"
 
   const reference = readFileSync(join(packageDir, "..", "docs", "reference", "cli.md"), "utf8");
   assert.match(reference, /HEX seed, preset, format, and neutral tint/);
-  assert.match(reference, /Neutral tint is asked last with `subtle` preselected/);
-});
-
-test("the palette reference documents the measured hueless accent changes by mode", () => {
-  const reference = readFileSync(join(packageDir, "..", "docs", "reference", "palette.md"), "utf8");
-  const normalized = reference.replaceAll(/\s+/g, " ");
-
-  assert.match(normalized, /#000000.*9 light.*6 dark.*15 total/i);
-  assert.match(normalized, /#010101.*0 light.*6 dark.*6 total/i);
-  assert.match(normalized, /#FEFEFE.*9 light.*0 dark.*9 total/i);
-  assert.match(normalized, /#FFFFFF.*9 light.*6 dark.*15 total/i);
-  assert.doesNotMatch(normalized, /those seeds move 15 accent-scale values/i);
+  assert.match(reference, /Neutral tint is asked last with `weak` preselected/);
 });
 
 test("the current authorities explain the Clack and scaffold ownership boundary", () => {
@@ -159,37 +129,12 @@ test("the current authorities explain the Clack and scaffold ownership boundary"
   }
 });
 
-test("contrast authorities state the exact supported boundary and thresholds", () => {
-  const agents = readFileSync(join(packageDir, "..", "AGENTS.md"), "utf8");
-  const project = readFileSync(join(packageDir, "..", "PROJECT.md"), "utf8");
-  const paletteReference = readFileSync(
-    join(packageDir, "..", "docs", "reference", "palette.md"),
-    "utf8",
-  );
-  for (const document of [agents, project, paletteReference]) {
-    const normalized = document.replaceAll(/\s+/g, " ");
-    assert.match(normalized, /shadcn.*radix.*css-variables/i);
-    assert.match(normalized, /hex.*rgb.*hsl.*hsl-values.*oklab.*oklch/i);
-    assert.match(normalized, /foreground.*background.*4\.6/i);
-    assert.match(normalized, /foreground-subtle.*background/i);
-    assert.match(normalized, /ring.*background.*card.*popover.*3(?:\.0)?/i);
-    assert.match(normalized, /primary-foreground.*primary.*4\.6/i);
-    assert.match(normalized, /primary.*background.*card.*popover.*1\.5/i);
-    assert.match(normalized, /non-WCAG/i);
-    assert.match(normalized, /generator.*before.*serializ/i);
-    assert.match(normalized, /Radix.*accent.*gray.*4\.6/i);
-    assert.match(normalized, /foreground.*status.*4\.6/i);
+test("native palette documentation separates audited bytes and consumer styling", () => {
+  for (const path of ["../PROJECT.md", "../docs/reference/palette.md", "template/DESIGN.md"]) {
+    const text = readFileSync(join(packageDir, path), "utf8");
+    assert.match(text, /Tintful/);
+    assert.match(text, /theme.audit.json/);
+    assert.match(text, /document.css/);
+    assert.doesNotMatch(text, /closest valid accent|lightness-inverted|81 color names/);
   }
-});
-
-test("the generated template documents the complete shadcn correction contract", () => {
-  const generatedDesign = readFileSync(join(packageDir, "template", "DESIGN.md"), "utf8");
-  const normalized = generatedDesign.replaceAll(/\s+/g, " ");
-
-  assert.match(normalized, /primary.*1\.5.*background.*card.*popover.*4\.6/i);
-  assert.match(normalized, /primary.*closest.*accent-scale.*fail.*explicit/i);
-  assert.match(normalized, /ring.*3.*background.*card.*popover.*accent.*gray.*neutral/i);
-  assert.match(normalized, /primary.foreground.*pure black or white.*tint-specific grays/i);
-  assert.match(normalized, /achromatic primary.*skip.*accent/i);
-  assert.match(normalized, /Radix.*accent.*gray.*4\.6/i);
 });

@@ -43,7 +43,7 @@ The prompt order and its flag bypasses are:
    No.
    - A Yes answer asks for the HEX seed, preset, format, and neutral tint in
      that order.
-   - Neutral tint is asked last with `subtle` preselected, so pressing Enter
+   - Neutral tint is asked last with `weak` preselected, so pressing Enter
      keeps the standard gray ramp. `--neutral-tint` answers it directly and
      requires `--hex`.
 3. Linter - answered by `--linter`, or by its default under `--defaults`.
@@ -70,9 +70,9 @@ prompt or scaffold operation.
 | `-d, --defaults` | Skip all prompts, use defaults (no skills) |
 | `--default-palette` | Answer No to a custom palette and use the default palette. Interactive default: `no`. Conflicts with `--hex` |
 | `--hex <color>` | Palette seed HEX - implies a custom palette. Value must not be empty. Conflicts with `--default-palette` |
-| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `css-variables`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
+| `--preset <name>` | Palette preset: `shadcn` \| `radix` \| `canonical`. Default: `shadcn`. Value must not be empty. Requires `--hex` |
 | `--format <name>` | Color format: `hex` \| `rgb` \| `hsl` \| `hsl-values` \| `oklab` \| `oklch`. Default: `hsl-values`. Value must not be empty. Requires `--hex` |
-| `--neutral-tint <name>` | Neutral gray-ramp tint: `subtle` \| `strong`. Default: `subtle`. Value must not be empty. Requires `--hex` |
+| `--neutral-tint <name>` | Neutral gray-ramp tint: `none` \| `weak` \| `strong`. Default: `weak`. Value must not be empty. Requires `--hex` |
 | `--pm <name>` | Package manager: `npm` \| `pnpm` \| `yarn` \| `bun`. Default: `npm`. Value must not be empty |
 | `--linter <name>` | Linter: `eslint` \| `biome` \| `none`. Default: `eslint`. Value must not be empty |
 | `--skills <list>` | Agent skills: recommended, all Larsen, or comma-separated names. Default with `--defaults`: `none`. Interactive default: `recommended`. Value must not be empty. Conflicts with `--no-skills` |
@@ -169,7 +169,7 @@ explicitly empty or whitespace-only value. More than one positional app name
 is rejected. Node's argument parser rejects unknown flags and missing flag
 values; the CLI reports the parser's message on its own and exits 1 instead
 of printing a stack trace. A command that still uses the removed `--scheme`
-flag is additionally told to use `--neutral-tint <subtle|strong>`.
+flag is additionally told to use `--neutral-tint <none|weak|strong>`.
 
 ## Non-interactive and CI use
 
@@ -182,7 +182,7 @@ choices.
 Default unattended scaffold:
 
 ```bash
-PACKAGE_VERSION=0.6.0 # use after this exact version is published
+PACKAGE_VERSION=0.7.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --defaults --no-git --no-install
 ```
@@ -190,7 +190,7 @@ npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
 Fully explicit custom scaffold:
 
 ```bash
-PACKAGE_VERSION=0.6.0 # use after this exact version is published
+PACKAGE_VERSION=0.7.0 # use after this exact version is published
 npx --yes "@larsen-utvikling/create-next-app@${PACKAGE_VERSION}" ci-app \
   --hex 4DA0FF --preset shadcn --format hsl-values --neutral-tint strong \
   --linter eslint --pm npm --no-skills --no-git --no-install
@@ -209,3 +209,17 @@ locked set is TypeScript, App Router, `src/`, no Tailwind, the selected linter,
 `@/*`, skipped upstream installation, disabled upstream git, and upstream
 defaults for any unlisted choice. The wrapper performs its own optional
 dependency installation and git initialization after applying the overlay.
+
+## Native Tintful migration (0.7.0)
+
+Requires Node >=22.20.0. Presets use native Tintful token names. The removed
+css-variables preset requires an explicit choice of canonical; subtle requires
+an explicit none/weak/strong choice. Neither is an output-compatible alias.
+Radix cannot use hsl-values, including the global format default: supply
+`--format rgb`, `hsl`, `hex`, `oklab`, or `oklch`. The interactive format picker
+filters unsupported choices and initially selects OKLCH for Radix.
+
+Generation is quality-checked before scaffolding. A supported syntax can still
+fail export quality for a particular seed. The CLI stops with diagnostics and
+never silently changes format. Static CSS, audit sidecars and a serialization
+manifest are written together; consumer document styling is separate.

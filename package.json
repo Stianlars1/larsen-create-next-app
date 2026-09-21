@@ -8,8 +8,10 @@
     "sync": "node create-next-app/scripts/sync.mjs"
   },
   "dependencies": {
-    "@radix-ui/colors": "3.0.0",
-    "bezier-easing": "2.1.0",
-    "colorjs.io": "0.5.2"
+    "colorjs.io": "0.7.1",
+    "tintful": "0.1.1"
+  },
+  "engines": {
+    "node": ">=22.20.0"
   }
 }

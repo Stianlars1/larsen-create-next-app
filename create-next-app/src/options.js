@@ -6,20 +6,21 @@ import { FORMATS, NEUTRAL_TINTS, PRESETS } from "../palette/index.js";
 const PRESET_DISPLAY = {
   shadcn: {
     label: "shadcn/ui",
-    hint: "approved semantic token names + Larsen scales (recommended)",
+    hint: "native Tintful shadcn tokens (recommended)",
   },
   radix: {
     label: "Radix Themes custom-palette tokens",
-    hint: "57 override names + 26 Larsen tokens",
+    hint: "native Radix Themes custom-palette tokens",
   },
-  "css-variables": { label: "CSS Variables", hint: "accent + gray scales" },
+  canonical: { label: "Canonical", hint: "native Tintful ramps and semantic roles" },
 };
 
 const NEUTRAL_TINT_DISPLAY = {
-  subtle: { label: "Subtle", hint: "the standard gray ramp (recommended)" },
+  none: { label: "None", hint: "achromatic neutrals" },
+  weak: { label: "Weak", hint: "subtle hue influence (recommended)" },
   strong: {
     label: "Strong",
-    hint: "more seed hue in the grays; chromatic accent scale unchanged",
+    hint: "stronger hue influence in neutrals",
   },
 };
 
@@ -91,7 +92,7 @@ export const OPTION_CONTRACT = Object.freeze([
     name: "neutral-tint",
     type: "string",
     valueName: "name",
-    defaultValue: "subtle",
+    defaultValue: "weak",
     requires: "hex",
     choices: choicesFrom(NEUTRAL_TINTS, NEUTRAL_TINT_DISPLAY),
     description: "Neutral gray-ramp tint",
@@ -200,7 +201,7 @@ export const PARSE_OPTIONS = Object.freeze(
  * replacement rather than leaving a previously valid command unexplained.
  */
 export const REMOVED_OPTIONS = Object.freeze({
-  scheme: "--neutral-tint <subtle|strong>",
+  scheme: "--neutral-tint <none|weak|strong>",
 });
 
 /** @param {string[]} [args] */
