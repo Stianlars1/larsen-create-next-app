@@ -62,3 +62,19 @@ ring across canvas/card/popover >=4.8448:1. Local console errors were limited to
 unavailable Vercel Analytics and font preload warnings.
 
 Corrected source, final candidate and rerun evidence follow below.
+
+## Corrected candidate
+
+Merged CLI PR: https://github.com/Stianlars1/larsen-create-next-app/pull/5.
+Source gitHead: 497e1baaf23b90413f6a91a4132cd6937b6dd1e1.
+74 tests and all 2,286 sweep exports passed; minimum text contrast is
+4.60002238236111 with no exceptions. Exact packed smoke and full install/build
+smoke passed (npm/pnpm/yarn installs, missing-bun fallback, production build).
+
+Candidate: /var/folders/h1/82t44wr13fj06v4fr9mkkfk40000gn/T/lu-release-candidate-ZfnKJN/larsen-utvikling-create-next-app-0.7.0.tgz.
+SHA-256: e389782fda81cf0a94076e4b5724ae3c5c50b422414ffa20836b44efb838bf89.
+
+The user explicitly authorized agent publication and deployment for this release.
+The npm publish command reached browser 2FA, but Touch ID timed out. Registry
+verification afterward confirmed 0.7.0 was still absent. No npm publication or
+website deployment is claimed. Retry the same candidate with fresh authentication.
