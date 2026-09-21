@@ -78,3 +78,10 @@ The user explicitly authorized agent publication and deployment for this release
 The npm publish command reached browser 2FA, but Touch ID timed out. Registry
 verification afterward confirmed 0.7.0 was still absent. No npm publication or
 website deployment is claimed. Retry the same candidate with fresh authentication.
+
+## Publication completed
+
+A fresh owner Touch ID confirmation completed the authorized publish.
+Registry verified at 2026-09-21T22:53:08.621Z: version/latest 0.7.0, gitHead
+497e1baaf23b90413f6a91a4132cd6937b6dd1e1, byte-identical candidate download.
+See releases.md for the final published record. The earlier timeout is superseded.

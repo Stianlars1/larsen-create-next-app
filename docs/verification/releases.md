@@ -278,3 +278,29 @@ Release as Latest, published, not a draft, and not a prerelease:
 [local-0.6.0.md](local-0.6.0.md) remains the pre-publication source, sweep,
 scaffold, build, and local-artifact record. The local and final registry
 evidence layers remain separate.
+
+## 0.7.0 publication verification
+
+Published at 2026-09-21T22:52:16.165Z; verified 2026-09-22 Europe/Oslo.
+The registry lists 0.7.0 and latest points to it.
+
+- gitHead: `497e1baaf23b90413f6a91a4132cd6937b6dd1e1` (merged PR #5).
+- npm shasum: `bb174c3f922852fb9b75d06a361abe4960f05835`.
+- SHA-256: `e389782fda81cf0a94076e4b5724ae3c5c50b422414ffa20836b44efb838bf89`.
+- Integrity: `sha512-YblChcAVOpwjngTrWVVRt9RKpg4S/jofJRP/19uX2/i2f4dcyV6r1wAPqQpzz8eTOpczhcG0H7y2BFqgnX0AUA==`.
+- 39 files, unpacked size 1,049,647 bytes.
+
+The public registry download is byte-identical to the corrected candidate that
+passed pack:release and full install/build smoke. Engine dependency is exact
+`tintful@0.1.1`, and Node >=22.20.0 is required. New applications receive static
+CSS plus unchanged audit artifacts, without a runtime engine dependency.
+Native shadcn, radix and canonical contracts replace the former vendored engine.
+
+The initially reported three contrast-boundary defects were consumer measurement
+errors, not Tintful defects. The corrected verifier uses normative WCAG sRGB
+coefficients. All 2,286 sweep exports pass without exception lists. 74 CLI tests
+and the actual tarball install/build gates pass. See local-0.7.0.md for details.
+
+The owner explicitly authorized agent publication for this release and completed
+browser Touch ID authentication. No password, fingerprint or OTP was handled by
+the agent. The previous false-negative candidate was not published.
