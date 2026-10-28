@@ -92,7 +92,7 @@ test("release packing preserves maintainer metadata and removes dead scripts fro
     assert.equal(manifestResult.status, 0, manifestResult.stderr);
     const manifest = JSON.parse(manifestResult.stdout);
     assert.equal(manifest.scripts, undefined);
-    assert.equal(manifest.dependencies.tintful, "0.1.1");
+    assert.equal(manifest.dependencies.tintful, "0.3.0");
     assert.equal(manifest.engines.node, ">=22.20.0");
     assert.equal(manifest.dependencies["@radix-ui/colors"], undefined);
     assert.equal(manifest.dependencies["bezier-easing"], undefined);
