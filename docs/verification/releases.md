@@ -304,3 +304,21 @@ and the actual tarball install/build gates pass. See local-0.7.0.md for details.
 The owner explicitly authorized agent publication for this release and completed
 browser Touch ID authentication. No password, fingerprint or OTP was handled by
 the agent. The previous false-negative candidate was not published.
+
+## 0.8.0 publication verification
+
+Published at 2026-10-28T16:23:36.344Z. The npm registry lists 0.8.0 as latest.
+The registry tarball is byte-identical to the verified release candidate.
+
+- gitHead: `86db0da345d2910c0924ce5a07b3c76fd8bfea4a` (merged PR #6).
+- npm shasum: `ff133543d1bc031d0f72a98955c1f795aad38d0d`.
+- SHA-256: `e0265765d93e86b7e069e30b877676eae85ad42df447eb60c51bcc53b0314ced`.
+- Integrity: `sha512-UmbNZRvIq+cUojJi6YPFt4+Zx/CTOgPPfVlLgp3wbziYDDJ7pG4GDm8IxRHkko321RDhheME22JB5rlYTamY/Q==`.
+- Tintful dependency: exactly `0.3.0`.
+
+The artifact passed 74 tests, the 2,286-export palette sweep, packed scaffold
+checks and full npm/pnpm/yarn install plus production build. Bun was unavailable
+and its missing-manager fallback passed. The owner explicitly authorized agent
+publication and completed npm browser authentication. Tintful pins Zod 4.4.3,
+which npm audit flags under GHSA-mrhx-c7xc-m3w5; the previous engine version
+also pinned 4.4.3. Wrapper exploitability has not been established.
