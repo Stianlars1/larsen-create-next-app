@@ -1,6 +1,6 @@
 # Palette contracts
 
-The shared integration in `palette/index.js` uses published `tintful@0.1.1`.
+The shared integration in `palette/index.js` uses published `tintful@0.3.0`.
 Tintful owns generation, native token contracts, constraints, serialization and
 audit evidence. This repository does not vendor or modify its engine.
 
@@ -61,8 +61,8 @@ Generation and serialization must both return `ok: true` and
 `qualityStatus: "pass"`; every exported artifact must also pass. Failed-quality
 output is rejected even when the serializer returns `ok: true`. Diagnostics
 identify the seed, preset, syntax, neutral choice and engine failure. There is
-no implicit format fallback. Tintful 0.1.1 has known Radix alpha-equivalent
-fidelity failures, including #4DA0FF with weak neutral in HEX. The valid syntax
+no implicit format fallback. Tintful 0.3.0 repairs the former Radix alpha fidelity failures, including
+#4DA0FF with weak neutral in HEX. The valid syntax
 matrix is not a guarantee that every seed exports successfully in every format.
 
 Tintful's standard text target is 4.6 and non-text target is 3 for its defined

@@ -3,7 +3,7 @@
 Current package contract. This document describes the behavior implemented in
 this repository, not the original plan, release history, or any separate site.
 
-Migration contract: 2026-09-21. See dated verification evidence for completed checks.
+Current engine upgrade: 2026-10-28. See dated verification evidence for completed checks.
 
 ## Product boundary
 
@@ -50,7 +50,7 @@ The root contains the editable masters and the publishable package:
 
 ```text
 CSS/                           editable design-system master
-palette/                       shared integration with published tintful@0.1.1
+palette/                       shared integration with published tintful@0.3.0
 create-next-app/               publishable npm package
   bin/cli.js                   orchestration
   src/options.js               wrapper option contract
@@ -75,7 +75,7 @@ masters into the package. Direct package packing runs sync through `prepack`.
 The release packer syncs into an isolated staging copy. Smoke and source tests
 check that the artifact contains the intended copies.
 
-Package code imports the shared `palette/index.js` boundary. Tintful 0.1.1 is
+Package code imports the shared `palette/index.js` boundary. Tintful 0.3.0 is
 an exact runtime dependency of the CLI; generated applications need no engine.
 No engine source is copied or forked.
 
@@ -217,7 +217,7 @@ generated `theme.css` block.
 
 The complete native contract is [docs/reference/palette.md](docs/reference/palette.md).
 The shared boundary generates, serializes and checks quality with published
-`tintful@0.1.1`. Choices are shadcn, radix and canonical; hex, rgb, hsl,
+`tintful@0.3.0`. Choices are shadcn, radix and canonical; hex, rgb, hsl,
 hsl-values, oklab and oklch; neutral hues none, weak and strong. Engine
 capabilities determine valid combinations. Radix rejects hsl-values. Custom
 neutral defaults to weak; the baked default remains strong. Removed
@@ -228,7 +228,7 @@ shared integration additionally checks final native CSS against consumer
 contrast targets using the normative WCAG sRGB coefficients (not general
 XYZ-D65 luminance), rejecting a mismatch without modifying engine output. A
 failed-quality artifact is never written, and requested formats never switch
-silently. Known Radix fidelity failures can reject otherwise supported syntax.
+silently. Export quality is checked for every requested combination.
 This is an explicit diagnostic path, not a claim of universal seed support.
 
 Tintful owns its standard 4.6 text and 3 non-text constraints. Consumer checks
@@ -242,6 +242,13 @@ original files and their serialization manifest; `generateThemePreview()` adds
 native canonical ramp data for the demo without changing export bytes.
 `usageIdioms()` and `tokenRoles()` make starter CSS match the selected preset
 and format. Generated projects remain static copies with no engine dependency.
+
+Tintful 0.3.0 uses semantic-corridors@2, perceptual-multistrategy@2 and
+wcag-ui@2. Status colors have stable green/red/amber/blue identities, safe action
+states are more distinct, and alpha serialization repairs are included. Existing
+choices, defaults and CSS delivery settings are unchanged. The opt-in engine
+color-scheme feature remains omitted. Regenerated colors and audits intentionally
+differ from 0.7.0; older output requires its original engine version.
 
 ## Optional agent skills
 

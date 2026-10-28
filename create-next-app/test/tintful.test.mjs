@@ -151,16 +151,10 @@ test("operation and quality failures cannot leak artifacts", () => {
       () => requireQuality(result, "test", DEFAULT_THEME),
       /No files emitted/,
     );
-  assert.throws(
-    () =>
-      generateThemeCss({
-        hex: "#4DA0FF",
-        preset: "radix",
-        format: "hex",
-        neutralTint: "weak",
-      }),
-    /ADAPTER_DERIVATION_FAILED/,
-  );
+  const repaired = generateThemeArtifacts({
+    hex: "#4DA0FF", preset: "radix", format: "hex", neutralTint: "weak",
+  });
+  assert.equal(repaired.qualityStatus, "pass");
 });
 
 test("preview ramps are native canonical tokens and export bytes equal CLI output", () => {
@@ -194,13 +188,12 @@ test("black, white, neutral, saturated and boundary seeds meet final consumer co
 });
 
 test("normative WCAG weights accept the previously misclassified boundary exports", () => {
-  const cases = [["#7B534B", "destructive", 4.60025885591219], ["#5736FE", "warning", 4.600182615352269], ["#FE9762", "destructive", 4.60002238236111]];
-  for (const [hex, role, expected] of cases) for (const neutralTint of NEUTRAL_TINTS) {
+  const cases = [["#7B534B", "destructive"], ["#5736FE", "warning"], ["#FE9762", "destructive"]];
+  for (const [hex, role] of cases) for (const neutralTint of NEUTRAL_TINTS) {
     const result = generateThemeArtifacts({ hex, neutralTint });
     const tokens = parseThemeTokens(result.css).light;
     const measured = wcagContrastRatio(tokens[`${role}-foreground`], tokens[role], "hsl-values");
     assert.ok(measured >= 4.6);
-    assert.ok(Math.abs(measured - expected) < 1e-10);
   }
 });
 

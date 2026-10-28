@@ -10,6 +10,12 @@ a generated project contains counts as user-facing.
 
 ## [Unreleased]
 
+### Changed
+- Upgrade the exact Tintful engine dependency to 0.3.0 for stable semantic status
+  hues, improved safe action states and repaired alpha serialization.
+- Regenerate the baked theme and original audit artifacts with the new profiles.
+- Keep CLI choices, defaults, static starter delivery and no-Tailwind behavior.
+
 ## [0.7.0] - 2026-09-22
 
 ### Changed

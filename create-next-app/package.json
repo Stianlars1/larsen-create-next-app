@@ -1,6 +1,6 @@
 {
   "name": "@larsen-utvikling/create-next-app",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Request create-next-app, then add the Larsen Utvikling vanilla CSS design system, agent docs, and an optional palette generated from one HEX.",
   "keywords": [
     "create-next-app",
@@ -53,6 +53,6 @@
   "dependencies": {
     "@clack/prompts": "^1.7.0",
     "colorjs.io": "0.7.1",
-    "tintful": "0.1.1"
+    "tintful": "0.3.0"
   }
 }
